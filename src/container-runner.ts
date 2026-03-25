@@ -7,6 +7,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { readEnvFile } from './env.js';
 import {
   CONTAINER_IMAGE,
   CONTAINER_MAX_OUTPUT_SIZE,
@@ -42,6 +43,7 @@ export interface ContainerInput {
   isMain: boolean;
   isScheduledTask?: boolean;
   assistantName?: string;
+  triggerMessageId?: string;
 }
 
 export interface ContainerOutput {
@@ -85,6 +87,26 @@ function buildVolumeMounts(
         hostPath: '/dev/null',
         containerPath: '/workspace/project/.env',
         readonly: true,
+      });
+    }
+
+    // Host home directory — gives main group agent full PC access for system
+    // configuration (email setup, global Claude settings, skill management, etc.)
+    const hostHome = process.env.HOME ?? '/root';
+    mounts.push({
+      hostPath: hostHome,
+      containerPath: '/workspace/host',
+      readonly: false,
+    });
+
+    // D-Bus / systemd user socket — allows `systemctl --user` from inside container
+    const xdgRuntime =
+      process.env.XDG_RUNTIME_DIR ?? `/run/user/${process.getuid?.() ?? 1000}`;
+    if (fs.existsSync(xdgRuntime)) {
+      mounts.push({
+        hostPath: xdgRuntime,
+        containerPath: xdgRuntime,
+        readonly: false,
       });
     }
 
@@ -147,15 +169,32 @@ function buildVolumeMounts(
     );
   }
 
-  // Sync skills from container/skills/ into each group's .claude/skills/
-  const skillsSrc = path.join(process.cwd(), 'container', 'skills');
+  // Sync skills from container/skills/ and ~/.claude/skills/ into each group's .claude/skills/
   const skillsDst = path.join(groupSessionsDir, 'skills');
-  if (fs.existsSync(skillsSrc)) {
+  for (const skillsSrc of [
+    path.join(process.cwd(), 'container', 'skills'),
+    path.join(process.env.HOME ?? '/root', '.claude', 'skills'),
+  ]) {
+    if (!fs.existsSync(skillsSrc)) continue;
     for (const skillDir of fs.readdirSync(skillsSrc)) {
       const srcDir = path.join(skillsSrc, skillDir);
       if (!fs.statSync(srcDir).isDirectory()) continue;
       const dstDir = path.join(skillsDst, skillDir);
       fs.cpSync(srcDir, dstDir, { recursive: true });
+    }
+  }
+
+  // Sync agents from container/agents/ into each group's .claude/agents/
+  const agentsSrc = path.join(process.cwd(), 'container', 'agents');
+  const agentsDst = path.join(groupSessionsDir, 'agents');
+  if (fs.existsSync(agentsSrc)) {
+    fs.mkdirSync(agentsDst, { recursive: true });
+    for (const agentFile of fs.readdirSync(agentsSrc)) {
+      if (!agentFile.endsWith('.md')) continue;
+      fs.copyFileSync(
+        path.join(agentsSrc, agentFile),
+        path.join(agentsDst, agentFile),
+      );
     }
   }
   mounts.push({
@@ -172,6 +211,31 @@ function buildVolumeMounts(
       hostPath: gmailDir,
       containerPath: '/home/node/.gmail-mcp',
       readonly: false, // MCP may need to refresh OAuth tokens
+    });
+  }
+
+  // NotebookLM MCP auth data (Google auth cookies for browser automation)
+  const notebooklmDir = path.join(homeDir, '.config', 'notebooklm-mcp');
+  if (fs.existsSync(notebooklmDir)) {
+    mounts.push({
+      hostPath: notebooklmDir,
+      containerPath: '/home/node/.config/notebooklm-mcp',
+      readonly: false,
+    });
+  }
+
+  // NotebookLM MCP browser profile (authenticated Chrome session)
+  const notebooklmBrowserDir = path.join(
+    homeDir,
+    '.local',
+    'share',
+    'notebooklm-mcp',
+  );
+  if (fs.existsSync(notebooklmBrowserDir)) {
+    mounts.push({
+      hostPath: notebooklmBrowserDir,
+      containerPath: '/home/node/.local/share/notebooklm-mcp',
+      readonly: false,
     });
   }
 
@@ -202,7 +266,7 @@ function buildVolumeMounts(
     group.folder,
     'agent-runner-src',
   );
-  if (!fs.existsSync(groupAgentRunnerDir) && fs.existsSync(agentRunnerSrc)) {
+  if (fs.existsSync(agentRunnerSrc)) {
     fs.cpSync(agentRunnerSrc, groupAgentRunnerDir, { recursive: true });
   }
   mounts.push({
@@ -232,6 +296,18 @@ function buildContainerArgs(
 
   // Pass host timezone so container's local time matches the user's
   args.push('-e', `TZ=${TIMEZONE}`);
+
+  // Pass third-party API keys from .env into the container
+  const thirdPartyKeys = readEnvFile([
+    'NOTION_API_KEY',
+    'OPENAPI_MCP_HEADERS',
+    'FIGMA_API_KEY',
+    'GITHUB_TOKEN',
+    'CLOUDFLARE_API_TOKEN',
+  ]);
+  for (const [key, value] of Object.entries(thirdPartyKeys)) {
+    if (value) args.push('-e', `${key}=${value}`);
+  }
 
   // Route API traffic through the credential proxy (containers never see real secrets)
   args.push(
@@ -281,6 +357,7 @@ export async function runContainerAgent(
   input: ContainerInput,
   onProcess: (proc: ChildProcess, containerName: string) => void,
   onOutput?: (output: ContainerOutput) => Promise<void>,
+  onStopped?: (chatJid: string, exitCode: number | null) => void,
 ): Promise<ContainerOutput> {
   const startTime = Date.now();
 
@@ -291,6 +368,20 @@ export async function runContainerAgent(
   const safeName = group.folder.replace(/[^a-zA-Z0-9-]/g, '-');
   const containerName = `nanoclaw-${safeName}-${Date.now()}`;
   const containerArgs = buildContainerArgs(mounts, containerName);
+
+  // Inject D-Bus / systemd env for main group so `systemctl --user` works
+  if (input.isMain) {
+    const xdgRuntime =
+      process.env.XDG_RUNTIME_DIR ?? `/run/user/${process.getuid?.() ?? 1000}`;
+    containerArgs.splice(
+      -1,
+      0,
+      '-e',
+      `XDG_RUNTIME_DIR=${xdgRuntime}`,
+      '-e',
+      `DBUS_SESSION_BUS_ADDRESS=unix:path=${xdgRuntime}/bus`,
+    );
+  }
 
   logger.debug(
     {
@@ -446,6 +537,7 @@ export async function runContainerAgent(
 
     container.on('close', (code) => {
       clearTimeout(timeout);
+      onStopped?.(input.chatJid, code);
       const duration = Date.now() - startTime;
 
       if (timedOut) {

@@ -4,8 +4,11 @@ import path from 'path';
 import {
   ASSISTANT_NAME,
   CREDENTIAL_PROXY_PORT,
+  DATA_DIR,
   IDLE_TIMEOUT,
+  NOTION_WEBHOOK_PORT,
   POLL_INTERVAL,
+  TELEGRAM_BOT_POOL,
   TIMEZONE,
   TRIGGER_PATTERN,
 } from './config.js';
@@ -31,6 +34,7 @@ import {
   getAllRegisteredGroups,
   getAllSessions,
   getAllTasks,
+  getLatestUserMessageId,
   getMessagesSince,
   getNewMessages,
   getRegisteredGroup,
@@ -57,9 +61,12 @@ import {
   loadSenderAllowlist,
   shouldDropMessage,
 } from './sender-allowlist.js';
+import { initBotPool } from './channels/telegram.js';
+import { startWebhookServer } from './webhook-server.js';
 import { startSchedulerLoop } from './task-scheduler.js';
 import { Channel, NewMessage, RegisteredGroup } from './types.js';
 import { logger } from './logger.js';
+import { ProgressTracker } from './progress-tracker.js';
 
 // Re-export for backwards compatibility during refactor
 export { escapeXml, formatMessages } from './router.js';
@@ -69,6 +76,7 @@ let sessions: Record<string, string> = {};
 let registeredGroups: Record<string, RegisteredGroup> = {};
 let lastAgentTimestamp: Record<string, string> = {};
 let messageLoopRunning = false;
+let progressTracker: ProgressTracker;
 
 const channels: Channel[] = [];
 const queue = new GroupQueue();
@@ -212,32 +220,57 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
   let hadError = false;
   let outputSentToUser = false;
 
-  const output = await runAgent(group, prompt, chatJid, async (result) => {
-    // Streaming output callback — called for each agent result
-    if (result.result) {
-      const raw =
-        typeof result.result === 'string'
-          ? result.result
-          : JSON.stringify(result.result);
-      // Strip <internal>...</internal> blocks — agent uses these for internal reasoning
-      const text = raw.replace(/<internal>[\s\S]*?<\/internal>/g, '').trim();
-      logger.info({ group: group.name }, `Agent output: ${raw.slice(0, 200)}`);
-      if (text) {
-        await channel.sendMessage(chatJid, text);
-        outputSentToUser = true;
+  const triggerMessageId = missedMessages[missedMessages.length - 1]?.id;
+
+  // Acknowledge immediately with a 👍 reaction before spinning up the container.
+  // Wait 400ms to allow nearly-simultaneous messages (e.g. photo sent right after text)
+  // to land in the DB, then react to the true latest message.
+  if (channel.reactToMessage) {
+    setTimeout(() => {
+      const latestId = getLatestUserMessageId(chatJid) ?? triggerMessageId;
+      if (latestId) {
+        channel.reactToMessage!(chatJid, latestId, '👍').catch(() => {
+          /* best effort */
+        });
       }
-      // Only reset idle timer on actual results, not session-update markers (result: null)
-      resetIdleTimer();
-    }
+    }, 400);
+  }
+  const output = await runAgent(
+    group,
+    prompt,
+    chatJid,
+    triggerMessageId,
+    async (result) => {
+      // Streaming output callback — called for each agent result
+      if (result.result) {
+        const raw =
+          typeof result.result === 'string'
+            ? result.result
+            : JSON.stringify(result.result);
+        // Strip <internal>...</internal> blocks — agent uses these for internal reasoning
+        const text = raw.replace(/<internal>[\s\S]*?<\/internal>/g, '').trim();
+        logger.info(
+          { group: group.name },
+          `Agent output: ${raw.slice(0, 200)}`,
+        );
+        if (text) {
+          await channel.sendMessage(chatJid, text);
+          outputSentToUser = true;
+        }
+        // Only reset idle timer on actual results, not session-update markers (result: null)
+        resetIdleTimer();
+      }
 
-    if (result.status === 'success') {
-      queue.notifyIdle(chatJid);
-    }
+      if (result.status === 'success') {
+        progressTracker?.onResponseReceived(chatJid);
+        queue.notifyIdle(chatJid);
+      }
 
-    if (result.status === 'error') {
-      hadError = true;
-    }
-  });
+      if (result.status === 'error') {
+        hadError = true;
+      }
+    },
+  );
 
   await channel.setTyping?.(chatJid, false);
   if (idleTimer) clearTimeout(idleTimer);
@@ -269,6 +302,7 @@ async function runAgent(
   group: RegisteredGroup,
   prompt: string,
   chatJid: string,
+  triggerMessageId?: string,
   onOutput?: (output: ContainerOutput) => Promise<void>,
 ): Promise<'success' | 'error'> {
   const isMain = group.isMain === true;
@@ -320,10 +354,12 @@ async function runAgent(
         chatJid,
         isMain,
         assistantName: ASSISTANT_NAME,
+        triggerMessageId,
       },
       (proc, containerName) =>
         queue.registerProcess(chatJid, proc, containerName, group.folder),
       wrappedOnOutput,
+      (chatJid, exitCode) => progressTracker?.onContainerStopped(chatJid, exitCode),
     );
 
     if (output.newSessionId) {
@@ -434,6 +470,7 @@ async function startMessageLoop(): Promise<void> {
               ?.catch((err) =>
                 logger.warn({ chatJid, err }, 'Failed to set typing indicator'),
               );
+            progressTracker?.onMessageSent(chatJid, group.folder);
           } else {
             // No active container — enqueue for a new one
             queue.enqueueMessageCheck(chatJid);
@@ -483,10 +520,28 @@ async function main(): Promise<void> {
     PROXY_BIND_HOST,
   );
 
+  // Start unified webhook server (ngrok forwards to this)
+  // Routes: POST /notion → Notion handler, POST /github → GitHub handler
+  const { readEnvFile } = await import('./env.js');
+  const webhookEnv = readEnvFile([
+    'NOTION_WEBHOOK_SECRET',
+    'GITHUB_WEBHOOK_SECRET',
+    'NOTION_API_KEY',
+  ]);
+  if (webhookEnv.NOTION_API_KEY)
+    process.env.NOTION_API_KEY = webhookEnv.NOTION_API_KEY;
+  const webhookServer = startWebhookServer({
+    port: NOTION_WEBHOOK_PORT,
+    notionSigningSecret: webhookEnv.NOTION_WEBHOOK_SECRET ?? '',
+    githubSigningSecret: webhookEnv.GITHUB_WEBHOOK_SECRET ?? '',
+    getRegisteredGroups: () => registeredGroups,
+  });
+
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'Shutdown signal received');
     proxyServer.close();
+    webhookServer.close();
     await queue.shutdown(10000);
     for (const ch of channels) await ch.disconnect();
     process.exit(0);
@@ -538,6 +593,10 @@ async function main(): Promise<void> {
 
   // Channel callbacks (shared by all channels)
   const channelOpts = {
+    onCriticalCommand: (chatJid: string, command: string) => {
+      logger.info({ chatJid, command }, 'Critical command from Telegram');
+      queue.closeStdin(chatJid);
+    },
     onMessage: (chatJid: string, msg: NewMessage) => {
       // Remote control commands — intercept before storage
       const trimmed = msg.content.trim();
@@ -597,6 +656,32 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Send "ready" message if we just restarted
+  try {
+    const notifyPath = path.join(DATA_DIR, 'restart_notify.json');
+    if (fs.existsSync(notifyPath)) {
+      fs.unlinkSync(notifyPath);
+      // Find the main group JID and notify it
+      const mainEntry = Object.entries(registeredGroups).find(
+        ([, g]) => g.isMain,
+      );
+      if (mainEntry) {
+        const [mainJid] = mainEntry;
+        const channel = findChannel(channels, mainJid);
+        if (channel) {
+          await channel.sendMessage(mainJid, '✅ Готовий!');
+        }
+      }
+    }
+  } catch {
+    /* best effort */
+  }
+
+  // Initialize Telegram bot pool for agent teams (if configured)
+  if (TELEGRAM_BOT_POOL.length > 0) {
+    await initBotPool(TELEGRAM_BOT_POOL);
+  }
+
   // Start subsystems (independently of connection handler)
   startSchedulerLoop({
     registeredGroups: () => registeredGroups,
@@ -620,6 +705,20 @@ async function main(): Promise<void> {
       if (!channel) throw new Error(`No channel for JID: ${jid}`);
       return channel.sendMessage(jid, text);
     },
+    reactToMessage: async (jid, messageId, emoji) => {
+      const channel = findChannel(channels, jid);
+      if (channel?.reactToMessage)
+        await channel.reactToMessage(jid, messageId, emoji);
+    },
+    sendWithButtons: async (jid, text, buttons, rowSize) => {
+      const channel = findChannel(channels, jid);
+      if (channel?.sendWithButtons)
+        await channel.sendWithButtons(jid, text, buttons, rowSize);
+    },
+    sendPhoto: async (jid, photoPath, caption) => {
+      const channel = findChannel(channels, jid);
+      if (channel?.sendPhoto) await channel.sendPhoto(jid, photoPath, caption);
+    },
     registeredGroups: () => registeredGroups,
     registerGroup,
     syncGroups: async (force: boolean) => {
@@ -635,6 +734,25 @@ async function main(): Promise<void> {
   });
   queue.setProcessMessagesFn(processGroupMessages);
   recoverPendingMessages();
+  // Initialize progress tracker
+  progressTracker = new ProgressTracker({
+    sendMsg: async (jid, text) => {
+      const ch = findChannel(channels, jid) as any;
+      return ch?.sendMessageRaw?.(jid, text);
+    },
+    editMsg: async (jid, msgId, text) => {
+      const ch = findChannel(channels, jid) as any;
+      await ch?.editMessage?.(jid, msgId, text);
+    },
+    deleteMsg: async (jid, msgId) => {
+      const ch = findChannel(channels, jid) as any;
+      await ch?.deleteMessage?.(jid, msgId);
+    },
+    setTyping: async (jid, typing) => {
+      const ch = findChannel(channels, jid);
+      await ch?.setTyping?.(jid, typing);
+    },
+  });
   startMessageLoop().catch((err) => {
     logger.fatal({ err }, 'Message loop crashed unexpectedly');
     process.exit(1);
