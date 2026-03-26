@@ -74,7 +74,10 @@ Plans:
   2. Main Discord channel can send IPC messages to any other group (Discord or Telegram)
   3. Non-main Discord channels can only send IPC messages to their own JID
   4. Discord channels use JID format `dc:{channelId}` consistently across all NanoClaw systems
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 04-01-PLAN.md — Discord group utilities (sanitization, collision detection, stub creation) + extend ChannelOpts with registerGroup
+- [ ] 04-02-PLAN.md — Wire auto-registration in discord.ts messageCreate handler + IPC authorization tests
 
 ### Phase 5: Server Structure Management
 **Goal**: Bot can programmatically create and manage the Discord server structure without manual Discord UI interaction
@@ -135,7 +138,7 @@ Note: Phase 4 and Phase 5 can execute in parallel (both depend on earlier phases
 | 1. Discord Channel Foundation | 0/2 | Planning complete | - |
 | 2. Inbound Message Handling | 0/1 | Planning complete | - |
 | 3. Outbound Formatting | 0/2 | Planning complete | - |
-| 4. Group Registration | 0/0 | Not started | - |
+| 4. Group Registration | 0/2 | Planning complete | - |
 | 5. Server Structure Management | 0/0 | Not started | - |
 | 6. Webhook Routing Architecture | 0/0 | Not started | - |
 | 7. Swarm Bot Identity | 0/0 | Not started | - |
