@@ -359,7 +359,8 @@ async function runAgent(
       (proc, containerName) =>
         queue.registerProcess(chatJid, proc, containerName, group.folder),
       wrappedOnOutput,
-      (chatJid, exitCode) => progressTracker?.onContainerStopped(chatJid, exitCode),
+      (chatJid, exitCode) =>
+        progressTracker?.onContainerStopped(chatJid, exitCode),
     );
 
     if (output.newSessionId) {
@@ -527,6 +528,8 @@ async function main(): Promise<void> {
     'NOTION_WEBHOOK_SECRET',
     'GITHUB_WEBHOOK_SECRET',
     'NOTION_API_KEY',
+    'GITHUB_TOKEN',
+    'GITHUB_REPO',
   ]);
   if (webhookEnv.NOTION_API_KEY)
     process.env.NOTION_API_KEY = webhookEnv.NOTION_API_KEY;
@@ -534,6 +537,8 @@ async function main(): Promise<void> {
     port: NOTION_WEBHOOK_PORT,
     notionSigningSecret: webhookEnv.NOTION_WEBHOOK_SECRET ?? '',
     githubSigningSecret: webhookEnv.GITHUB_WEBHOOK_SECRET ?? '',
+    githubToken: webhookEnv.GITHUB_TOKEN ?? '',
+    githubRepo: webhookEnv.GITHUB_REPO ?? 'megadude000/YW_Core',
     getRegisteredGroups: () => registeredGroups,
   });
 
