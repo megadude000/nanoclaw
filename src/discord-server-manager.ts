@@ -5,9 +5,37 @@ import {
   PermissionFlagsBits,
   PermissionsBitField,
   type PermissionsString,
+  type GuildBasedChannel,
+  Collection,
 } from 'discord.js';
+import { z } from 'zod';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { logger } from './logger.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export const ChannelConfigSchema = z.object({
+  name: z.string(),
+  topic: z.string().optional(),
+  permissions: z.record(z.string(), z.boolean()).optional(),
+});
+
+export const CategoryConfigSchema = z.object({
+  name: z.string(),
+  channels: z.array(ChannelConfigSchema),
+});
+
+export const ServerConfigSchema = z.object({
+  categories: z.array(CategoryConfigSchema),
+});
+
+export type ServerConfig = z.infer<typeof ServerConfigSchema>;
+export type CategoryConfig = z.infer<typeof CategoryConfigSchema>;
+export type ChannelConfig = z.infer<typeof ChannelConfigSchema>;
 
 export interface ServerManagerDeps {
   getGuild: () => Guild | null;
@@ -65,6 +93,8 @@ export class DiscordServerManager {
           return await this.renameChannel(guild, params);
         case 'set_permissions':
           return await this.setPermissions(guild, params);
+        case 'bootstrap':
+          return await this.bootstrap(guild, params);
         default:
           return { success: false, error: `Unknown action: ${action}` };
       }
@@ -172,5 +202,118 @@ export class DiscordServerManager {
 
     logger.info({ channelId, count: overwrites.length }, 'Updated Discord channel permissions');
     return { success: true };
+  }
+
+  private loadConfig(configPath?: string): ServerConfig {
+    const path = configPath
+      ? resolve(configPath)
+      : resolve(__dirname, '..', 'config', 'discord-server.json');
+    const raw = readFileSync(path, 'utf-8');
+    const json = JSON.parse(raw);
+    return ServerConfigSchema.parse(json);
+  }
+
+  private async bootstrap(
+    guild: Guild,
+    params: Record<string, unknown>,
+  ): Promise<ServerManagerResult> {
+    let config: ServerConfig;
+    try {
+      config = this.loadConfig(params.configPath as string | undefined);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { success: false, error: `Invalid config: ${message}` };
+    }
+
+    // Fetch ALL guild channels fresh from API (not cache)
+    let channelMap: Map<string, GuildBasedChannel | null>;
+    try {
+      channelMap = await guild.channels.fetch();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { success: false, error: `Failed to fetch channels: ${message}` };
+    }
+
+    // Convert to array for easy searching (works with both Collection and Map)
+    const existingChannels = Array.from(channelMap.values()).filter(
+      (ch): ch is GuildBasedChannel => ch !== null,
+    );
+
+    const created: string[] = [];
+    const skipped: string[] = [];
+    const errors: string[] = [];
+
+    for (const categoryConfig of config.categories) {
+      // Find existing category by name (case-insensitive)
+      let category = existingChannels.find(
+        (ch) =>
+          ch.type === ChannelType.GuildCategory &&
+          ch.name.toLowerCase() === categoryConfig.name.toLowerCase(),
+      ) as GuildChannel | undefined;
+
+      if (category) {
+        skipped.push(`category:${categoryConfig.name}`);
+      } else {
+        try {
+          category = await guild.channels.create({
+            name: categoryConfig.name,
+            type: ChannelType.GuildCategory,
+          });
+          created.push(`category:${categoryConfig.name}`);
+          logger.info({ name: categoryConfig.name, id: category.id }, 'Bootstrap: created category');
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          errors.push(`category:${categoryConfig.name}: ${message}`);
+          logger.error({ name: categoryConfig.name, error: message }, 'Bootstrap: failed to create category');
+          continue; // Skip channels in this category since parent failed
+        }
+      }
+
+      const categoryId = category.id;
+
+      for (const channelConfig of categoryConfig.channels) {
+        // Find existing channel by name + parentId
+        const existingChannel = existingChannels.find(
+          (ch) =>
+            ch.type === ChannelType.GuildText &&
+            ch.name.toLowerCase() === channelConfig.name.toLowerCase() &&
+            ch.parentId === categoryId,
+        );
+
+        if (existingChannel) {
+          skipped.push(`channel:${channelConfig.name}`);
+        } else {
+          try {
+            const newChannel = await guild.channels.create({
+              name: channelConfig.name,
+              type: ChannelType.GuildText,
+              parent: categoryId,
+              ...(channelConfig.topic ? { topic: channelConfig.topic } : {}),
+            });
+            created.push(`channel:${channelConfig.name}`);
+            logger.info(
+              { name: channelConfig.name, id: newChannel.id, parent: categoryId },
+              'Bootstrap: created channel',
+            );
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            errors.push(`channel:${channelConfig.name}: ${message}`);
+            logger.error(
+              { name: channelConfig.name, error: message },
+              'Bootstrap: failed to create channel',
+            );
+          }
+        }
+      }
+    }
+
+    return {
+      success: errors.length === 0,
+      created,
+      skipped,
+      errors: errors.length > 0 ? errors : undefined,
+      total_created: created.length,
+      total_skipped: skipped.length,
+    };
   }
 }

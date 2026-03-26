@@ -1,0 +1,32 @@
+{
+  "categories": [
+    {
+      "name": "General",
+      "channels": [
+        { "name": "main", "topic": "Main conversational channel" },
+        { "name": "agents", "topic": "Friday/Alfred swarm output" }
+      ]
+    },
+    {
+      "name": "YourWave",
+      "channels": [
+        { "name": "yw-tasks", "topic": "Notion webhook task updates" },
+        { "name": "bugs", "topic": "GitHub Issues bug reports" },
+        { "name": "progress", "topic": "Progress tracker output" }
+      ]
+    },
+    {
+      "name": "Dev",
+      "channels": [
+        { "name": "dev-alerts", "topic": "CI/build/deploy notifications" },
+        { "name": "logs", "topic": "System logs, container events" }
+      ]
+    },
+    {
+      "name": "Admin",
+      "channels": [
+        { "name": "bot-control", "topic": "Server management commands" }
+      ]
+    }
+  ]
+}
