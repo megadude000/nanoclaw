@@ -1,0 +1,29 @@
+{
+  "github-issues": {
+    "targets": [
+      { "platform": "telegram", "jid": "tg:TELEGRAM_CHAT_ID" },
+      { "platform": "discord", "jid": "dc:DISCORD_BUGS_CHANNEL_ID" }
+    ]
+  },
+  "github-ci": {
+    "targets": [
+      { "platform": "telegram", "jid": "tg:TELEGRAM_CHAT_ID" }
+    ]
+  },
+  "notion": {
+    "targets": [
+      { "platform": "telegram", "jid": "tg:TELEGRAM_CHAT_ID" },
+      { "platform": "discord", "jid": "dc:DISCORD_TASKS_CHANNEL_ID" }
+    ]
+  },
+  "progress": {
+    "targets": [
+      { "platform": "telegram", "jid": "tg:TELEGRAM_CHAT_ID" }
+    ]
+  },
+  "bugreport": {
+    "targets": [
+      { "platform": "discord", "jid": "dc:DISCORD_BUGS_CHANNEL_ID" }
+    ]
+  }
+}
