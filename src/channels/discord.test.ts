@@ -35,6 +35,9 @@ vi.mock('discord.js', () => {
     MessageCreate: 'messageCreate',
     ClientReady: 'ready',
     Error: 'error',
+    ShardDisconnect: 'shardDisconnect',
+    ShardReconnecting: 'shardReconnecting',
+    ShardResume: 'shardResume',
   };
 
   const GatewayIntentBits = {
@@ -161,9 +164,7 @@ function createMessage(overrides: {
     member: overrides.memberDisplayName
       ? { displayName: overrides.memberDisplayName }
       : null,
-    guild: overrides.guildName
-      ? { name: overrides.guildName }
-      : null,
+    guild: overrides.guildName ? { name: overrides.guildName } : null,
     channel: {
       name: overrides.channelName ?? 'general',
       messages: {
@@ -641,8 +642,11 @@ describe('DiscordChannel', () => {
 
       await channel.sendMessage('dc:1234567890123456', 'Hello');
 
-      const fetchedChannel = await currentClient().channels.fetch('1234567890123456');
-      expect(currentClient().channels.fetch).toHaveBeenCalledWith('1234567890123456');
+      const fetchedChannel =
+        await currentClient().channels.fetch('1234567890123456');
+      expect(currentClient().channels.fetch).toHaveBeenCalledWith(
+        '1234567890123456',
+      );
     });
 
     it('strips dc: prefix from JID', async () => {
@@ -771,6 +775,69 @@ describe('DiscordChannel', () => {
     it('has name "discord"', () => {
       const channel = new DiscordChannel('test-token', createTestOpts());
       expect(channel.name).toBe('discord');
+    });
+  });
+
+  // --- Shard lifecycle logging ---
+
+  describe('shard lifecycle logging', () => {
+    it('registers shard event handlers on connect', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const client = currentClient();
+      expect(client.eventHandlers.has('shardDisconnect')).toBe(true);
+      expect(client.eventHandlers.has('shardReconnecting')).toBe(true);
+      expect(client.eventHandlers.has('shardResume')).toBe(true);
+    });
+
+    it('logs warning on ShardDisconnect with shardId and code', async () => {
+      const { logger } = await import('../logger.js');
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const client = currentClient();
+      const handlers = client.eventHandlers.get('shardDisconnect') || [];
+      for (const h of handlers) h({ code: 1006 }, 0);
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ shardId: 0, code: 1006 }),
+        expect.stringContaining('disconnected'),
+      );
+    });
+
+    it('logs info on ShardReconnecting with shardId', async () => {
+      const { logger } = await import('../logger.js');
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const client = currentClient();
+      const handlers = client.eventHandlers.get('shardReconnecting') || [];
+      for (const h of handlers) h(0);
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.objectContaining({ shardId: 0 }),
+        expect.stringContaining('reconnecting'),
+      );
+    });
+
+    it('logs info on ShardResume with shardId and replayedEvents', async () => {
+      const { logger } = await import('../logger.js');
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const client = currentClient();
+      const handlers = client.eventHandlers.get('shardResume') || [];
+      for (const h of handlers) h(0, 5);
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.objectContaining({ shardId: 0, replayedEvents: 5 }),
+        expect.stringContaining('resumed'),
+      );
     });
   });
 });
