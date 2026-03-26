@@ -38,6 +38,7 @@ vi.mock('discord.js', () => {
     ShardDisconnect: 'shardDisconnect',
     ShardReconnecting: 'shardReconnecting',
     ShardResume: 'shardResume',
+    InteractionCreate: 'interactionCreate',
   };
 
   const GatewayIntentBits = {
@@ -46,6 +47,22 @@ vi.mock('discord.js', () => {
     MessageContent: 4,
     DirectMessages: 8,
   };
+
+  const ButtonStyle = { Primary: 1 };
+
+  class MockButtonBuilder {
+    private _customId = '';
+    private _label = '';
+    private _style = 0;
+    setCustomId(id: string) { this._customId = id; return this; }
+    setLabel(label: string) { this._label = label; return this; }
+    setStyle(style: number) { this._style = style; return this; }
+  }
+
+  class MockActionRowBuilder {
+    components: any[] = [];
+    addComponents(items: any[]) { this.components.push(...items); return this; }
+  }
 
   class MockClient {
     eventHandlers = new Map<string, Handler[]>();
@@ -82,8 +99,13 @@ vi.mock('discord.js', () => {
 
     channels = {
       fetch: vi.fn().mockResolvedValue({
-        send: vi.fn().mockResolvedValue(undefined),
+        send: vi.fn().mockResolvedValue({ id: 'sent_msg_001' }),
         sendTyping: vi.fn().mockResolvedValue(undefined),
+        messages: {
+          fetch: vi.fn().mockResolvedValue({
+            edit: vi.fn().mockResolvedValue(undefined),
+          }),
+        },
       }),
     };
 
@@ -100,6 +122,9 @@ vi.mock('discord.js', () => {
     Events,
     GatewayIntentBits,
     TextChannel,
+    ActionRowBuilder: MockActionRowBuilder,
+    ButtonBuilder: MockButtonBuilder,
+    ButtonStyle,
   };
 });
 
@@ -787,13 +812,13 @@ describe('DiscordChannel', () => {
       // No error, no API call
     });
 
-    it('splits messages exceeding 2000 characters', async () => {
+    it('splits messages exceeding 2000 characters using markdown-aware chunker', async () => {
       const opts = createTestOpts();
       const channel = new DiscordChannel('test-token', opts);
       await channel.connect();
 
       const mockChannel = {
-        send: vi.fn().mockResolvedValue(undefined),
+        send: vi.fn().mockResolvedValue({ id: 'sent_001' }),
         sendTyping: vi.fn(),
       };
       currentClient().channels.fetch.mockResolvedValue(mockChannel);
@@ -801,9 +826,11 @@ describe('DiscordChannel', () => {
       const longText = 'x'.repeat(3000);
       await channel.sendMessage('dc:1234567890123456', longText);
 
+      // Should be split into multiple chunks (markdown-aware chunker handles this)
       expect(mockChannel.send).toHaveBeenCalledTimes(2);
-      expect(mockChannel.send).toHaveBeenNthCalledWith(1, 'x'.repeat(2000));
-      expect(mockChannel.send).toHaveBeenNthCalledWith(2, 'x'.repeat(1000));
+      // All chunks together should equal original text
+      const allSent = mockChannel.send.mock.calls.map((c: any[]) => c[0]).join('');
+      expect(allSent).toBe(longText);
     });
   });
 
@@ -878,6 +905,322 @@ describe('DiscordChannel', () => {
     it('has name "discord"', () => {
       const channel = new DiscordChannel('test-token', createTestOpts());
       expect(channel.name).toBe('discord');
+    });
+  });
+
+  // --- editMessage ---
+
+  describe('editMessage', () => {
+    it('edits a message by fetching channel and message', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const mockEdit = vi.fn().mockResolvedValue(undefined);
+      const mockChannel = {
+        send: vi.fn(),
+        sendTyping: vi.fn(),
+        messages: {
+          fetch: vi.fn().mockResolvedValue({ edit: mockEdit }),
+        },
+      };
+      currentClient().channels.fetch.mockResolvedValue(mockChannel);
+
+      await channel.editMessage('dc:1234567890123456', 'msg_123', 'Updated text');
+
+      expect(currentClient().channels.fetch).toHaveBeenCalledWith('1234567890123456');
+      expect(mockChannel.messages.fetch).toHaveBeenCalledWith('msg_123');
+      expect(mockEdit).toHaveBeenCalledWith('Updated text');
+    });
+
+    it('does nothing when client is not initialized', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      // Don't connect
+      await channel.editMessage('dc:1234567890123456', 'msg_123', 'text');
+      // No error thrown
+    });
+
+    it('handles edit failure gracefully', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      currentClient().channels.fetch.mockRejectedValueOnce(new Error('Not found'));
+
+      await expect(
+        channel.editMessage('dc:1234567890123456', 'msg_123', 'text'),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  // --- sendMessageRaw ---
+
+  describe('sendMessageRaw', () => {
+    it('returns message_id from sent message', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const mockChannel = {
+        send: vi.fn().mockResolvedValue({ id: 'discord_msg_456' }),
+        sendTyping: vi.fn(),
+      };
+      currentClient().channels.fetch.mockResolvedValue(mockChannel);
+
+      const result = await channel.sendMessageRaw('dc:1234567890123456', 'Hello raw');
+
+      expect(result).toEqual({ message_id: 'discord_msg_456' });
+      expect(mockChannel.send).toHaveBeenCalledWith('Hello raw');
+    });
+
+    it('returns undefined when client is not initialized', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      // Don't connect
+      const result = await channel.sendMessageRaw('dc:1234567890123456', 'text');
+      expect(result).toBeUndefined();
+    });
+
+    it('truncates to 2000 chars', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const mockChannel = {
+        send: vi.fn().mockResolvedValue({ id: 'msg_001' }),
+        sendTyping: vi.fn(),
+      };
+      currentClient().channels.fetch.mockResolvedValue(mockChannel);
+
+      await channel.sendMessageRaw('dc:1234567890123456', 'x'.repeat(3000));
+
+      expect(mockChannel.send).toHaveBeenCalledWith('x'.repeat(2000));
+    });
+
+    it('returns undefined on failure', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      currentClient().channels.fetch.mockRejectedValueOnce(new Error('fail'));
+
+      const result = await channel.sendMessageRaw('dc:1234567890123456', 'text');
+      expect(result).toBeUndefined();
+    });
+  });
+
+  // --- sendPhoto ---
+
+  describe('sendPhoto', () => {
+    it('sends photo with caption', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const mockChannel = {
+        send: vi.fn().mockResolvedValue({ id: 'msg_001' }),
+        sendTyping: vi.fn(),
+      };
+      currentClient().channels.fetch.mockResolvedValue(mockChannel);
+
+      await channel.sendPhoto('dc:1234567890123456', '/tmp/photo.png', 'My caption');
+
+      expect(mockChannel.send).toHaveBeenCalledWith({
+        content: 'My caption',
+        files: ['/tmp/photo.png'],
+      });
+    });
+
+    it('sends photo without caption', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const mockChannel = {
+        send: vi.fn().mockResolvedValue({ id: 'msg_001' }),
+        sendTyping: vi.fn(),
+      };
+      currentClient().channels.fetch.mockResolvedValue(mockChannel);
+
+      await channel.sendPhoto('dc:1234567890123456', '/tmp/photo.png');
+
+      expect(mockChannel.send).toHaveBeenCalledWith({
+        content: undefined,
+        files: ['/tmp/photo.png'],
+      });
+    });
+
+    it('does nothing when client is not initialized', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.sendPhoto('dc:1234567890123456', '/tmp/photo.png');
+      // No error
+    });
+
+    it('handles failure gracefully', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      currentClient().channels.fetch.mockRejectedValueOnce(new Error('fail'));
+
+      await expect(
+        channel.sendPhoto('dc:1234567890123456', '/tmp/photo.png'),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  // --- sendWithButtons ---
+
+  describe('sendWithButtons', () => {
+    it('sends message with button components', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const mockChannel = {
+        send: vi.fn().mockResolvedValue({ id: 'msg_001' }),
+        sendTyping: vi.fn(),
+      };
+      currentClient().channels.fetch.mockResolvedValue(mockChannel);
+
+      const buttons = [
+        { label: 'Yes', data: 'confirm_yes' },
+        { label: 'No', data: 'confirm_no' },
+      ];
+      await channel.sendWithButtons('dc:1234567890123456', 'Confirm?', buttons);
+
+      expect(mockChannel.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: 'Confirm?',
+          components: expect.arrayContaining([
+            expect.objectContaining({
+              components: expect.arrayContaining([
+                expect.any(Object),
+                expect.any(Object),
+              ]),
+            }),
+          ]),
+        }),
+      );
+    });
+
+    it('splits buttons into rows based on rowSize', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const mockChannel = {
+        send: vi.fn().mockResolvedValue({ id: 'msg_001' }),
+        sendTyping: vi.fn(),
+      };
+      currentClient().channels.fetch.mockResolvedValue(mockChannel);
+
+      const buttons = [
+        { label: 'A', data: 'a' },
+        { label: 'B', data: 'b' },
+        { label: 'C', data: 'c' },
+      ];
+      await channel.sendWithButtons('dc:1234567890123456', 'Pick', buttons, 2);
+
+      const sentArg = mockChannel.send.mock.calls[0][0];
+      // Should have 2 rows: [A, B] and [C]
+      expect(sentArg.components).toHaveLength(2);
+      expect(sentArg.components[0].components).toHaveLength(2);
+      expect(sentArg.components[1].components).toHaveLength(1);
+    });
+
+    it('does nothing when client is not initialized', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.sendWithButtons('dc:1234567890123456', 'text', []);
+      // No error
+    });
+  });
+
+  // --- interactionCreate handler ---
+
+  describe('interactionCreate handler', () => {
+    it('registers interactionCreate handler on connect', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      expect(currentClient().eventHandlers.has('interactionCreate')).toBe(true);
+    });
+
+    it('routes button clicks as messages to onMessage', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const mockInteraction = {
+        isButton: () => true,
+        deferUpdate: vi.fn().mockResolvedValue(undefined),
+        channelId: '1234567890123456',
+        id: 'interaction_001',
+        customId: 'confirm_yes',
+        user: { id: 'user_123', username: 'alice' },
+        member: { displayName: 'Alice' },
+      };
+
+      const handlers = currentClient().eventHandlers.get('interactionCreate') || [];
+      for (const h of handlers) await h(mockInteraction);
+
+      expect(mockInteraction.deferUpdate).toHaveBeenCalled();
+      expect(opts.onMessage).toHaveBeenCalledWith(
+        'dc:1234567890123456',
+        expect.objectContaining({
+          id: 'interaction_001',
+          chat_jid: 'dc:1234567890123456',
+          sender: 'user_123',
+          sender_name: 'Alice',
+          content: '@Andy [button:confirm_yes]',
+          is_from_me: false,
+        }),
+      );
+    });
+
+    it('ignores non-button interactions', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const mockInteraction = {
+        isButton: () => false,
+      };
+
+      const handlers = currentClient().eventHandlers.get('interactionCreate') || [];
+      for (const h of handlers) await h(mockInteraction);
+
+      expect(opts.onMessage).not.toHaveBeenCalled();
+    });
+
+    it('falls back to username when no displayName on member', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const mockInteraction = {
+        isButton: () => true,
+        deferUpdate: vi.fn().mockResolvedValue(undefined),
+        channelId: '1234567890123456',
+        id: 'interaction_002',
+        customId: 'action_1',
+        user: { id: 'user_456', username: 'bob' },
+        member: null,
+      };
+
+      const handlers = currentClient().eventHandlers.get('interactionCreate') || [];
+      for (const h of handlers) await h(mockInteraction);
+
+      expect(opts.onMessage).toHaveBeenCalledWith(
+        'dc:1234567890123456',
+        expect.objectContaining({
+          sender_name: 'bob',
+        }),
+      );
     });
   });
 

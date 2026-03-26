@@ -1,10 +1,15 @@
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   Client,
   Events,
   GatewayIntentBits,
   Message,
   TextChannel,
 } from 'discord.js';
+
+import { chunkMessage } from '../discord-chunker.js';
 
 import { ASSISTANT_NAME, TRIGGER_PATTERN } from '../config.js';
 import { readEnvFile } from '../env.js';
@@ -184,6 +189,28 @@ export class DiscordChannel implements Channel {
       logger.info({ shardId, replayedEvents }, 'Discord shard resumed');
     });
 
+    // Handle button interactions — route back to agent as messages
+    this.client.on(Events.InteractionCreate, async (interaction) => {
+      if (!interaction.isButton()) return;
+      try {
+        await interaction.deferUpdate();
+      } catch (err) {
+        logger.debug({ err }, 'Failed to defer button interaction');
+      }
+      const chatJid = `dc:${interaction.channelId}`;
+      this.opts.onMessage(chatJid, {
+        id: interaction.id,
+        chat_jid: chatJid,
+        sender: interaction.user.id,
+        sender_name: interaction.member && 'displayName' in interaction.member
+          ? (interaction.member as any).displayName || interaction.user.username
+          : interaction.user.username,
+        content: `@${ASSISTANT_NAME} [button:${interaction.customId}]`,
+        timestamp: new Date().toISOString(),
+        is_from_me: false,
+      });
+    });
+
     // Handle errors gracefully
     this.client.on(Events.Error, (err) => {
       logger.error({ err: err.message }, 'Discord client error');
@@ -223,14 +250,10 @@ export class DiscordChannel implements Channel {
 
       const textChannel = channel as TextChannel;
 
-      // Discord has a 2000 character limit per message — split if needed
-      const MAX_LENGTH = 2000;
-      if (text.length <= MAX_LENGTH) {
-        await textChannel.send(text);
-      } else {
-        for (let i = 0; i < text.length; i += MAX_LENGTH) {
-          await textChannel.send(text.slice(i, i + MAX_LENGTH));
-        }
+      // Use markdown-aware chunking to split at natural boundaries
+      const chunks = chunkMessage(text);
+      for (const chunk of chunks) {
+        await textChannel.send(chunk);
       }
       logger.info({ jid, length: text.length }, 'Discord message sent');
     } catch (err) {
@@ -251,6 +274,83 @@ export class DiscordChannel implements Channel {
       this.client.destroy();
       this.client = null;
       logger.info('Discord bot stopped');
+    }
+  }
+
+  async editMessage(jid: string, messageId: string, text: string): Promise<void> {
+    if (!this.client) return;
+    try {
+      const channelId = jid.replace(/^dc:/, '');
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel || !('messages' in channel)) return;
+      const textChannel = channel as TextChannel;
+      const message = await textChannel.messages.fetch(messageId);
+      await message.edit(text);
+    } catch (err) {
+      logger.debug({ jid, messageId, err }, 'Failed to edit Discord message');
+    }
+  }
+
+  async sendMessageRaw(jid: string, text: string): Promise<{ message_id: string } | undefined> {
+    if (!this.client) return undefined;
+    try {
+      const channelId = jid.replace(/^dc:/, '');
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel || !('send' in channel)) return undefined;
+      const textChannel = channel as TextChannel;
+      const msg = await textChannel.send(text.slice(0, 2000));
+      return { message_id: msg.id };
+    } catch (err) {
+      logger.debug({ jid, err }, 'sendMessageRaw failed');
+      return undefined;
+    }
+  }
+
+  async sendPhoto(jid: string, photoPath: string, caption?: string): Promise<void> {
+    if (!this.client) return;
+    try {
+      const channelId = jid.replace(/^dc:/, '');
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel || !('send' in channel)) return;
+      const textChannel = channel as TextChannel;
+      await textChannel.send({
+        content: caption || undefined,
+        files: [photoPath],
+      });
+      logger.info({ jid, photoPath, hasCaption: !!caption }, 'Discord photo sent');
+    } catch (err) {
+      logger.error({ jid, photoPath, err }, 'Failed to send Discord photo');
+    }
+  }
+
+  async sendWithButtons(
+    jid: string,
+    text: string,
+    buttons: Array<{ label: string; data: string }>,
+    rowSize: number = 5,
+  ): Promise<void> {
+    if (!this.client) return;
+    try {
+      const channelId = jid.replace(/^dc:/, '');
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel || !('send' in channel)) return;
+      const textChannel = channel as TextChannel;
+      const rows: ActionRowBuilder<ButtonBuilder>[] = [];
+      for (let i = 0; i < buttons.length; i += rowSize) {
+        const row = new ActionRowBuilder<ButtonBuilder>();
+        row.addComponents(
+          buttons.slice(i, i + rowSize).map((b) =>
+            new ButtonBuilder()
+              .setCustomId(b.data.slice(0, 100))
+              .setLabel(b.label)
+              .setStyle(ButtonStyle.Primary)
+          ),
+        );
+        rows.push(row);
+      }
+      await textChannel.send({ content: text, components: rows });
+    } catch (err) {
+      logger.error({ jid, err }, 'Failed to send Discord message with buttons');
     }
   }
 
