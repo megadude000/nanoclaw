@@ -22,6 +22,7 @@ Clear separation of automated notifications and project workstreams into dedicat
 - Cortex/Obsidian knowledge base for agent context — existing
 - Discord bot foundation: connect, send/receive, channel registry — Validated in Phase 1
 - Discord inbound message handling: trigger detection, reply context with preview, attachment metadata — Validated in Phase 2
+- Discord outbound formatting: rich embeds, markdown-aware chunking, editMessage, sendWithButtons + callbacks, sendPhoto, cross-channel error feedback — Validated in Phase 3
 
 ### Active
 
@@ -116,4 +117,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after Phase 2 completion*
+*Last updated: 2026-03-26 after Phase 3 completion*
