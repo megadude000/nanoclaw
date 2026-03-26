@@ -106,7 +106,7 @@ Plans:
   5. Dual-send mode delivers the same notification to both Telegram and Discord simultaneously
 **Plans:** 2 plans
 Plans:
-- [ ] 06-01-PLAN.md — Routing abstraction layer (webhook-router.ts, Zod schema, resolveTargets, unit tests, routing.json config)
+- [x] 06-01-PLAN.md — Routing abstraction layer (webhook-router.ts, Zod schema, resolveTargets, unit tests, routing.json config)
 - [ ] 06-02-PLAN.md — Migrate webhook handlers (github-issues, github-ci, notion, progress tracker) to resolveTargets
 
 ### Phase 7: Swarm Bot Identity

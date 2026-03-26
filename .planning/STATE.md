@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-26T18:53:27.568Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-26T19:09:04.077Z"
 last_activity: 2026-03-26
 progress:
   total_phases: 8
   completed_phases: 5
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 11
+  completed_plans: 10
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Clear separation of automated notifications and project workstreams into dedicated Discord channels, keeping Telegram clean for personal conversation.
-**Current focus:** Phase 05 — server-structure-management
+**Current focus:** Phase 06 — webhook-routing-architecture
 
 ## Current Position
 
-Phase: 05 (server-structure-management) — EXECUTING
-Plan: 2 of 2
+Phase: 06 (webhook-routing-architecture) — DISCUSSING
+Plan: 0 of 0
 Status: Phase complete — ready for verification
 Last activity: 2026-03-26
 
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04 P02 | 3min | 2 tasks | 4 files |
 | Phase 05 P01 | 4min | 2 tasks | 4 files |
 | Phase 05 P02 | 4m | 1 tasks | 3 files |
+| Phase 06 P01 | 125s | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,7 @@ Recent decisions affecting current work:
 - [Phase 05]: ServerManagerDeps uses getGuild() accessor instead of raw Client for testability
 - [Phase 05]: Permission overwrites use PermissionsString record pattern matching discord.js edit() API
 - [Phase 05]: Used Array.from() for Collection/Map compatibility in bootstrap channel iteration
+- [Phase 06]: Read routing config fresh per-call with Zod validation and mainJid fallback
 
 ### Pending Todos
 
@@ -95,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T18:53:27.564Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-03-26T19:09:04.073Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None

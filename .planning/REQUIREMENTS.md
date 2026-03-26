@@ -47,12 +47,12 @@
 
 ### Webhook Routing
 
-- [ ] **ROUT-01**: Webhook routing abstraction layer replacing hardcoded `mainJid` in webhook handlers
+- [x] **ROUT-01**: Webhook routing abstraction layer replacing hardcoded `mainJid` in webhook handlers
 - [ ] **ROUT-02**: GitHub Issues webhook routable to Discord `#bugs` channel (`dc:{bugChannelId}`)
 - [ ] **ROUT-03**: Notion webhook routable to Discord `#yw-tasks` channel (`dc:{taskChannelId}`)
 - [ ] **ROUT-04**: Progress tracker output routable to Discord `#progress` channel
-- [ ] **ROUT-05**: Routing config supports targeting Telegram, Discord, or both per webhook
-- [ ] **ROUT-06**: Dual-send mode: same notification sent to both platforms during migration
+- [x] **ROUT-05**: Routing config supports targeting Telegram, Discord, or both per webhook
+- [x] **ROUT-06**: Dual-send mode: same notification sent to both platforms during migration
 
 ### Swarm Bot Identity
 
@@ -133,12 +133,12 @@
 | SRV-04 | Phase 5 | Complete |
 | SRV-05 | Phase 5 | Complete |
 | SRV-06 | Phase 5 | Complete |
-| ROUT-01 | Phase 6 | Pending |
+| ROUT-01 | Phase 6 | Complete |
 | ROUT-02 | Phase 6 | Pending |
 | ROUT-03 | Phase 6 | Pending |
 | ROUT-04 | Phase 6 | Pending |
-| ROUT-05 | Phase 6 | Pending |
-| ROUT-06 | Phase 6 | Pending |
+| ROUT-05 | Phase 6 | Complete |
+| ROUT-06 | Phase 6 | Complete |
 | SWRM-01 | Phase 7 | Pending |
 | SWRM-02 | Phase 7 | Pending |
 | SWRM-03 | Phase 7 | Pending |
