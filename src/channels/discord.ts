@@ -26,6 +26,7 @@ export interface DiscordChannelOpts {
   onMessage: OnInboundMessage;
   onChatMetadata: OnChatMetadata;
   registeredGroups: () => Record<string, RegisteredGroup>;
+  registerGroup?: (jid: string, group: RegisteredGroup) => void;
 }
 
 export class DiscordChannel implements Channel {

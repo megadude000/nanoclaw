@@ -1,0 +1,223 @@
+{
+  "main": {
+    "id": "88832eba4c955383",
+    "type": "split",
+    "children": [
+      {
+        "id": "cb0ce470daf2788e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "023f2a908a2bc88d",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Areas/Work/Projects/ContentFactory/ContentFactory.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "ContentFactory"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "d45185fe078fb820",
+    "type": "split",
+    "children": [
+      {
+        "id": "ad391c268fc6f0c8",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e5d655373809f588",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "92cb8d1db3b01d31",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "8614025d0159bbbc",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "07f320441d3f553b",
+    "type": "split",
+    "children": [
+      {
+        "id": "458230e583849f3f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "db24b956ffce1df5",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "CLAUDE.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for CLAUDE"
+            }
+          },
+          {
+            "id": "85245d71c4b12ef1",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "CLAUDE.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from CLAUDE"
+            }
+          },
+          {
+            "id": "f13da081d5d692d2",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "4fd2b6cb7dec5adb",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "60e9d5bf50871725",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "CLAUDE.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of CLAUDE"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "023f2a908a2bc88d",
+  "lastOpenFiles": [
+    "Areas/Work/Projects/MorningDigest/MorningDigest.md",
+    "Areas/Work/Session-Logs/2026-03-23-nightshift-planning-approval.md",
+    "Areas/Work/Session-Logs/2026-03-23-nightshift-v2-grants-platform.md",
+    "Areas/Work/Projects/YourWave/Research/instagram-strategy.md",
+    "Areas/Work/Projects/YourWave/Research/brand-moodboard.md",
+    "Areas/Work/Projects/NightShift/cron-registry.md",
+    "Areas/Work/Projects/NightShift/nightshift.architecture.md",
+    "Areas/Work/Session-Logs/2026-03-23-platform-discovery-cloudflare.md",
+    "Areas/Work/Projects/YourWave/yw.platform-discovery.md.tmp.58.1774266557634",
+    "Areas/Work/Projects/YourWave/yw.platform-discovery.md",
+    "Areas/Work/Projects/MorningDigest",
+    "Areas/Work/Session-Logs/2026-03-23-nightshift-execution.md",
+    "Calendar/Daily/2026-03-23.md",
+    "Areas/Work/Session-Logs/2026-03-22-nightshift-system.md",
+    "CLAUDE.md",
+    "Areas/Work/Projects/NightShift/NightShift.md",
+    "Areas/Work/Projects/NightShift",
+    "System/Templates/Project.md",
+    "Calendar/Daily/2026-03-17.md",
+    "Calendar/Daily/2026-03-18.md",
+    "Areas/Work/_Index.md",
+    "Areas/Work/Session-Logs/2026-03-20-yourwave-atlas-ci.md",
+    "Areas/Work/Session-Logs/2026-03-22-atlas-content-system.md",
+    "Areas/Work/Session-Logs/2026-03-16-21-14-nanoclaw-setup.md",
+    "Welcome.md",
+    "System/Templates/Daily-Note.md",
+    "Areas/Work/_Index.md.tmp.7010.1773676399719",
+    "System/Templates/Daily-Note.md.tmp.7010.1773676399279",
+    "System/Templates/Project.md.tmp.7010.1773676394667",
+    "System/Templates/Meeting-Note.md",
+    "System/Templates/Meeting-Note.md.tmp.7010.1773676393851",
+    "CLAUDE.md.tmp.7010.1773676390297",
+    "System/Templates",
+    "System/Dashboards"
+  ]
+}
