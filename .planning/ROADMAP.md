@@ -32,7 +32,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Bot reconnects automatically after a network interruption without manual intervention
   3. Bot disconnects cleanly when NanoClaw is stopped (no orphaned gateway sessions)
   4. Discord channel appears in NanoClaw's registered channel list at startup
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 01-01-PLAN.md — Merge nanoclaw-discord remote, resolve conflicts, verify build and tests
+- [ ] 01-02-PLAN.md — Add shard lifecycle logging for CHAN-03, configure bot token
 
 ### Phase 2: Inbound Message Handling
 **Goal**: Users can write messages in Discord channels and have them processed by the NanoClaw agent
@@ -124,7 +127,7 @@ Note: Phase 4 and Phase 5 can execute in parallel (both depend on earlier phases
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Discord Channel Foundation | 0/0 | Not started | - |
+| 1. Discord Channel Foundation | 0/2 | Planning complete | - |
 | 2. Inbound Message Handling | 0/0 | Not started | - |
 | 3. Outbound Formatting | 0/0 | Not started | - |
 | 4. Group Registration | 0/0 | Not started | - |
