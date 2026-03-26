@@ -730,6 +730,11 @@ describe('DiscordChannel', () => {
     });
   });
 
+  // IN-05 coverage note: Trigger pattern logic (main group skips trigger,
+  // non-main requires TRIGGER_PATTERN match) is implemented in index.ts
+  // startMessageLoop() and is channel-agnostic. No Discord-specific code
+  // or test needed. See index.ts lines ~432-447.
+
   // --- sendMessage ---
 
   describe('sendMessage', () => {
