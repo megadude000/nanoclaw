@@ -108,56 +108,56 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CHAN-01 | TBD | Pending |
-| CHAN-02 | TBD | Pending |
-| CHAN-03 | TBD | Pending |
-| CHAN-04 | TBD | Pending |
-| IN-01 | TBD | Pending |
-| IN-02 | TBD | Pending |
-| IN-03 | TBD | Pending |
-| IN-04 | TBD | Pending |
-| IN-05 | TBD | Pending |
-| OUT-01 | TBD | Pending |
-| OUT-02 | TBD | Pending |
-| OUT-03 | TBD | Pending |
-| OUT-04 | TBD | Pending |
-| OUT-05 | TBD | Pending |
-| OUT-06 | TBD | Pending |
-| GRP-01 | TBD | Pending |
-| GRP-02 | TBD | Pending |
-| GRP-03 | TBD | Pending |
-| GRP-04 | TBD | Pending |
-| SRV-01 | TBD | Pending |
-| SRV-02 | TBD | Pending |
-| SRV-03 | TBD | Pending |
-| SRV-04 | TBD | Pending |
-| SRV-05 | TBD | Pending |
-| SRV-06 | TBD | Pending |
-| ROUT-01 | TBD | Pending |
-| ROUT-02 | TBD | Pending |
-| ROUT-03 | TBD | Pending |
-| ROUT-04 | TBD | Pending |
-| ROUT-05 | TBD | Pending |
-| ROUT-06 | TBD | Pending |
-| SWRM-01 | TBD | Pending |
-| SWRM-02 | TBD | Pending |
-| SWRM-03 | TBD | Pending |
-| SWRM-04 | TBD | Pending |
-| CTX-01 | TBD | Pending |
-| CTX-02 | TBD | Pending |
-| CTX-03 | TBD | Pending |
-| CTX-04 | TBD | Pending |
-| CTX-05 | TBD | Pending |
-| MIG-01 | TBD | Pending |
-| MIG-02 | TBD | Pending |
-| MIG-03 | TBD | Pending |
-| MIG-04 | TBD | Pending |
+| CHAN-01 | Phase 1 | Pending |
+| CHAN-02 | Phase 1 | Pending |
+| CHAN-03 | Phase 1 | Pending |
+| CHAN-04 | Phase 1 | Pending |
+| IN-01 | Phase 2 | Pending |
+| IN-02 | Phase 2 | Pending |
+| IN-03 | Phase 2 | Pending |
+| IN-04 | Phase 2 | Pending |
+| IN-05 | Phase 2 | Pending |
+| OUT-01 | Phase 3 | Pending |
+| OUT-02 | Phase 3 | Pending |
+| OUT-03 | Phase 3 | Pending |
+| OUT-04 | Phase 3 | Pending |
+| OUT-05 | Phase 3 | Pending |
+| OUT-06 | Phase 3 | Pending |
+| GRP-01 | Phase 4 | Pending |
+| GRP-02 | Phase 4 | Pending |
+| GRP-03 | Phase 4 | Pending |
+| GRP-04 | Phase 4 | Pending |
+| SRV-01 | Phase 5 | Pending |
+| SRV-02 | Phase 5 | Pending |
+| SRV-03 | Phase 5 | Pending |
+| SRV-04 | Phase 5 | Pending |
+| SRV-05 | Phase 5 | Pending |
+| SRV-06 | Phase 5 | Pending |
+| ROUT-01 | Phase 6 | Pending |
+| ROUT-02 | Phase 6 | Pending |
+| ROUT-03 | Phase 6 | Pending |
+| ROUT-04 | Phase 6 | Pending |
+| ROUT-05 | Phase 6 | Pending |
+| ROUT-06 | Phase 6 | Pending |
+| SWRM-01 | Phase 7 | Pending |
+| SWRM-02 | Phase 7 | Pending |
+| SWRM-03 | Phase 7 | Pending |
+| SWRM-04 | Phase 7 | Pending |
+| CTX-01 | Phase 8 | Pending |
+| CTX-02 | Phase 8 | Pending |
+| CTX-03 | Phase 8 | Pending |
+| CTX-04 | Phase 8 | Pending |
+| CTX-05 | Phase 8 | Pending |
+| MIG-01 | Phase 8 | Pending |
+| MIG-02 | Phase 8 | Pending |
+| MIG-03 | Phase 8 | Pending |
+| MIG-04 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 43 total
-- Mapped to phases: 0
-- Unmapped: 43 (awaiting roadmap)
+- Mapped to phases: 43
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-26*
-*Last updated: 2026-03-26 after initial definition*
+*Last updated: 2026-03-26 after roadmap creation*
