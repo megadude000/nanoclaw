@@ -31,8 +31,8 @@
 
 ### Group Registration
 
-- [ ] **GRP-01**: Discord channels registered as NanoClaw groups with JID format `dc:{channelId}`
-- [ ] **GRP-02**: Each registered Discord channel has its own isolated `groups/{folder}/` workspace
+- [x] **GRP-01**: Discord channels registered as NanoClaw groups with JID format `dc:{channelId}`
+- [x] **GRP-02**: Each registered Discord channel has its own isolated `groups/{folder}/` workspace
 - [ ] **GRP-03**: Main Discord channel can send to all other groups via IPC
 - [ ] **GRP-04**: Non-main Discord channels restricted to own JID per IPC authorization
 
@@ -123,8 +123,8 @@
 | OUT-04 | Phase 3 | Complete |
 | OUT-05 | Phase 3 | Complete |
 | OUT-06 | Phase 3 | Complete |
-| GRP-01 | Phase 4 | Pending |
-| GRP-02 | Phase 4 | Pending |
+| GRP-01 | Phase 4 | Complete |
+| GRP-02 | Phase 4 | Complete |
 | GRP-03 | Phase 4 | Pending |
 | GRP-04 | Phase 4 | Pending |
 | SRV-01 | Phase 5 | Pending |
