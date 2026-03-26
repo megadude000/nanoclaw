@@ -60,7 +60,10 @@ Plans:
   3. Progress tracker updates appear as edits to the same message (not new messages)
   4. Bot shows typing indicator while processing a user request
   5. Bot sends messages with clickable inline buttons
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 03-01-PLAN.md — Channel interface contracts, markdown-aware chunker, embed builder helpers
+- [ ] 03-02-PLAN.md — Discord outbound methods (editMessage, sendMessageRaw, sendPhoto, sendWithButtons, interactionCreate) + router error feedback
 
 ### Phase 4: Group Registration
 **Goal**: Each Discord channel operates as an isolated NanoClaw group with its own workspace and IPC authorization
@@ -131,7 +134,7 @@ Note: Phase 4 and Phase 5 can execute in parallel (both depend on earlier phases
 |-------|----------------|--------|-----------|
 | 1. Discord Channel Foundation | 0/2 | Planning complete | - |
 | 2. Inbound Message Handling | 0/1 | Planning complete | - |
-| 3. Outbound Formatting | 0/0 | Not started | - |
+| 3. Outbound Formatting | 0/2 | Planning complete | - |
 | 4. Group Registration | 0/0 | Not started | - |
 | 5. Server Structure Management | 0/0 | Not started | - |
 | 6. Webhook Routing Architecture | 0/0 | Not started | - |
