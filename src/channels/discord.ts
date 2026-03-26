@@ -125,7 +125,12 @@ export class DiscordChannel implements Channel {
             repliedTo.member?.displayName ||
             repliedTo.author.displayName ||
             repliedTo.author.username;
-          content = `[Reply to ${replyAuthor}] ${content}`;
+          const preview = repliedTo.content
+            ? repliedTo.content.slice(0, 100) +
+              (repliedTo.content.length > 100 ? '...' : '')
+            : '';
+          const previewPart = preview ? `: "${preview}"` : '';
+          content = `[Reply to ${replyAuthor}${previewPart}] ${content}`;
         } catch {
           // Referenced message may have been deleted
         }
