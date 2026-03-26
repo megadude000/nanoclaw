@@ -67,6 +67,7 @@ import { startSchedulerLoop } from './task-scheduler.js';
 import { Channel, NewMessage, RegisteredGroup } from './types.js';
 import { logger } from './logger.js';
 import { ProgressTracker } from './progress-tracker.js';
+import { resolveTargets } from './webhook-router.js';
 
 // Re-export for backwards compatibility during refactor
 export { escapeXml, formatMessages } from './router.js';
@@ -667,15 +668,12 @@ async function main(): Promise<void> {
     const notifyPath = path.join(DATA_DIR, 'restart_notify.json');
     if (fs.existsSync(notifyPath)) {
       fs.unlinkSync(notifyPath);
-      // Find the main group JID and notify it
-      const mainEntry = Object.entries(registeredGroups).find(
-        ([, g]) => g.isMain,
-      );
-      if (mainEntry) {
-        const [mainJid] = mainEntry;
-        const channel = findChannel(channels, mainJid);
+      // Notify all startup targets via routing config
+      const startupTargets = resolveTargets('startup', registeredGroups);
+      for (const target of startupTargets) {
+        const channel = findChannel(channels, target.jid);
         if (channel) {
-          await channel.sendMessage(mainJid, '✅ Готовий!');
+          await channel.sendMessage(target.jid, '✅ Готовий!');
         }
       }
     }
