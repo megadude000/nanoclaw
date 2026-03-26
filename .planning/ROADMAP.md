@@ -63,7 +63,7 @@ Plans:
 **Plans:** 2 plans
 Plans:
 - [x] 03-01-PLAN.md — Channel interface contracts, markdown-aware chunker, embed builder helpers
-- [ ] 03-02-PLAN.md — Discord outbound methods (editMessage, sendMessageRaw, sendPhoto, sendWithButtons, interactionCreate) + router error feedback
+- [x] 03-02-PLAN.md — Discord outbound methods (editMessage, sendMessageRaw, sendPhoto, sendWithButtons, interactionCreate) + router error feedback
 
 ### Phase 4: Group Registration
 **Goal**: Each Discord channel operates as an isolated NanoClaw group with its own workspace and IPC authorization
