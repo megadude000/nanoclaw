@@ -43,7 +43,7 @@
 - [x] **SRV-03**: Bot can delete and rename channels
 - [x] **SRV-04**: Bot can set per-channel permissions
 - [x] **SRV-05**: Server management exposed via IPC `discord_manage` message type (main group only)
-- [ ] **SRV-06**: Bootstrap script creates initial server structure (categories + channels from config)
+- [x] **SRV-06**: Bootstrap script creates initial server structure (categories + channels from config)
 
 ### Webhook Routing
 
@@ -132,7 +132,7 @@
 | SRV-03 | Phase 5 | Complete |
 | SRV-04 | Phase 5 | Complete |
 | SRV-05 | Phase 5 | Complete |
-| SRV-06 | Phase 5 | Pending |
+| SRV-06 | Phase 5 | Complete |
 | ROUT-01 | Phase 6 | Pending |
 | ROUT-02 | Phase 6 | Pending |
 | ROUT-03 | Phase 6 | Pending |

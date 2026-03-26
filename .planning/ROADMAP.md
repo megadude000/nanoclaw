@@ -92,7 +92,7 @@ Plans:
 **Plans:** 1/2 plans executed
 Plans:
 - [x] 05-01-PLAN.md — DiscordServerManager CRUD operations + IPC discord_manage wiring
-- [ ] 05-02-PLAN.md — Bootstrap config and idempotent server structure creation
+- [x] 05-02-PLAN.md — Bootstrap config and idempotent server structure creation
 
 ### Phase 6: Webhook Routing Architecture
 **Goal**: Automated notifications (GitHub Issues, Notion, progress tracker) route to specific Discord channels instead of only Telegram
