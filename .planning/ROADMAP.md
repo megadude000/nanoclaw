@@ -104,7 +104,10 @@ Plans:
   3. Progress tracker output appears in the Discord #progress channel with live editing
   4. Routing config file determines which platform(s) receive each webhook type
   5. Dual-send mode delivers the same notification to both Telegram and Discord simultaneously
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 06-01-PLAN.md — Routing abstraction layer (webhook-router.ts, Zod schema, resolveTargets, unit tests, routing.json config)
+- [ ] 06-02-PLAN.md — Migrate webhook handlers (github-issues, github-ci, notion, progress tracker) to resolveTargets
 
 ### Phase 7: Swarm Bot Identity
 **Goal**: Friday and Alfred post in Discord with their own distinct identities (names and avatars), not as the main bot
@@ -141,8 +144,8 @@ Note: Phase 4 and Phase 5 can execute in parallel (both depend on earlier phases
 | 1. Discord Channel Foundation | 0/2 | Planning complete | - |
 | 2. Inbound Message Handling | 0/1 | Planning complete | - |
 | 3. Outbound Formatting | 0/2 | Planning complete | - |
-| 4. Group Registration | 1/2 | In Progress|  |
-| 5. Server Structure Management | 1/2 | In Progress|  |
-| 6. Webhook Routing Architecture | 0/0 | Not started | - |
+| 4. Group Registration | 2/2 | Complete | 2026-03-26 |
+| 5. Server Structure Management | 2/2 | Complete | 2026-03-26 |
+| 6. Webhook Routing Architecture | 0/2 | Planning complete | - |
 | 7. Swarm Bot Identity | 0/0 | Not started | - |
 | 8. Per-Channel Context and Migration | 0/0 | Not started | - |
