@@ -630,6 +630,104 @@ describe('DiscordChannel', () => {
         }),
       );
     });
+
+    it('includes reply message preview in content', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const msg = createMessage({
+        content: 'I agree',
+        reference: { messageId: 'orig_id' },
+        guildName: 'Server',
+      });
+      msg.channel.messages.fetch = vi.fn().mockResolvedValue({
+        author: { username: 'Bob', displayName: 'Bob' },
+        member: { displayName: 'Bob' },
+        content: 'The original message text here',
+      });
+      await triggerMessage(msg);
+
+      expect(opts.onMessage).toHaveBeenCalledWith(
+        'dc:1234567890123456',
+        expect.objectContaining({
+          content: '[Reply to Bob: "The original message text here"] I agree',
+        }),
+      );
+    });
+
+    it('truncates long reply preview at 100 chars', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const msg = createMessage({
+        content: 'I agree',
+        reference: { messageId: 'orig_id' },
+        guildName: 'Server',
+      });
+      msg.channel.messages.fetch = vi.fn().mockResolvedValue({
+        author: { username: 'Bob', displayName: 'Bob' },
+        member: { displayName: 'Bob' },
+        content: 'x'.repeat(150),
+      });
+      await triggerMessage(msg);
+
+      expect(opts.onMessage).toHaveBeenCalledWith(
+        'dc:1234567890123456',
+        expect.objectContaining({
+          content: '[Reply to Bob: "' + 'x'.repeat(100) + '..."] I agree',
+        }),
+      );
+    });
+
+    it('handles reply to message with no text content', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const msg = createMessage({
+        content: 'I agree',
+        reference: { messageId: 'orig_id' },
+        guildName: 'Server',
+      });
+      msg.channel.messages.fetch = vi.fn().mockResolvedValue({
+        author: { username: 'Bob', displayName: 'Bob' },
+        member: { displayName: 'Bob' },
+        content: '',
+      });
+      await triggerMessage(msg);
+
+      expect(opts.onMessage).toHaveBeenCalledWith(
+        'dc:1234567890123456',
+        expect.objectContaining({
+          content: '[Reply to Bob] I agree',
+        }),
+      );
+    });
+
+    it('handles deleted referenced message gracefully', async () => {
+      const opts = createTestOpts();
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const msg = createMessage({
+        content: 'I agree',
+        reference: { messageId: 'orig_id' },
+        guildName: 'Server',
+      });
+      msg.channel.messages.fetch = vi.fn().mockRejectedValue(
+        new Error('Unknown Message'),
+      );
+      await triggerMessage(msg);
+
+      expect(opts.onMessage).toHaveBeenCalledWith(
+        'dc:1234567890123456',
+        expect.objectContaining({
+          content: 'I agree',
+        }),
+      );
+    });
   });
 
   // --- sendMessage ---
