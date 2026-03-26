@@ -34,8 +34,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Discord channel appears in NanoClaw's registered channel list at startup
 **Plans:** 2 plans
 Plans:
-- [ ] 01-01-PLAN.md — Merge nanoclaw-discord remote, resolve conflicts, verify build and tests
-- [ ] 01-02-PLAN.md — Add shard lifecycle logging for CHAN-03, configure bot token
+- [x] 01-01-PLAN.md — Merge nanoclaw-discord remote, resolve conflicts, verify build and tests
+- [x] 01-02-PLAN.md — Add shard lifecycle logging for CHAN-03, configure bot token
 
 ### Phase 2: Inbound Message Handling
 **Goal**: Users can write messages in Discord channels and have them processed by the NanoClaw agent
