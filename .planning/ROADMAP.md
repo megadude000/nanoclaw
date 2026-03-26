@@ -62,7 +62,7 @@ Plans:
   5. Bot sends messages with clickable inline buttons
 **Plans:** 2 plans
 Plans:
-- [ ] 03-01-PLAN.md — Channel interface contracts, markdown-aware chunker, embed builder helpers
+- [x] 03-01-PLAN.md — Channel interface contracts, markdown-aware chunker, embed builder helpers
 - [ ] 03-02-PLAN.md — Discord outbound methods (editMessage, sendMessageRaw, sendPhoto, sendWithButtons, interactionCreate) + router error feedback
 
 ### Phase 4: Group Registration

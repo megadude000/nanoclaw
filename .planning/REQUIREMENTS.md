@@ -22,9 +22,9 @@
 
 ### Outbound Messages
 
-- [ ] **OUT-01**: Bot sends text messages to Discord channels via `sendMessage(jid, text)`
-- [ ] **OUT-02**: Bot splits messages exceeding 2000-char Discord limit into multiple messages
-- [ ] **OUT-03**: Bot sends rich embeds for structured notifications (bug reports, task updates)
+- [x] **OUT-01**: Bot sends text messages to Discord channels via `sendMessage(jid, text)`
+- [x] **OUT-02**: Bot splits messages exceeding 2000-char Discord limit into multiple messages
+- [x] **OUT-03**: Bot sends rich embeds for structured notifications (bug reports, task updates)
 - [ ] **OUT-04**: Bot edits own messages via `editMessage` for progress tracker updates
 - [ ] **OUT-05**: Bot shows typing indicator while agent processes
 - [ ] **OUT-06**: Bot sends messages with inline keyboard buttons via `sendWithButtons`
@@ -117,9 +117,9 @@
 | IN-03 | Phase 2 | Complete |
 | IN-04 | Phase 2 | Complete |
 | IN-05 | Phase 2 | Complete |
-| OUT-01 | Phase 3 | Pending |
-| OUT-02 | Phase 3 | Pending |
-| OUT-03 | Phase 3 | Pending |
+| OUT-01 | Phase 3 | Complete |
+| OUT-02 | Phase 3 | Complete |
+| OUT-03 | Phase 3 | Complete |
 | OUT-04 | Phase 3 | Pending |
 | OUT-05 | Phase 3 | Pending |
 | OUT-06 | Phase 3 | Pending |
