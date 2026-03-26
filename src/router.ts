@@ -34,14 +34,38 @@ export function formatOutbound(rawText: string): string {
   return text;
 }
 
-export function routeOutbound(
+export async function routeOutbound(
   channels: Channel[],
   jid: string,
   text: string,
+  originJid?: string,
 ): Promise<void> {
   const channel = channels.find((c) => c.ownsJid(jid) && c.isConnected());
-  if (!channel) throw new Error(`No channel for JID: ${jid}`);
-  return channel.sendMessage(jid, text);
+  if (!channel) {
+    // If we know where the request came from, notify that channel about the failure
+    if (originJid && originJid !== jid) {
+      const originChannel = channels.find((c) => c.ownsJid(originJid) && c.isConnected());
+      if (originChannel) {
+        await originChannel.sendMessage(originJid, `[Error] Failed to deliver message to ${jid}: no connected channel found`);
+      }
+    }
+    throw new Error(`No channel for JID: ${jid}`);
+  }
+  try {
+    await channel.sendMessage(jid, text);
+  } catch (err) {
+    if (originJid && originJid !== jid) {
+      const originChannel = channels.find((c) => c.ownsJid(originJid) && c.isConnected());
+      if (originChannel) {
+        try {
+          await originChannel.sendMessage(originJid, `[Error] Failed to send message to ${jid}: ${err instanceof Error ? err.message : 'unknown error'}`);
+        } catch {
+          // Avoid infinite error loops
+        }
+      }
+    }
+    throw err;
+  }
 }
 
 export function findChannel(
