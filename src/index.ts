@@ -720,7 +720,7 @@ async function main(): Promise<void> {
       if (channel?.sendWithButtons)
         await channel.sendWithButtons(jid, text, buttons, rowSize);
     },
-    sendPhoto: async (jid, photoPath, caption) => {
+    sendPhoto: async (jid: string, photoPath: string, caption?: string) => {
       const channel = findChannel(channels, jid);
       if (channel?.sendPhoto) await channel.sendPhoto(jid, photoPath, caption);
     },

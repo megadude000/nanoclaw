@@ -90,6 +90,12 @@ export interface Channel {
   setTyping?(jid: string, isTyping: boolean): Promise<void>;
   // Optional: sync group/chat names from the platform.
   syncGroups?(force: boolean): Promise<void>;
+  // Optional: send a photo/image with caption.
+  sendPhoto?(jid: string, photoPath: string, caption?: string): Promise<void>;
+  // Optional: react to a message with an emoji.
+  reactToMessage?(jid: string, messageId: string, emoji: string): Promise<void>;
+  // Optional: send a message with inline buttons.
+  sendWithButtons?(jid: string, text: string, buttons: any[], rowSize?: number): Promise<void>;
 }
 
 // Callback type that channels use to deliver inbound messages

@@ -23,6 +23,9 @@ export interface IpcDeps {
     registeredJids: Set<string>,
   ) => void;
   onTasksChanged: () => void;
+  reactToMessage?: (jid: string, messageId: string, emoji: string) => Promise<void>;
+  sendWithButtons?: (jid: string, text: string, buttons: any[], rowSize?: number) => Promise<void>;
+  sendPhoto?: (jid: string, photoPath: string, caption?: string) => Promise<void>;
 }
 
 let ipcWatcherRunning = false;
