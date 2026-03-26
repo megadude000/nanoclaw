@@ -89,7 +89,10 @@ Plans:
   3. Agent can rename or delete a Discord channel via IPC command
   4. Agent can set per-channel permissions (e.g., restrict a channel to bot-only posting)
   5. Server management IPC commands are restricted to the main group only
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 05-01-PLAN.md — DiscordServerManager CRUD operations + IPC discord_manage wiring
+- [ ] 05-02-PLAN.md — Bootstrap config and idempotent server structure creation
 
 ### Phase 6: Webhook Routing Architecture
 **Goal**: Automated notifications (GitHub Issues, Notion, progress tracker) route to specific Discord channels instead of only Telegram
@@ -139,7 +142,7 @@ Note: Phase 4 and Phase 5 can execute in parallel (both depend on earlier phases
 | 2. Inbound Message Handling | 0/1 | Planning complete | - |
 | 3. Outbound Formatting | 0/2 | Planning complete | - |
 | 4. Group Registration | 1/2 | In Progress|  |
-| 5. Server Structure Management | 0/0 | Not started | - |
+| 5. Server Structure Management | 0/2 | Planning complete | - |
 | 6. Webhook Routing Architecture | 0/0 | Not started | - |
 | 7. Swarm Bot Identity | 0/0 | Not started | - |
 | 8. Per-Channel Context and Migration | 0/0 | Not started | - |
