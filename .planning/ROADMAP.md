@@ -118,7 +118,10 @@ Plans:
   2. When Alfred generates output, it appears under "Alfred" with a different custom avatar
   3. Swarm identity webhooks are created automatically when a Discord channel is registered
   4. If a swarm webhook is unavailable, the message still posts via the main bot as fallback
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 07-01-PLAN.md — SwarmWebhookManager class, config, and unit tests
+- [ ] 07-02-PLAN.md — Thread sender through IPC and wire swarm routing into DiscordChannel
 
 ### Phase 8: Per-Channel Context and Migration
 **Goal**: Each Discord channel has themed AI behavior via channel-specific CLAUDE.md, and notifications migrate gradually from Telegram to Discord
@@ -146,6 +149,6 @@ Note: Phase 4 and Phase 5 can execute in parallel (both depend on earlier phases
 | 3. Outbound Formatting | 0/2 | Planning complete | - |
 | 4. Group Registration | 2/2 | Complete | 2026-03-26 |
 | 5. Server Structure Management | 2/2 | Complete | 2026-03-26 |
-| 6. Webhook Routing Architecture | 0/2 | Planning complete | - |
-| 7. Swarm Bot Identity | 0/0 | Not started | - |
+| 6. Webhook Routing Architecture | 2/2 | Complete | 2026-03-26 |
+| 7. Swarm Bot Identity | 0/2 | Planning complete | - |
 | 8. Per-Channel Context and Migration | 0/0 | Not started | - |
