@@ -23,11 +23,11 @@ Clear separation of automated notifications and project workstreams into dedicat
 - Discord bot foundation: connect, send/receive, channel registry — Validated in Phase 1
 - Discord inbound message handling: trigger detection, reply context with preview, attachment metadata — Validated in Phase 2
 - Discord outbound formatting: rich embeds, markdown-aware chunking, editMessage, sendWithButtons + callbacks, sendPhoto, cross-channel error feedback — Validated in Phase 3
+- Discord group registration: auto-registration on first message, human-readable folder naming, DISCORD_MAIN_CHANNEL_ID env var, IPC authorization for Discord JIDs — Validated in Phase 4
 
 ### Active
 
 - [ ] Discord bot with full server admin capabilities (create/delete channels, categories, permissions)
-- [ ] Discord channel registration as NanoClaw groups with per-channel CLAUDE.md
 - [ ] Contextual agent responses — agent responds in-theme per channel using Cortex knowledge
 - [ ] GitHub Issues webhook routable to Discord `#bugs` channel
 - [ ] Notion webhook routable to Discord `#yw-tasks` channel
@@ -117,4 +117,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after Phase 3 completion*
+*Last updated: 2026-03-26 after Phase 4 completion*
