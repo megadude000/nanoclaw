@@ -11,13 +11,13 @@ describe('chunkMessage', () => {
   });
 
   it('splits text with code fences at fence boundary', () => {
-    const code = 'x'.repeat(100);
-    const text = `Before\n\n\`\`\`typescript\n${code}\n\`\`\`\n\nAfter the code block with more text`;
+    const code = 'x'.repeat(300);
+    const text = `Before paragraph\n\n\`\`\`typescript\n${code}\n\`\`\`\n\nAfter the code block with more text here`;
     // Use a small maxLength to force a split
-    const chunks = chunkMessage(text, 180);
+    const chunks = chunkMessage(text, 200);
     expect(chunks.length).toBeGreaterThanOrEqual(2);
     for (const chunk of chunks) {
-      expect(chunk.length).toBeLessThanOrEqual(180);
+      expect(chunk.length).toBeLessThanOrEqual(200);
     }
     // Reassembling chunks should preserve all content logically
     // Code fences should be properly closed and reopened
