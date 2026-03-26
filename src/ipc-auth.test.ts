@@ -677,3 +677,56 @@ describe('register_group success', () => {
     expect(getRegisteredGroup('partial@g.us')).toBeUndefined();
   });
 });
+
+// --- Discord JID IPC authorization ---
+
+describe('Discord JID IPC authorization', () => {
+  const DC_MAIN_GROUP: RegisteredGroup = {
+    name: 'Discord Main',
+    folder: 'dc-main',
+    trigger: '@Andy',
+    added_at: '2024-01-01T00:00:00.000Z',
+    isMain: true,
+  };
+  const DC_OTHER_GROUP: RegisteredGroup = {
+    name: 'Discord Bugs',
+    folder: 'dc-bugs',
+    trigger: '@Andy',
+    added_at: '2024-01-01T00:00:00.000Z',
+  };
+
+  // Replicate the exact check from the IPC watcher
+  function isMessageAuthorized(
+    sourceGroup: string,
+    isMain: boolean,
+    targetChatJid: string,
+    registeredGroups: Record<string, RegisteredGroup>,
+  ): boolean {
+    const targetGroup = registeredGroups[targetChatJid];
+    return isMain || (!!targetGroup && targetGroup.folder === sourceGroup);
+  }
+
+  it('Discord main group (dc: JID) can send to other groups', () => {
+    const dcGroups: Record<string, RegisteredGroup> = {
+      'dc:111': DC_MAIN_GROUP,
+      'dc:222': DC_OTHER_GROUP,
+    };
+    expect(isMessageAuthorized('dc-main', true, 'dc:222', dcGroups)).toBe(true);
+  });
+
+  it('Discord non-main group cannot send to other groups', () => {
+    const dcGroups: Record<string, RegisteredGroup> = {
+      'dc:111': DC_MAIN_GROUP,
+      'dc:222': DC_OTHER_GROUP,
+    };
+    expect(isMessageAuthorized('dc-bugs', false, 'dc:111', dcGroups)).toBe(false);
+  });
+
+  it('Discord non-main group can send to own JID', () => {
+    const dcGroups: Record<string, RegisteredGroup> = {
+      'dc:111': DC_MAIN_GROUP,
+      'dc:222': DC_OTHER_GROUP,
+    };
+    expect(isMessageAuthorized('dc-bugs', false, 'dc:222', dcGroups)).toBe(true);
+  });
+});

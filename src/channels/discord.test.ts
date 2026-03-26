@@ -12,6 +12,26 @@ vi.mock('../env.js', () => ({ readEnvFile: vi.fn(() => ({})) }));
 vi.mock('../config.js', () => ({
   ASSISTANT_NAME: 'Andy',
   TRIGGER_PATTERN: /^@Andy\b/i,
+  GROUPS_DIR: '/tmp/test-groups',
+}));
+
+// Mock discord-group-utils
+vi.mock('../discord-group-utils.js', () => ({
+  sanitizeWithCollisionCheck: vi.fn(
+    (name: string, _id: string, _existing: Set<string>) => `dc-${name}`
+  ),
+  createGroupStub: vi.fn(
+    (name: string, isMain: boolean) =>
+      `# ${name}\n\nDiscord channel group.${isMain ? ' This is the main channel.' : ''}\n`
+  ),
+}));
+
+// Mock fs
+vi.mock('fs', () => ({
+  default: { existsSync: vi.fn(() => false), writeFileSync: vi.fn(), mkdirSync: vi.fn() },
+  existsSync: vi.fn(() => false),
+  writeFileSync: vi.fn(),
+  mkdirSync: vi.fn(),
 }));
 
 // Mock logger
@@ -146,6 +166,7 @@ function createTestOpts(
         added_at: '2024-01-01T00:00:00.000Z',
       },
     })),
+    registerGroup: vi.fn(),
     ...overrides,
   };
 }
@@ -1283,6 +1304,120 @@ describe('DiscordChannel', () => {
       expect(logger.info).toHaveBeenCalledWith(
         expect.objectContaining({ shardId: 0, replayedEvents: 5 }),
         expect.stringContaining('resumed'),
+      );
+    });
+  });
+
+  // --- Discord auto-registration ---
+
+  describe('Discord auto-registration', () => {
+    const UNREGISTERED_CHANNEL_ID = '9999888877776666';
+
+    it('auto-registers channel on first message when not in registeredGroups', async () => {
+      const opts = createTestOpts({
+        registeredGroups: vi.fn(() => ({})),
+      });
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const msg = createMessage({
+        channelId: UNREGISTERED_CHANNEL_ID,
+        content: 'hello',
+        guildName: 'TestServer',
+        channelName: 'bugs',
+      });
+      await triggerMessage(msg);
+
+      expect(opts.registerGroup).toHaveBeenCalledWith(
+        `dc:${UNREGISTERED_CHANNEL_ID}`,
+        expect.objectContaining({
+          name: 'TestServer #bugs',
+          folder: 'dc-bugs',
+          trigger: '@Andy',
+          requiresTrigger: true,
+        }),
+      );
+    });
+
+    it('sets isMain=true when channelId matches DISCORD_MAIN_CHANNEL_ID', async () => {
+      const originalEnv = process.env.DISCORD_MAIN_CHANNEL_ID;
+      process.env.DISCORD_MAIN_CHANNEL_ID = UNREGISTERED_CHANNEL_ID;
+
+      try {
+        const opts = createTestOpts({
+          registeredGroups: vi.fn(() => ({})),
+        });
+        const channel = new DiscordChannel('test-token', opts);
+        await channel.connect();
+
+        const msg = createMessage({
+          channelId: UNREGISTERED_CHANNEL_ID,
+          content: 'hello',
+          guildName: 'TestServer',
+          channelName: 'general',
+        });
+        await triggerMessage(msg);
+
+        expect(opts.registerGroup).toHaveBeenCalledWith(
+          `dc:${UNREGISTERED_CHANNEL_ID}`,
+          expect.objectContaining({
+            isMain: true,
+            requiresTrigger: false,
+          }),
+        );
+      } finally {
+        if (originalEnv === undefined) {
+          delete process.env.DISCORD_MAIN_CHANNEL_ID;
+        } else {
+          process.env.DISCORD_MAIN_CHANNEL_ID = originalEnv;
+        }
+      }
+    });
+
+    it('does not re-register already registered channel', async () => {
+      const opts = createTestOpts({
+        registeredGroups: vi.fn(() => ({
+          [`dc:${UNREGISTERED_CHANNEL_ID}`]: {
+            name: 'Already Registered',
+            folder: 'dc-already',
+            trigger: '@Andy',
+            added_at: '2024-01-01T00:00:00.000Z',
+          },
+        })),
+      });
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const msg = createMessage({
+        channelId: UNREGISTERED_CHANNEL_ID,
+        content: 'hello',
+        guildName: 'TestServer',
+        channelName: 'already',
+      });
+      await triggerMessage(msg);
+
+      expect(opts.registerGroup).not.toHaveBeenCalled();
+    });
+
+    it('creates CLAUDE.md stub on registration', async () => {
+      const fs = await import('fs');
+      const opts = createTestOpts({
+        registeredGroups: vi.fn(() => ({})),
+      });
+      const channel = new DiscordChannel('test-token', opts);
+      await channel.connect();
+
+      const msg = createMessage({
+        channelId: UNREGISTERED_CHANNEL_ID,
+        content: 'hello',
+        guildName: 'TestServer',
+        channelName: 'bugs',
+      });
+      await triggerMessage(msg);
+
+      expect(fs.default.writeFileSync).toHaveBeenCalledWith(
+        expect.stringContaining('dc-bugs'),
+        expect.stringContaining('Discord channel group'),
       );
     });
   });
