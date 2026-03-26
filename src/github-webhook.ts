@@ -15,6 +15,7 @@ import { createTask, getTaskById } from './db.js';
 import { logger } from './logger.js';
 import { RegisteredGroup } from './types.js';
 import { handleGitHubIssuesEvent } from './github-issues-webhook.js';
+import { resolveTargets } from './webhook-router.js';
 
 export interface GitHubHandlerConfig {
   signingSecret: string;
@@ -131,15 +132,11 @@ async function handleWorkflowRunEvent(
   if (!workflowRun) return;
 
   const groups = config.getRegisteredGroups();
-  const mainEntry = Object.entries(groups).find(([, g]) => g.isMain);
-  if (!mainEntry) {
-    logger.warn(
-      'GitHub webhook: no main group registered, cannot dispatch task',
-    );
+  const targets = resolveTargets('github-ci', groups);
+  if (targets.length === 0) {
+    logger.warn('GitHub webhook: no routing targets available');
     return;
   }
-
-  const [mainJid, mainGroup] = mainEntry;
 
   const runId = workflowRun.id as number;
   const conclusion = workflowRun.conclusion as string;
@@ -169,23 +166,32 @@ async function handleWorkflowRunEvent(
     repoFullName,
   });
 
-  createTask({
-    id: taskId,
-    group_folder: mainGroup.folder,
-    chat_jid: mainJid,
-    prompt,
-    schedule_type: 'once',
-    schedule_value: now,
-    context_mode: 'isolated',
-    next_run: now,
-    status: 'active',
-    created_at: now,
-  });
-
-  logger.info(
-    { repoFullName, runId, conclusion, headBranch, taskId },
-    'GitHub CI task queued',
-  );
+  for (const target of targets) {
+    const targetTaskId = targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
+    try {
+      createTask({
+        id: targetTaskId,
+        group_folder: target.group.folder,
+        chat_jid: target.jid,
+        prompt,
+        schedule_type: 'once',
+        schedule_value: now,
+        context_mode: 'isolated',
+        next_run: now,
+        status: 'active',
+        created_at: now,
+      });
+      logger.info(
+        { repoFullName, runId, conclusion, headBranch, taskId: targetTaskId, jid: target.jid },
+        'GitHub CI task created for target',
+      );
+    } catch (err) {
+      logger.error(
+        { err, taskId: targetTaskId, jid: target.jid },
+        'GitHub CI webhook: failed to create task for target',
+      );
+    }
+  }
 }
 
 interface CIRunInfo {

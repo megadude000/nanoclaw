@@ -9,6 +9,7 @@
 import { createTask, getTaskById } from './db.js';
 import { logger } from './logger.js';
 import { RegisteredGroup } from './types.js';
+import { resolveTargets } from './webhook-router.js';
 
 export interface GitHubIssuesHandlerConfig {
   githubToken: string;
@@ -41,31 +42,38 @@ export async function handleGitHubIssuesEvent(
   }
 
   const groups = config.getRegisteredGroups();
-  const mainEntry = Object.entries(groups).find(([, g]) => g.isMain);
-  if (!mainEntry) {
-    logger.warn('GitHub issues webhook: no main group registered');
+  const targets = resolveTargets('github-issues', groups);
+  if (targets.length === 0) {
+    logger.warn('GitHub issues webhook: no routing targets available');
     return;
   }
 
-  const [mainJid, mainGroup] = mainEntry;
   const now = new Date().toISOString();
 
   // No bug label — send Telegram buttons and exit
   if (!labelNames.includes('bug')) {
     logger.info({ issueNumber, issueTitle, labelNames }, 'GitHub issue: no bug label, asking user');
     const prompt = buildNoBugLabelPrompt({ issueNumber, issueTitle, issueUrl });
-    createTask({
-      id: taskId,
-      group_folder: mainGroup.folder,
-      chat_jid: mainJid,
-      prompt,
-      schedule_type: 'once',
-      schedule_value: now,
-      context_mode: 'isolated',
-      next_run: now,
-      status: 'active',
-      created_at: now,
-    });
+    for (const target of targets) {
+      const targetTaskId = targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
+      try {
+        createTask({
+          id: targetTaskId,
+          group_folder: target.group.folder,
+          chat_jid: target.jid,
+          prompt,
+          schedule_type: 'once',
+          schedule_value: now,
+          context_mode: 'isolated',
+          next_run: now,
+          status: 'active',
+          created_at: now,
+        });
+        logger.info({ taskId: targetTaskId, jid: target.jid }, 'GitHub issues webhook: task created for target');
+      } catch (err) {
+        logger.error({ err, taskId: targetTaskId, jid: target.jid }, 'GitHub issues webhook: failed to create task for target');
+      }
+    }
     return;
   }
 
@@ -85,18 +93,26 @@ export async function handleGitHubIssuesEvent(
     githubRepo: config.githubRepo,
   });
 
-  createTask({
-    id: taskId,
-    group_folder: mainGroup.folder,
-    chat_jid: mainJid,
-    prompt,
-    schedule_type: 'once',
-    schedule_value: now,
-    context_mode: 'isolated',
-    next_run: now,
-    status: 'active',
-    created_at: now,
-  });
+  for (const target of targets) {
+    const targetTaskId = targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
+    try {
+      createTask({
+        id: targetTaskId,
+        group_folder: target.group.folder,
+        chat_jid: target.jid,
+        prompt,
+        schedule_type: 'once',
+        schedule_value: now,
+        context_mode: 'isolated',
+        next_run: now,
+        status: 'active',
+        created_at: now,
+      });
+      logger.info({ taskId: targetTaskId, jid: target.jid }, 'GitHub issues webhook: task created for target');
+    } catch (err) {
+      logger.error({ err, taskId: targetTaskId, jid: target.jid }, 'GitHub issues webhook: failed to create task for target');
+    }
+  }
 }
 
 interface NoBugLabelInfo {

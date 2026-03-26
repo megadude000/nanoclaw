@@ -14,6 +14,7 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { createTask, getTaskById } from './db.js';
 import { logger } from './logger.js';
 import { RegisteredGroup } from './types.js';
+import { resolveTargets } from './webhook-router.js';
 
 export interface NotionHandlerConfig {
   signingSecret: string;
@@ -134,17 +135,13 @@ async function handleCommentCreated(
   event: Record<string, unknown>,
   config: NotionHandlerConfig,
 ): Promise<void> {
-  // Find the main group
+  // Resolve routing targets
   const groups = config.getRegisteredGroups();
-  const mainEntry = Object.entries(groups).find(([, g]) => g.isMain);
-  if (!mainEntry) {
-    logger.warn(
-      'Notion webhook: no main group registered, cannot dispatch task',
-    );
+  const targets = resolveTargets('notion', groups);
+  if (targets.length === 0) {
+    logger.warn('Notion webhook: no routing targets available');
     return;
   }
-
-  const [mainJid, mainGroup] = mainEntry;
 
   const entity = event.entity as Record<string, unknown> | undefined;
   const data = event.data as Record<string, unknown> | undefined;
@@ -189,20 +186,26 @@ async function handleCommentCreated(
   const now = new Date().toISOString();
   const prompt = buildAgentPrompt(pageId, commentId);
 
-  createTask({
-    id: taskId,
-    group_folder: mainGroup.folder,
-    chat_jid: mainJid,
-    prompt,
-    schedule_type: 'once',
-    schedule_value: now,
-    context_mode: 'isolated',
-    next_run: now,
-    status: 'active',
-    created_at: now,
-  });
-
-  logger.info({ pageId, commentId, taskId }, 'Notion comment task queued');
+  for (const target of targets) {
+    const targetTaskId = targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
+    try {
+      createTask({
+        id: targetTaskId,
+        group_folder: target.group.folder,
+        chat_jid: target.jid,
+        prompt,
+        schedule_type: 'once',
+        schedule_value: now,
+        context_mode: 'isolated',
+        next_run: now,
+        status: 'active',
+        created_at: now,
+      });
+      logger.info({ pageId, commentId, taskId: targetTaskId, jid: target.jid }, 'Notion webhook: task created for target');
+    } catch (err) {
+      logger.error({ err, taskId: targetTaskId, jid: target.jid }, 'Notion webhook: failed to create task for target');
+    }
+  }
 }
 
 function buildAgentPrompt(pageId: string, commentId: string): string {
