@@ -1,4 +1,11 @@
-import { ChannelType, Guild, PermissionFlagsBits } from 'discord.js';
+import {
+  ChannelType,
+  GuildChannel,
+  Guild,
+  PermissionFlagsBits,
+  PermissionsBitField,
+  type PermissionsString,
+} from 'discord.js';
 
 import { logger } from './logger.js';
 
@@ -12,29 +19,22 @@ export interface ServerManagerResult {
   [key: string]: unknown;
 }
 
-const PERMISSION_MAP: Record<string, bigint> = {
-  ViewChannel: PermissionFlagsBits.ViewChannel,
-  SendMessages: PermissionFlagsBits.SendMessages,
-  ManageChannels: PermissionFlagsBits.ManageChannels,
-  ManageMessages: PermissionFlagsBits.ManageMessages,
-  ReadMessageHistory: PermissionFlagsBits.ReadMessageHistory,
-  AddReactions: PermissionFlagsBits.AddReactions,
-  AttachFiles: PermissionFlagsBits.AttachFiles,
-  EmbedLinks: PermissionFlagsBits.EmbedLinks,
-  MentionEveryone: PermissionFlagsBits.MentionEveryone,
-  Connect: PermissionFlagsBits.Connect,
-  Speak: PermissionFlagsBits.Speak,
-};
-
-function resolvePermissions(names: string[]): bigint {
-  let bits = BigInt(0);
+/**
+ * Build a permission overwrite object from string permission names.
+ * Each name maps to `true` (allow) or `false` (deny) in the overwrite.
+ */
+function buildPermissionOverwrite(
+  names: string[],
+  value: boolean | null,
+): Partial<Record<PermissionsString, boolean | null>> {
+  const result: Partial<Record<PermissionsString, boolean | null>> = {};
   for (const name of names) {
-    const flag = PERMISSION_MAP[name];
-    if (flag !== undefined) {
-      bits |= flag;
+    // Validate that the name is a valid permission string
+    if (name in PermissionFlagsBits) {
+      result[name as PermissionsString] = value;
     }
   }
-  return bits;
+  return result;
 }
 
 export class DiscordServerManager {
@@ -151,18 +151,21 @@ export class DiscordServerManager {
       deny?: string[];
     }>;
 
-    const channel = await guild.channels.fetch(channelId);
-    if (!channel) {
+    const fetched = await guild.channels.fetch(channelId);
+    if (!fetched) {
       return { success: false, error: 'Channel not found' };
     }
 
+    // Narrow to GuildChannel which has permissionOverwrites
+    const channel = fetched as GuildChannel;
+
     for (const overwrite of overwrites) {
-      const perms: { allow?: bigint; deny?: bigint } = {};
+      const perms: Partial<Record<PermissionsString, boolean | null>> = {};
       if (overwrite.allow) {
-        perms.allow = resolvePermissions(overwrite.allow);
+        Object.assign(perms, buildPermissionOverwrite(overwrite.allow, true));
       }
       if (overwrite.deny) {
-        perms.deny = resolvePermissions(overwrite.deny);
+        Object.assign(perms, buildPermissionOverwrite(overwrite.deny, false));
       }
       await channel.permissionOverwrites.edit(overwrite.id, perms);
     }

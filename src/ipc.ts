@@ -22,6 +22,12 @@ export interface IpcDeps {
     availableGroups: AvailableGroup[],
     registeredJids: Set<string>,
   ) => void;
+  discordServerManager?: {
+    handleAction(
+      action: string,
+      params: Record<string, unknown>,
+    ): Promise<{ success: boolean; error?: string; [key: string]: unknown }>;
+  };
 }
 
 let ipcWatcherRunning = false;
@@ -171,6 +177,9 @@ export async function processTaskIpc(
     trigger?: string;
     requiresTrigger?: boolean;
     containerConfig?: RegisteredGroup['containerConfig'];
+    // For discord_manage
+    action?: string;
+    params?: Record<string, unknown>;
   },
   sourceGroup: string, // Verified identity from IPC directory
   isMain: boolean, // Verified from directory path
@@ -448,6 +457,26 @@ export async function processTaskIpc(
         );
       }
       break;
+
+    case 'discord_manage': {
+      if (!isMain) {
+        logger.warn({ sourceGroup }, 'Unauthorized discord_manage attempt blocked');
+        break;
+      }
+      if (!deps.discordServerManager) {
+        logger.warn('discord_manage received but no server manager available');
+        break;
+      }
+      const action = data.action as string;
+      const params = (data.params ?? {}) as Record<string, unknown>;
+      const result = await deps.discordServerManager.handleAction(action, params);
+      if (!result.success) {
+        logger.error({ action, error: result.error }, 'discord_manage action failed');
+      } else {
+        logger.info({ action, result }, 'discord_manage action completed');
+      }
+      break;
+    }
 
     default:
       logger.warn({ type: data.type }, 'Unknown IPC task type');

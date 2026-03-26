@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import {
   _initTestDatabase,
@@ -674,5 +674,77 @@ describe('register_group success', () => {
     );
 
     expect(getRegisteredGroup('partial@g.us')).toBeUndefined();
+  });
+});
+
+// --- discord_manage authorization ---
+
+describe('discord_manage authorization', () => {
+  let mockHandleAction: IpcDeps['discordServerManager'];
+
+  beforeEach(() => {
+    mockHandleAction = {
+      handleAction: vi.fn().mockResolvedValue({ success: true, channelId: '999' }),
+    };
+  });
+
+  it('calls handleAction when invoked from main group', async () => {
+    const depsWithManager: IpcDeps = {
+      ...deps,
+      discordServerManager: mockHandleAction,
+    };
+
+    await processTaskIpc(
+      { type: 'discord_manage', action: 'create_channel', params: { name: 'test' } },
+      'whatsapp_main',
+      true,
+      depsWithManager,
+    );
+
+    expect(mockHandleAction!.handleAction).toHaveBeenCalledWith('create_channel', { name: 'test' });
+  });
+
+  it('blocks discord_manage from non-main group', async () => {
+    const depsWithManager: IpcDeps = {
+      ...deps,
+      discordServerManager: mockHandleAction,
+    };
+
+    await processTaskIpc(
+      { type: 'discord_manage', action: 'create_channel', params: { name: 'test' } },
+      'other-group',
+      false,
+      depsWithManager,
+    );
+
+    expect(mockHandleAction!.handleAction).not.toHaveBeenCalled();
+  });
+
+  it('handles missing discordServerManager gracefully', async () => {
+    // deps has no discordServerManager
+    await expect(
+      processTaskIpc(
+        { type: 'discord_manage', action: 'create_channel', params: { name: 'test' } },
+        'whatsapp_main',
+        true,
+        deps,
+      ),
+    ).resolves.not.toThrow();
+  });
+
+  it('passes empty params when params is undefined', async () => {
+    const depsWithManager: IpcDeps = {
+      ...deps,
+      discordServerManager: mockHandleAction,
+    };
+
+    await processTaskIpc(
+      { type: 'discord_manage', action: 'delete_channel' },
+      'whatsapp_main',
+      true,
+      depsWithManager,
+    );
+
+    expect(mockHandleAction!.handleAction).toHaveBeenCalledWith('delete_channel', {});
   });
 });
