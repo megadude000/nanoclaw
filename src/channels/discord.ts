@@ -9,9 +9,13 @@ import {
   TextChannel,
 } from 'discord.js';
 
-import { chunkMessage } from '../discord-chunker.js';
+import fs from 'fs';
+import path from 'path';
 
-import { ASSISTANT_NAME, TRIGGER_PATTERN } from '../config.js';
+import { chunkMessage } from '../discord-chunker.js';
+import { sanitizeWithCollisionCheck, createGroupStub } from '../discord-group-utils.js';
+
+import { ASSISTANT_NAME, GROUPS_DIR, TRIGGER_PATTERN } from '../config.js';
 import { readEnvFile } from '../env.js';
 import { logger } from '../logger.js';
 import { registerChannel, ChannelOpts } from './registry.js';
@@ -152,6 +156,44 @@ export class DiscordChannel implements Channel {
         isGroup,
       );
 
+      // Auto-register Discord channel as group on first message (D-04, D-05)
+      if (!this.opts.registeredGroups()[chatJid] && this.opts.registerGroup) {
+        const mainChannelId = process.env.DISCORD_MAIN_CHANNEL_ID || '';
+        const isMain = channelId === mainChannelId;
+
+        const existingFolders = new Set(
+          Object.values(this.opts.registeredGroups()).map(g => g.folder)
+        );
+        const textChannel = message.channel as TextChannel;
+        const folder = sanitizeWithCollisionCheck(
+          textChannel.name,
+          channelId,
+          existingFolders,
+        );
+
+        // Per D-06/D-07/D-08: main gets isMain+no trigger, non-main gets trigger required
+        this.opts.registerGroup(chatJid, {
+          name: chatName,
+          folder,
+          trigger: `@${ASSISTANT_NAME}`,
+          added_at: new Date().toISOString(),
+          requiresTrigger: !isMain,
+          isMain: isMain || undefined,
+        });
+
+        // Create CLAUDE.md stub per D-09
+        const groupDir = path.join(GROUPS_DIR, folder);
+        const claudePath = path.join(groupDir, 'CLAUDE.md');
+        if (!fs.existsSync(claudePath)) {
+          fs.writeFileSync(claudePath, createGroupStub(textChannel.name, isMain));
+        }
+
+        logger.info(
+          { chatJid, folder, isMain },
+          'Discord channel auto-registered as group',
+        );
+      }
+
       // Only deliver full message for registered groups
       const group = this.opts.registeredGroups()[chatJid];
       if (!group) {
@@ -227,6 +269,9 @@ export class DiscordChannel implements Channel {
         console.log(
           `  Use /chatid command or check channel IDs in Discord settings\n`,
         );
+        if (!process.env.DISCORD_MAIN_CHANNEL_ID) {
+          logger.warn('DISCORD_MAIN_CHANNEL_ID not set — no Discord channel will get main group privileges');
+        }
         resolve();
       });
 
