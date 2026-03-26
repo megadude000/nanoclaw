@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-03-26T11:42:59.927Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-26T11:57:02.431Z"
 last_activity: 2026-03-26
 progress:
   total_phases: 8
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 3
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Clear separation of automated notifications and project workstreams into dedicated Discord channels, keeping Telegram clean for personal conversation.
-**Current focus:** Phase 01 — discord-channel-foundation
+**Current focus:** Phase 02 — inbound-message-handling
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
+Phase: 02 (inbound-message-handling) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-03-26
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01 P01 | 1min | 2 tasks | 52 files |
 | Phase 01 P02 | 3min | 2 tasks | 2 files |
+| Phase 02 P01 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,7 @@ Recent decisions affecting current work:
 - CTX and MIG requirements merged into Phase 8 (both depend on routing + groups being ready)
 - [Phase 01]: Merged DiscordChannel from nanoclaw-discord remote (fast-forward) rather than writing from scratch
 - [Phase 01]: Shard handlers at warn/info levels based on severity; registered before login()
+- [Phase 02]: Truncate reply preview at 100 chars with ellipsis; skip preview for no-text messages; IN-05 is channel-agnostic
 
 ### Pending Todos
 
@@ -80,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T11:32:51.317Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-03-26T11:57:02.428Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None

@@ -48,7 +48,7 @@ Plans:
   4. Bot responds to all messages in the main Discord channel without requiring trigger pattern
 **Plans:** 1 plan
 Plans:
-- [ ] 02-01-PLAN.md — Add reply message preview (IN-03) and verify all inbound requirement coverage
+- [x] 02-01-PLAN.md — Add reply message preview (IN-03) and verify all inbound requirement coverage
 
 ### Phase 3: Outbound Formatting
 **Goal**: Bot sends well-formatted messages to Discord including rich embeds, message editing, and interactive elements

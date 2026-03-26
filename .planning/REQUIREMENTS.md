@@ -14,11 +14,11 @@
 
 ### Inbound Messages
 
-- [ ] **IN-01**: Bot receives text messages in registered Discord channels
-- [ ] **IN-02**: Bot translates Discord @mentions to NanoClaw trigger pattern (`@Andy`)
-- [ ] **IN-03**: Bot extracts reply context (who user is replying to, original message preview)
-- [ ] **IN-04**: Bot handles attachment descriptions (images, files shown as metadata)
-- [ ] **IN-05**: Bot respects trigger pattern for non-main channels, responds to all in main
+- [x] **IN-01**: Bot receives text messages in registered Discord channels
+- [x] **IN-02**: Bot translates Discord @mentions to NanoClaw trigger pattern (`@Andy`)
+- [x] **IN-03**: Bot extracts reply context (who user is replying to, original message preview)
+- [x] **IN-04**: Bot handles attachment descriptions (images, files shown as metadata)
+- [x] **IN-05**: Bot respects trigger pattern for non-main channels, responds to all in main
 
 ### Outbound Messages
 
@@ -112,11 +112,11 @@
 | CHAN-02 | Phase 1 | Complete |
 | CHAN-03 | Phase 1 | Complete |
 | CHAN-04 | Phase 1 | Complete |
-| IN-01 | Phase 2 | Pending |
-| IN-02 | Phase 2 | Pending |
-| IN-03 | Phase 2 | Pending |
-| IN-04 | Phase 2 | Pending |
-| IN-05 | Phase 2 | Pending |
+| IN-01 | Phase 2 | Complete |
+| IN-02 | Phase 2 | Complete |
+| IN-03 | Phase 2 | Complete |
+| IN-04 | Phase 2 | Complete |
+| IN-05 | Phase 2 | Complete |
 | OUT-01 | Phase 3 | Pending |
 | OUT-02 | Phase 3 | Pending |
 | OUT-03 | Phase 3 | Pending |
