@@ -38,11 +38,11 @@
 
 ### Server Management
 
-- [ ] **SRV-01**: Bot can create text channels programmatically via discord.js guild API
-- [ ] **SRV-02**: Bot can create channel categories (General, YourWave, Dev, Admin)
-- [ ] **SRV-03**: Bot can delete and rename channels
-- [ ] **SRV-04**: Bot can set per-channel permissions
-- [ ] **SRV-05**: Server management exposed via IPC `discord_manage` message type (main group only)
+- [x] **SRV-01**: Bot can create text channels programmatically via discord.js guild API
+- [x] **SRV-02**: Bot can create channel categories (General, YourWave, Dev, Admin)
+- [x] **SRV-03**: Bot can delete and rename channels
+- [x] **SRV-04**: Bot can set per-channel permissions
+- [x] **SRV-05**: Server management exposed via IPC `discord_manage` message type (main group only)
 - [ ] **SRV-06**: Bootstrap script creates initial server structure (categories + channels from config)
 
 ### Webhook Routing
@@ -127,11 +127,11 @@
 | GRP-02 | Phase 4 | Complete |
 | GRP-03 | Phase 4 | Complete |
 | GRP-04 | Phase 4 | Complete |
-| SRV-01 | Phase 5 | Pending |
-| SRV-02 | Phase 5 | Pending |
-| SRV-03 | Phase 5 | Pending |
-| SRV-04 | Phase 5 | Pending |
-| SRV-05 | Phase 5 | Pending |
+| SRV-01 | Phase 5 | Complete |
+| SRV-02 | Phase 5 | Complete |
+| SRV-03 | Phase 5 | Complete |
+| SRV-04 | Phase 5 | Complete |
+| SRV-05 | Phase 5 | Complete |
 | SRV-06 | Phase 5 | Pending |
 | ROUT-01 | Phase 6 | Pending |
 | ROUT-02 | Phase 6 | Pending |
