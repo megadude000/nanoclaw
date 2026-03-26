@@ -107,7 +107,7 @@ Plans:
 **Plans:** 2 plans
 Plans:
 - [x] 06-01-PLAN.md — Routing abstraction layer (webhook-router.ts, Zod schema, resolveTargets, unit tests, routing.json config)
-- [ ] 06-02-PLAN.md — Migrate webhook handlers (github-issues, github-ci, notion, progress tracker) to resolveTargets
+- [x] 06-02-PLAN.md — Migrate webhook handlers (github-issues, github-ci, notion, progress tracker) to resolveTargets
 
 ### Phase 7: Swarm Bot Identity
 **Goal**: Friday and Alfred post in Discord with their own distinct identities (names and avatars), not as the main bot
