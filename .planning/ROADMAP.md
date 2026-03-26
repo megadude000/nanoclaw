@@ -46,7 +46,9 @@ Plans:
   2. User replies to a bot message and the agent sees the reply context (original message preview)
   3. User sends an image/file attachment and the agent acknowledges it with metadata description
   4. Bot responds to all messages in the main Discord channel without requiring trigger pattern
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 02-01-PLAN.md — Add reply message preview (IN-03) and verify all inbound requirement coverage
 
 ### Phase 3: Outbound Formatting
 **Goal**: Bot sends well-formatted messages to Discord including rich embeds, message editing, and interactive elements
@@ -128,7 +130,7 @@ Note: Phase 4 and Phase 5 can execute in parallel (both depend on earlier phases
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Discord Channel Foundation | 0/2 | Planning complete | - |
-| 2. Inbound Message Handling | 0/0 | Not started | - |
+| 2. Inbound Message Handling | 0/1 | Planning complete | - |
 | 3. Outbound Formatting | 0/0 | Not started | - |
 | 4. Group Registration | 0/0 | Not started | - |
 | 5. Server Structure Management | 0/0 | Not started | - |
