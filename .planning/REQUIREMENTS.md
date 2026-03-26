@@ -7,10 +7,10 @@
 
 ### Channel Foundation
 
-- [ ] **CHAN-01**: Discord bot connects to server using discord.js v14 with gateway intents (Guilds, GuildMessages, MessageContent)
-- [ ] **CHAN-02**: Discord channel self-registers via `registerChannel('discord', factory)` following existing pattern
+- [x] **CHAN-01**: Discord bot connects to server using discord.js v14 with gateway intents (Guilds, GuildMessages, MessageContent)
+- [x] **CHAN-02**: Discord channel self-registers via `registerChannel('discord', factory)` following existing pattern
 - [ ] **CHAN-03**: Bot reconnects automatically after disconnection with exponential backoff
-- [ ] **CHAN-04**: Bot gracefully disconnects on NanoClaw shutdown
+- [x] **CHAN-04**: Bot gracefully disconnects on NanoClaw shutdown
 
 ### Inbound Messages
 
@@ -108,10 +108,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CHAN-01 | Phase 1 | Pending |
-| CHAN-02 | Phase 1 | Pending |
+| CHAN-01 | Phase 1 | Complete |
+| CHAN-02 | Phase 1 | Complete |
 | CHAN-03 | Phase 1 | Pending |
-| CHAN-04 | Phase 1 | Pending |
+| CHAN-04 | Phase 1 | Complete |
 | IN-01 | Phase 2 | Pending |
 | IN-02 | Phase 2 | Pending |
 | IN-03 | Phase 2 | Pending |
