@@ -1,29 +1,29 @@
 {
   "github-issues": {
     "targets": [
-      { "platform": "telegram", "jid": "tg:TELEGRAM_CHAT_ID" },
-      { "platform": "discord", "jid": "dc:DISCORD_BUGS_CHANNEL_ID" }
+      { "platform": "telegram", "jid": "tg:TELEGRAM_CHAT_ID", "enabled": true },
+      { "platform": "discord", "jid": "dc:DISCORD_BUGS_CHANNEL_ID", "enabled": true }
     ]
   },
   "github-ci": {
     "targets": [
-      { "platform": "telegram", "jid": "tg:TELEGRAM_CHAT_ID" }
+      { "platform": "telegram", "jid": "tg:TELEGRAM_CHAT_ID", "enabled": true }
     ]
   },
   "notion": {
     "targets": [
-      { "platform": "telegram", "jid": "tg:TELEGRAM_CHAT_ID" },
-      { "platform": "discord", "jid": "dc:DISCORD_TASKS_CHANNEL_ID" }
+      { "platform": "telegram", "jid": "tg:TELEGRAM_CHAT_ID", "enabled": true },
+      { "platform": "discord", "jid": "dc:DISCORD_TASKS_CHANNEL_ID", "enabled": true }
     ]
   },
   "progress": {
     "targets": [
-      { "platform": "telegram", "jid": "tg:TELEGRAM_CHAT_ID" }
+      { "platform": "telegram", "jid": "tg:TELEGRAM_CHAT_ID", "enabled": true }
     ]
   },
   "bugreport": {
     "targets": [
-      { "platform": "discord", "jid": "dc:DISCORD_BUGS_CHANNEL_ID" }
+      { "platform": "discord", "jid": "dc:DISCORD_BUGS_CHANNEL_ID", "enabled": true }
     ]
   }
 }
