@@ -56,10 +56,10 @@
 
 ### Swarm Bot Identity
 
-- [ ] **SWRM-01**: Swarm agents (Friday/Alfred) post in Discord with distinct usernames via channel webhooks
-- [ ] **SWRM-02**: Each swarm identity has custom avatar in Discord
-- [ ] **SWRM-03**: Swarm webhook creation automated per registered Discord channel
-- [ ] **SWRM-04**: Swarm identity falls back to main bot if webhook unavailable
+- [x] **SWRM-01**: Swarm agents (Friday/Alfred) post in Discord with distinct usernames via channel webhooks
+- [x] **SWRM-02**: Each swarm identity has custom avatar in Discord
+- [x] **SWRM-03**: Swarm webhook creation automated per registered Discord channel
+- [x] **SWRM-04**: Swarm identity falls back to main bot if webhook unavailable
 
 ### Per-Channel Context
 
@@ -139,10 +139,10 @@
 | ROUT-04 | Phase 6 | Complete |
 | ROUT-05 | Phase 6 | Complete |
 | ROUT-06 | Phase 6 | Complete |
-| SWRM-01 | Phase 7 | Pending |
-| SWRM-02 | Phase 7 | Pending |
-| SWRM-03 | Phase 7 | Pending |
-| SWRM-04 | Phase 7 | Pending |
+| SWRM-01 | Phase 7 | Complete |
+| SWRM-02 | Phase 7 | Complete |
+| SWRM-03 | Phase 7 | Complete |
+| SWRM-04 | Phase 7 | Complete |
 | CTX-01 | Phase 8 | Pending |
 | CTX-02 | Phase 8 | Pending |
 | CTX-03 | Phase 8 | Pending |
