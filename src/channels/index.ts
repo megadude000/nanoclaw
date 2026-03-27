@@ -10,7 +10,6 @@ import './gmail.js';
 // slack
 
 // telegram
-import './telegram.js';
 
 // whatsapp (dynamic — @whiskeysockets/baileys may not be installed)
 import('./whatsapp.js').catch(() => {
