@@ -1,4 +1,11 @@
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { isValidGroupFolder } from './group-folder.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const TEMPLATES_DIR = resolve(__dirname, '..', 'config', 'channel-templates');
 
 const MAX_FOLDER_LENGTH = 64;
 const PREFIX = 'dc-';
@@ -53,9 +60,17 @@ export function sanitizeWithCollisionCheck(
 }
 
 /**
- * Create a minimal CLAUDE.md stub for a new Discord group folder.
+ * Create a CLAUDE.md for a new Discord group folder.
+ * Loads a channel-specific template from config/channel-templates/ if one exists,
+ * otherwise falls back to a generic stub.
  */
 export function createGroupStub(channelName: string, isMain: boolean): string {
+  const templatePath = resolve(TEMPLATES_DIR, `${channelName}.md`);
+  if (existsSync(templatePath)) {
+    return readFileSync(templatePath, 'utf-8');
+  }
+
+  // Fallback to generic stub for channels without a template
   return `# ${channelName}
 
 Discord channel group.${isMain ? ' This is the main channel.' : ''}
