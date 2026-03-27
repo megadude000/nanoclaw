@@ -115,20 +115,75 @@ describe('sanitizeWithCollisionCheck', () => {
 
 describe('createGroupStub', () => {
   it('creates stub without main channel text when isMain=false', () => {
-    const stub = createGroupStub('general', false);
-    expect(stub).toContain('# general');
+    const stub = createGroupStub('unknown-channel', false);
+    expect(stub).toContain('# unknown-channel');
     expect(stub).not.toContain('This is the main channel.');
   });
 
   it('creates stub with main channel text when isMain=true', () => {
-    const stub = createGroupStub('main', true);
-    expect(stub).toContain('# main');
+    const stub = createGroupStub('unknown-main', true);
+    expect(stub).toContain('# unknown-main');
     expect(stub).toContain('This is the main channel.');
   });
 
-  it('includes instructions section', () => {
-    const stub = createGroupStub('test', false);
+  it('includes instructions section in fallback', () => {
+    const stub = createGroupStub('no-template-here', false);
     expect(stub).toContain('## Instructions');
     expect(stub).toContain('Respond helpfully');
+  });
+});
+
+describe('createGroupStub template selection', () => {
+  it('loads bugs template containing triage instructions', () => {
+    const content = createGroupStub('bugs', false);
+    expect(content).toContain('triage');
+    expect(content).toContain('# bugs');
+  });
+
+  it('loads yw-tasks template containing project management instructions', () => {
+    const content = createGroupStub('yw-tasks', false);
+    expect(content).toContain('project management');
+    expect(content).toContain('# yw-tasks');
+  });
+
+  it('loads main template containing Cortex reference', () => {
+    const content = createGroupStub('main', true);
+    expect(content).toContain('cortex/');
+    expect(content).toContain('# main');
+  });
+
+  it('loads agents template containing swarm references', () => {
+    const content = createGroupStub('agents', false);
+    expect(content).toMatch(/swarm|Friday|Alfred/i);
+  });
+
+  it('returns generic fallback for unknown channel names', () => {
+    const content = createGroupStub('unknown-channel', false);
+    expect(content).toContain('Respond helpfully');
+    expect(content).not.toContain('cortex/');
+  });
+
+  it('Cortex references use directory paths not specific file paths', () => {
+    const bugsContent = createGroupStub('bugs', false);
+    const ywContent = createGroupStub('yw-tasks', false);
+    const mainContent = createGroupStub('main', true);
+
+    // Should contain directory-level cortex references
+    expect(bugsContent).toContain('cortex/Areas/Work/');
+    expect(ywContent).toContain('cortex/Areas/Work/');
+    expect(mainContent).toContain('cortex/');
+
+    // Should NOT contain specific .md file references within cortex
+    expect(bugsContent).not.toMatch(/cortex\/[^\s]*\.md/);
+    expect(ywContent).not.toMatch(/cortex\/[^\s]*\.md/);
+  });
+
+  it('all 8 channel templates are loadable', () => {
+    const channels = ['main', 'agents', 'yw-tasks', 'bugs', 'progress', 'dev-alerts', 'logs', 'bot-control'];
+    for (const ch of channels) {
+      const content = createGroupStub(ch, ch === 'main');
+      expect(content.length).toBeGreaterThan(50);
+      expect(content).toContain(`# ${ch}`);
+    }
   });
 });
