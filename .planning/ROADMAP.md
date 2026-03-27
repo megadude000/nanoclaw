@@ -133,8 +133,10 @@ Plans:
   3. User writes in #main and the agent responds as the general Jarvis assistant
   4. User can switch any webhook from Telegram-only to Discord-only to both, one at a time
   5. User can roll back any webhook to Telegram-only if Discord routing has issues
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 2 plans
+Plans:
+- [ ] 08-01-PLAN.md — Channel-specific CLAUDE.md templates + enhanced createGroupStub()
+- [ ] 08-02-PLAN.md — Routing enabled toggle + migration checklist documentation
 
 ## Progress
 
@@ -150,5 +152,5 @@ Note: Phase 4 and Phase 5 can execute in parallel (both depend on earlier phases
 | 4. Group Registration | 2/2 | Complete | 2026-03-26 |
 | 5. Server Structure Management | 2/2 | Complete | 2026-03-26 |
 | 6. Webhook Routing Architecture | 2/2 | Complete | 2026-03-26 |
-| 7. Swarm Bot Identity | 1/2 | In Progress|  |
-| 8. Per-Channel Context and Migration | 0/0 | Not started | - |
+| 7. Swarm Bot Identity | 2/2 | Complete | 2026-03-27 |
+| 8. Per-Channel Context and Migration | 0/2 | Planning complete | - |
