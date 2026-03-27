@@ -86,7 +86,10 @@ Plans:
   1. Every message posted to #agents includes embed fields: agent name, task ID, message type (status/blocker/handoff/digest)
   2. Embed fields use consistent, documented field names that can be filtered programmatically
   3. A TypeScript type or schema defines the required fields and valid message-type values
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 09-01-PLAN.md — Zod schema, AgentMessageMeta types, withAgentMeta() helper, AGENT_COLORS
 
 #### Phase 10: Agent Status Reporting
 **Goal**: Agents announce task lifecycle events (picked up, in progress, closed) to #agents
@@ -159,7 +162,7 @@ Note: Phase 12 depends only on Phase 6 (already complete) and can execute in par
 | 6. Webhook Routing | v1.0 | 2/2 | Complete | 2026-03-27 |
 | 7. Swarm Bot Presence | v1.0 | 2/2 | Complete | 2026-03-27 |
 | 8. Channel Templates | v1.0 | 1/1 | Complete | 2026-03-27 |
-| 9. Agent Message Schema | v2.0 | 0/? | Not started | - |
+| 9. Agent Message Schema | v2.0 | 0/1 | Not started | - |
 | 10. Agent Status Reporting | v2.0 | 0/? | Not started | - |
 | 11. Blocker & Handoff Reporting | v2.0 | 0/? | Not started | - |
 | 12. Morning Digest Routing | v2.0 | 0/? | Not started | - |
