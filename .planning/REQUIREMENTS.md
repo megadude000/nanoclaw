@@ -62,18 +62,18 @@ Transform #agents into a live operational dashboard and machine-searchable activ
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| ASTATUS-01 | — | Pending |
-| ASTATUS-02 | — | Pending |
-| ASTATUS-03 | — | Pending |
-| BLOCK-01 | — | Pending |
-| BLOCK-02 | — | Pending |
-| BLOCK-03 | — | Pending |
-| HAND-01 | — | Pending |
-| DIGEST-01 | — | Pending |
-| DIGEST-02 | — | Pending |
-| HEALTH-01 | — | Pending |
-| HEALTH-02 | — | Pending |
-| HEALTH-03 | — | Pending |
-| SEARCH-01 | — | Pending |
-| SEARCH-02 | — | Pending |
-| SEARCH-03 | — | Pending |
+| ASTATUS-01 | Phase 10 | Pending |
+| ASTATUS-02 | Phase 10 | Pending |
+| ASTATUS-03 | Phase 10 | Pending |
+| BLOCK-01 | Phase 11 | Pending |
+| BLOCK-02 | Phase 11 | Pending |
+| BLOCK-03 | Phase 11 | Pending |
+| HAND-01 | Phase 11 | Pending |
+| DIGEST-01 | Phase 12 | Pending |
+| DIGEST-02 | Phase 12 | Pending |
+| HEALTH-01 | Phase 13 | Pending |
+| HEALTH-02 | Phase 13 | Pending |
+| HEALTH-03 | Phase 13 | Pending |
+| SEARCH-01 | Phase 9 | Pending |
+| SEARCH-02 | Phase 14 | Pending |
+| SEARCH-03 | Phase 14 | Pending |

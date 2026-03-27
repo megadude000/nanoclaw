@@ -7,7 +7,7 @@ stopped_at: ~
 last_updated: "2026-03-27T00:00:00.000Z"
 last_activity: 2026-03-27
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -18,17 +18,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-26)
+See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Clear separation of automated notifications and project workstreams into dedicated Discord channels, keeping Telegram clean for personal conversation.
-**Current focus:** Phase 06 — webhook-routing-architecture
+**Current focus:** Phase 9 — Agent Message Schema (ready to plan)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 9 of 14 (Agent Message Schema)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-27 — Milestone v2.0 Agent Dashboard started
+Status: Ready to plan
+Last activity: 2026-03-27 — v2.0 roadmap created, 6 phases planned (9-14), 15/15 requirements mapped
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -36,7 +36,7 @@ Progress: [░░░░░░░░░░] 0%
 
 **Velocity:**
 
-- Total plans completed: 0
+- Total plans completed: 0 (v2.0)
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -52,20 +52,6 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
-| Phase 01 P01 | 1min | 2 tasks | 52 files |
-| Phase 01 P02 | 3min | 2 tasks | 2 files |
-| Phase 02 P01 | 2min | 2 tasks | 2 files |
-| Phase 03 P01 | 3min | 2 tasks | 5 files |
-| Phase 03 P02 | 3min | 2 tasks | 3 files |
-| Phase 04 P01 | 2min | 2 tasks | 4 files |
-| Phase 04 P02 | 3min | 2 tasks | 4 files |
-| Phase 05 P01 | 4min | 2 tasks | 4 files |
-| Phase 05 P02 | 4m | 1 tasks | 3 files |
-| Phase 06 P01 | 125s | 2 tasks | 3 files |
-| Phase 06 P02 | 185 | 2 tasks | 4 files |
-| Phase 07 P01 | 190 | 1 tasks | 3 files |
-| Phase 07 P02 | 150 | 2 tasks | 4 files |
-| Phase 08 P01 | 4min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -74,25 +60,10 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Fine granularity (8 phases) derived from 8 natural requirement categories
-- Phase 1 is the only phase requiring user involvement (Discord bot token creation, ~5 min)
-- Phases 4 and 5 can execute in parallel (independent dependencies)
-- CTX and MIG requirements merged into Phase 8 (both depend on routing + groups being ready)
-- [Phase 01]: Merged DiscordChannel from nanoclaw-discord remote (fast-forward) rather than writing from scratch
-- [Phase 01]: Shard handlers at warn/info levels based on severity; registered before login()
-- [Phase 02]: Truncate reply preview at 100 chars with ellipsis; skip preview for no-text messages; IN-05 is channel-agnostic
-- [Phase 03]: Chunker uses state-machine fence tracking for code block splitting
-- [Phase 03]: Button clicks route as synthetic messages with [button:customId] content via ASSISTANT_NAME trigger
-- [Phase 04]: dc- prefix for Discord group folders; last 6 chars of channel ID for collision suffix; registerGroup optional in ChannelOpts, required in DiscordChannelOpts
-- [Phase 04]: Auto-registration guarded by registerGroup existence check; DISCORD_MAIN_CHANNEL_ID env var for main detection
-- [Phase 05]: ServerManagerDeps uses getGuild() accessor instead of raw Client for testability
-- [Phase 05]: Permission overwrites use PermissionsString record pattern matching discord.js edit() API
-- [Phase 05]: Used Array.from() for Collection/Map compatibility in bootstrap channel iteration
-- [Phase 06]: Read routing config fresh per-call with Zod validation and mainJid fallback
-- [Phase 06]: Task IDs use @jid suffix for dual-send uniqueness; progress tracker unchanged (JID from task chat_jid)
-- [Phase 07]: SwarmWebhookManager uses NanoClaw- prefix naming, Dicebear placeholder avatars, in-memory Map cache keyed by channelId:identityName
-- [Phase 07]: Lazy webhook hydration - no hydrateCache at startup, webhooks created on first send per channel
-- [Phase 08]: Channel templates loaded via readFileSync from config/channel-templates/{name}.md
+- [v2.0 Roadmap]: Phase 9 (schema) must execute before Phases 10-11 — all #agents embeds depend on shared metadata structure
+- [v2.0 Roadmap]: Phase 12 (digest routing) depends only on Phase 6 (complete) — can execute in parallel with 10-11
+- [v2.0 Roadmap]: Phase 13 (health monitoring) depends on Phase 8 — Alfred runs as a new NanoClaw scheduled task
+- [v2.0 Roadmap]: SEARCH-01 assigned to Phase 9 as foundation; SEARCH-02/03 deferred to Phase 14 after log is populated
 
 ### Pending Todos
 
@@ -100,11 +71,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- MessageContent privileged intent must be enabled in Discord Developer Portal before Phase 2
-- Bot token needed from user before Phase 1 can execute
+- MessageContent privileged intent must be enabled in Discord Developer Portal (carried from v1.0)
+- SEARCH-02 IPC query: needs Discord channel history fetch design (paginated API call vs. SQLite mirror)
 
 ## Session Continuity
 
-Last session: 2026-03-27T05:49:44.893Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-03-27T00:00:00.000Z
+Stopped at: Roadmap created for v2.0 — ready to plan Phase 9
 Resume file: None
