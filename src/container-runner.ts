@@ -45,6 +45,7 @@ export interface ContainerInput {
   assistantName?: string;
   triggerMessageId?: string;
   script?: string;
+  imageAttachments?: Array<{ relativePath: string; mediaType: string }>;
 }
 
 export interface ContainerOutput {

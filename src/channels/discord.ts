@@ -2,13 +2,18 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChatInputCommandInteraction,
   Client,
   Events,
   GatewayIntentBits,
   Message,
+  REST,
+  Routes,
+  SlashCommandBuilder,
   TextChannel,
 } from 'discord.js';
 
+import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -24,6 +29,7 @@ import {
 
 import { ASSISTANT_NAME, GROUPS_DIR, TRIGGER_PATTERN } from '../config.js';
 import { readEnvFile } from '../env.js';
+import { processImage } from '../image.js';
 import { logger } from '../logger.js';
 import { registerChannel, ChannelOpts } from './registry.js';
 import {
@@ -38,6 +44,7 @@ export interface DiscordChannelOpts {
   onChatMetadata: OnChatMetadata;
   registeredGroups: () => Record<string, RegisteredGroup>;
   registerGroup?: (jid: string, group: RegisteredGroup) => void;
+  onCriticalCommand?: (chatJid: string, command: string) => void;
 }
 
 export class DiscordChannel implements Channel {
@@ -68,6 +75,83 @@ export class DiscordChannel implements Channel {
     this.client.on(Events.MessageCreate, async (message: Message) => {
       // Ignore bot messages (including own)
       if (message.author.bot) return;
+
+      // Pre-agent commands — handled locally, never reach the agent
+      const trimmedCmd = message.content.trim();
+      if (trimmedCmd.startsWith('/')) {
+        const cmd = trimmedCmd.slice(1).split(/\s/)[0].toLowerCase();
+        if (cmd === 'chatid') {
+          const textChannel = message.channel as TextChannel;
+          const chatName = message.guild
+            ? `${message.guild.name} #${textChannel.name}`
+            : message.author.username;
+          await message.reply(
+            `Chat ID: \`dc:${message.channelId}\`\nName: ${chatName}\nType: ${message.guild ? 'guild' : 'dm'}`,
+          );
+          return;
+        }
+        if (cmd === 'ping') {
+          await message.reply(`${ASSISTANT_NAME} is online.`);
+          return;
+        }
+        if (cmd === 'kill') {
+          const chatJid = `dc:${message.channelId}`;
+          if (this.opts.onCriticalCommand) {
+            this.opts.onCriticalCommand(chatJid, 'kill');
+            await message.reply('Agent container killed.');
+          } else {
+            await message.reply('Kill command not available.');
+          }
+          return;
+        }
+        if (cmd === 'restart') {
+          await message.reply('Restarting NanoClaw...');
+          exec('systemctl --user restart nanoclaw', (err) => {
+            if (err) {
+              logger.error({ err }, 'Failed to restart NanoClaw');
+            }
+          });
+          return;
+        }
+        if (cmd === 'reboot') {
+          await message.reply('Rebooting PC...');
+          const envVars = readEnvFile(['SUDO_PASS']);
+          const sudoPass = process.env.SUDO_PASS || envVars.SUDO_PASS || '';
+          exec(
+            sudoPass
+              ? `echo '${sudoPass.replace(/'/g, "'\\''")}' | sudo -S reboot`
+              : 'sudo reboot',
+            (err) => {
+              if (err) {
+                logger.error({ err }, 'Failed to reboot');
+              }
+            },
+          );
+          return;
+        }
+        if (cmd === 'spin_yw') {
+          const chatJid = `dc:${message.channelId}`;
+          // Kill any existing agent first, then trigger a new spin
+          if (this.opts.onCriticalCommand) {
+            this.opts.onCriticalCommand(chatJid, 'kill');
+          }
+          // Send a trigger message so the message loop picks it up and spawns a fresh container
+          this.opts.onMessage(chatJid, {
+            id: message.id,
+            chat_jid: chatJid,
+            sender: message.author.id,
+            sender_name:
+              message.member?.displayName ||
+              message.author.displayName ||
+              message.author.username,
+            content: `@${ASSISTANT_NAME} You have been spun up. Check your tasks and report status.`,
+            timestamp: message.createdAt.toISOString(),
+            is_from_me: false,
+          });
+          await message.reply('Spinning up YW instance...');
+          return;
+        }
+      }
 
       const channelId = message.channelId;
       const chatJid = `dc:${channelId}`;
@@ -112,26 +196,40 @@ export class DiscordChannel implements Channel {
         }
       }
 
-      // Handle attachments — store placeholders so the agent knows something was sent
+      // Handle attachments — download images for vision, placeholders for other types
       if (message.attachments.size > 0) {
-        const attachmentDescriptions = [...message.attachments.values()].map(
-          (att) => {
-            const contentType = att.contentType || '';
-            if (contentType.startsWith('image/')) {
-              return `[Image: ${att.name || 'image'}]`;
-            } else if (contentType.startsWith('video/')) {
-              return `[Video: ${att.name || 'video'}]`;
-            } else if (contentType.startsWith('audio/')) {
-              return `[Audio: ${att.name || 'audio'}]`;
-            } else {
-              return `[File: ${att.name || 'file'}]`;
+        const group = this.opts.registeredGroups()[chatJid];
+        const groupDir = group ? path.join(GROUPS_DIR, group.folder) : '';
+
+        const descriptions: string[] = [];
+        for (const att of message.attachments.values()) {
+          const contentType = att.contentType || '';
+          if (contentType.startsWith('image/') && groupDir) {
+            try {
+              const resp = await fetch(att.url);
+              const arrayBuf = await resp.arrayBuffer();
+              const buffer = Buffer.from(arrayBuf);
+              const result = await processImage(buffer, groupDir, '');
+              if (result) {
+                descriptions.push(result.content);
+                continue;
+              }
+            } catch (err) {
+              logger.warn({ err, name: att.name }, 'Discord image download failed');
             }
-          },
-        );
-        if (content) {
-          content = `${content}\n${attachmentDescriptions.join('\n')}`;
-        } else {
-          content = attachmentDescriptions.join('\n');
+            descriptions.push(`[Image: ${att.name || 'image'}]`);
+          } else if (contentType.startsWith('video/')) {
+            descriptions.push(`[Video: ${att.name || 'video'}]`);
+          } else if (contentType.startsWith('audio/')) {
+            descriptions.push(`[Audio: ${att.name || 'audio'}]`);
+          } else {
+            descriptions.push(`[File: ${att.name || 'file'}]`);
+          }
+        }
+        if (descriptions.length > 0) {
+          content = content
+            ? `${content}\n${descriptions.join('\n')}`
+            : descriptions.join('\n');
         }
       }
 
@@ -245,8 +343,14 @@ export class DiscordChannel implements Channel {
       logger.info({ shardId, replayedEvents }, 'Discord shard resumed');
     });
 
-    // Handle button interactions — route back to agent as messages
+    // Handle interactions (slash commands + buttons)
     this.client.on(Events.InteractionCreate, async (interaction) => {
+      // Slash commands
+      if (interaction.isChatInputCommand()) {
+        await this._handleSlashCommand(interaction);
+        return;
+      }
+      // Button interactions — route back to agent as messages
       if (!interaction.isButton()) return;
       try {
         await interaction.deferUpdate();
@@ -299,6 +403,11 @@ export class DiscordChannel implements Channel {
             'Swarm webhook manager initialized',
           );
         }
+
+        // Register slash commands
+        this._registerSlashCommands(readyClient.user.id).catch((err) =>
+          logger.error({ err }, 'Failed to register Discord slash commands'),
+        );
 
         resolve();
       });
@@ -470,6 +579,144 @@ export class DiscordChannel implements Channel {
     } catch (err) {
       logger.error({ jid, err }, 'Failed to send Discord message with buttons');
     }
+  }
+
+  private async _registerSlashCommands(botUserId: string): Promise<void> {
+    const commands = [
+      new SlashCommandBuilder()
+        .setName('ping')
+        .setDescription(`Check if ${ASSISTANT_NAME} is online`),
+      new SlashCommandBuilder()
+        .setName('chatid')
+        .setDescription('Show this channel\'s JID, name, and type'),
+      new SlashCommandBuilder()
+        .setName('kill')
+        .setDescription('Kill the running agent container for this channel'),
+      new SlashCommandBuilder()
+        .setName('restart')
+        .setDescription('Restart NanoClaw service'),
+      new SlashCommandBuilder()
+        .setName('reboot')
+        .setDescription('Reboot the host PC'),
+      new SlashCommandBuilder()
+        .setName('spin_yw')
+        .setDescription('Kill existing agent and spin up a fresh YW instance'),
+    ];
+
+    const rest = new REST().setToken(this.botToken);
+    // Register per-guild for instant availability (global takes up to 1 hour)
+    if (this.client) {
+      for (const [guildId] of this.client.guilds.cache) {
+        await rest.put(Routes.applicationGuildCommands(botUserId, guildId), {
+          body: commands.map((c) => c.toJSON()),
+        });
+        logger.info(
+          { guildId, count: commands.length },
+          'Discord slash commands registered (guild)',
+        );
+      }
+    }
+    // Clear any stale global commands
+    await rest.put(Routes.applicationCommands(botUserId), { body: [] }).catch(() => {});
+  }
+
+  private async _handleSlashCommand(
+    interaction: ChatInputCommandInteraction,
+  ): Promise<void> {
+    const cmd = interaction.commandName;
+    const chatJid = `dc:${interaction.channelId}`;
+
+    try {
+      if (cmd === 'ping') {
+        await interaction.reply(`${ASSISTANT_NAME} is online.`);
+        return;
+      }
+
+      if (cmd === 'chatid') {
+        const textChannel = interaction.channel as TextChannel;
+        const chatName = interaction.guild
+          ? `${interaction.guild.name} #${textChannel.name}`
+          : interaction.user.username;
+        await interaction.reply(
+          `Chat ID: \`dc:${interaction.channelId}\`\nName: ${chatName}\nType: ${interaction.guild ? 'guild' : 'dm'}`,
+        );
+        return;
+      }
+
+      if (cmd === 'kill') {
+        if (this.opts.onCriticalCommand) {
+          this.opts.onCriticalCommand(chatJid, 'kill');
+          await interaction.reply('Agent container killed.');
+        } else {
+          await interaction.reply('Kill command not available.');
+        }
+        return;
+      }
+
+      if (cmd === 'restart') {
+        await interaction.reply('Restarting NanoClaw...');
+        exec('systemctl --user restart nanoclaw', (err) => {
+          if (err) logger.error({ err }, 'Failed to restart NanoClaw');
+        });
+        return;
+      }
+
+      if (cmd === 'reboot') {
+        await interaction.reply('Rebooting PC...');
+        const envVars = readEnvFile(['SUDO_PASS']);
+        const sudoPass = process.env.SUDO_PASS || envVars.SUDO_PASS || '';
+        exec(
+          sudoPass
+            ? `echo '${sudoPass.replace(/'/g, "'\\''")}' | sudo -S reboot`
+            : 'sudo reboot',
+          (err) => {
+            if (err) logger.error({ err }, 'Failed to reboot');
+          },
+        );
+        return;
+      }
+
+      if (cmd === 'spin_yw') {
+        if (this.opts.onCriticalCommand) {
+          this.opts.onCriticalCommand(chatJid, 'kill');
+        }
+        this.opts.onMessage(chatJid, {
+          id: interaction.id,
+          chat_jid: chatJid,
+          sender: interaction.user.id,
+          sender_name:
+            interaction.member && 'displayName' in interaction.member
+              ? (interaction.member as any).displayName ||
+                interaction.user.username
+              : interaction.user.username,
+          content: `@${ASSISTANT_NAME} You have been spun up. Check your tasks and report status.`,
+          timestamp: new Date().toISOString(),
+          is_from_me: false,
+        });
+        await interaction.reply('Spinning up YW instance...');
+        return;
+      }
+
+      await interaction.reply({ content: 'Unknown command.', ephemeral: true });
+    } catch (err) {
+      logger.error({ cmd, err }, 'Slash command handler error');
+      try {
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({ content: 'Command failed.', ephemeral: true });
+        }
+      } catch { /* already replied */ }
+    }
+  }
+
+  findChannelByName(name: string): string | null {
+    if (!this.client) return null;
+    for (const [, guild] of this.client.guilds.cache) {
+      const ch = guild.channels.cache.find(
+        (c) => c.isTextBased() && 'name' in c && c.name === name,
+      );
+      if (ch) return `dc:${ch.id}`;
+    }
+    return null;
   }
 
   async setTyping(jid: string, isTyping: boolean): Promise<void> {

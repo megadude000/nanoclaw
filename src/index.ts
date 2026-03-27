@@ -3,6 +3,8 @@ import path from 'path';
 
 import { OneCLI } from '@onecli-sh/sdk';
 
+import { readEnvFile } from './env.js';
+
 import {
   ASSISTANT_NAME,
   CREDENTIAL_PROXY_PORT,
@@ -54,6 +56,7 @@ import {
 import { GroupQueue } from './group-queue.js';
 import { resolveGroupFolderPath } from './group-folder.js';
 import { startIpcWatcher } from './ipc.js';
+import { parseImageReferences } from './image.js';
 import { findChannel, formatMessages, formatOutbound } from './router.js';
 import {
   restoreRemoteControl,
@@ -84,6 +87,7 @@ let registeredGroups: Record<string, RegisteredGroup> = {};
 let lastAgentTimestamp: Record<string, string> = {};
 let messageLoopRunning = false;
 let progressTracker: ProgressTracker;
+let sendToLogs: ((text: string) => Promise<void>) | undefined;
 
 const channels: Channel[] = [];
 const queue = new GroupQueue();
@@ -241,6 +245,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
   }
 
   const prompt = formatMessages(missedMessages, TIMEZONE);
+  const imageAttachments = parseImageReferences(missedMessages);
 
   // Advance cursor so the piping path in startMessageLoop won't re-fetch
   // these messages. Save the old cursor so we can roll back on error.
@@ -292,6 +297,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
     prompt,
     chatJid,
     triggerMessageId,
+    imageAttachments.length > 0 ? imageAttachments : undefined,
     async (result) => {
       // Streaming output callback — called for each agent result
       if (result.result) {
@@ -355,6 +361,7 @@ async function runAgent(
   prompt: string,
   chatJid: string,
   triggerMessageId?: string,
+  imageAttachments?: Array<{ relativePath: string; mediaType: string }>,
   onOutput?: (output: ContainerOutput) => Promise<void>,
 ): Promise<'success' | 'error'> {
   const isMain = group.isMain === true;
@@ -398,6 +405,7 @@ async function runAgent(
     : undefined;
 
   try {
+    sendToLogs?.(`📦 Container starting — **${group.folder}** (${chatJid})`);
     const output = await runContainerAgent(
       group,
       {
@@ -408,12 +416,19 @@ async function runAgent(
         isMain,
         assistantName: ASSISTANT_NAME,
         triggerMessageId,
+        imageAttachments,
       },
       (proc, containerName) =>
         queue.registerProcess(chatJid, proc, containerName, group.folder),
       wrappedOnOutput,
-      (chatJid, exitCode) =>
-        progressTracker?.onContainerStopped(chatJid, exitCode),
+      (cJid, exitCode) => {
+        progressTracker?.onContainerStopped(cJid, exitCode);
+        sendToLogs?.(
+          exitCode === 0
+            ? `✅ Container exited — **${group.folder}** (code 0)`
+            : `❌ Container exited — **${group.folder}** (code ${exitCode})`,
+        );
+      },
     );
 
     if (output.newSessionId) {
@@ -426,12 +441,14 @@ async function runAgent(
         { group: group.name, error: output.error },
         'Container agent error',
       );
+      sendToLogs?.(`⚠️ Agent error — **${group.folder}**: ${output.error?.slice(0, 200)}`);
       return 'error';
     }
 
     return 'success';
   } catch (err) {
     logger.error({ group: group.name, err }, 'Agent error');
+    sendToLogs?.(`⚠️ Agent crash — **${group.folder}**: ${String(err).slice(0, 200)}`);
     return 'error';
   }
 }
@@ -815,6 +832,24 @@ async function main(): Promise<void> {
   queue.setProcessMessagesFn(processGroupMessages);
   recoverPendingMessages();
   // Initialize progress tracker
+  // If a Discord logs channel is configured, dump progress there instead of source chat
+  const logsEnv = readEnvFile(['DISCORD_LOGS_CHANNEL_ID']);
+  const logsChannelId = process.env.DISCORD_LOGS_CHANNEL_ID || logsEnv.DISCORD_LOGS_CHANNEL_ID || '';
+  const dumpJid = logsChannelId ? `dc:${logsChannelId}` : undefined;
+  // Helper to send lifecycle events to the logs channel
+  sendToLogs = dumpJid
+    ? async (text: string) => {
+        const ch = findChannel(channels, dumpJid);
+        if (ch) await ch.sendMessage(dumpJid, text).catch(() => {});
+      }
+    : undefined;
+
+  // Log startup
+  if (sendToLogs) {
+    const channelNames = channels.map((c) => c.name).join(', ');
+    sendToLogs(`🟢 NanoClaw started — channels: ${channelNames}`);
+  }
+
   progressTracker = new ProgressTracker({
     sendMsg: async (jid, text) => {
       const ch = findChannel(channels, jid) as any;
@@ -832,6 +867,7 @@ async function main(): Promise<void> {
       const ch = findChannel(channels, jid);
       await ch?.setTyping?.(jid, typing);
     },
+    dumpJid,
   });
   startMessageLoop().catch((err) => {
     logger.fatal({ err }, 'Message loop crashed unexpectedly');
