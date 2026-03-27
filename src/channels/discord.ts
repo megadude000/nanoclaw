@@ -14,6 +14,10 @@ import path from 'path';
 
 import { chunkMessage } from '../discord-chunker.js';
 import { sanitizeWithCollisionCheck, createGroupStub } from '../discord-group-utils.js';
+import {
+  SwarmWebhookManager,
+  loadSwarmIdentities,
+} from '../swarm-webhook-manager.js';
 
 import { ASSISTANT_NAME, GROUPS_DIR, TRIGGER_PATTERN } from '../config.js';
 import { readEnvFile } from '../env.js';
@@ -39,6 +43,7 @@ export class DiscordChannel implements Channel {
   private client: Client | null = null;
   private opts: DiscordChannelOpts;
   private botToken: string;
+  private swarmManager: SwarmWebhookManager | null = null;
 
   constructor(botToken: string, opts: DiscordChannelOpts) {
     this.botToken = botToken;
@@ -272,6 +277,17 @@ export class DiscordChannel implements Channel {
         if (!process.env.DISCORD_MAIN_CHANNEL_ID) {
           logger.warn('DISCORD_MAIN_CHANNEL_ID not set — no Discord channel will get main group privileges');
         }
+
+        // Initialize swarm webhook manager for distinct bot identities
+        const identities = loadSwarmIdentities();
+        if (identities.length > 0) {
+          this.swarmManager = new SwarmWebhookManager(identities);
+          logger.info(
+            { identities: identities.map((i) => i.name) },
+            'Swarm webhook manager initialized',
+          );
+        }
+
         resolve();
       });
 
@@ -279,10 +295,38 @@ export class DiscordChannel implements Channel {
     });
   }
 
-  async sendMessage(jid: string, text: string): Promise<void> {
+  async sendMessage(jid: string, text: string, sender?: string): Promise<void> {
     if (!this.client) {
       logger.warn('Discord client not initialized');
       return;
+    }
+
+    // Swarm identity routing (D-13): check sender before normal send
+    if (sender && this.swarmManager?.hasIdentity(sender)) {
+      try {
+        const channelId = jid.replace(/^dc:/, '');
+        const channel = await this.client.channels.fetch(channelId);
+        if (channel && 'send' in channel) {
+          const textChannel = channel as TextChannel;
+          const sent = await this.swarmManager.send(textChannel, text, sender);
+          if (sent) {
+            logger.info(
+              { jid, sender, length: text.length },
+              'Discord swarm message sent via webhook',
+            );
+            return;
+          }
+          // Fallback: prefix message with sender name (D-11)
+          logger.warn({ jid, sender }, 'Swarm webhook fallback to main bot');
+          text = `[${sender}] ${text}`;
+        }
+      } catch (err) {
+        logger.warn(
+          { jid, sender, err },
+          'Swarm webhook routing failed, falling back to main bot',
+        );
+        text = `[${sender}] ${text}`;
+      }
     }
 
     try {
