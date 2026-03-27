@@ -121,7 +121,7 @@ Plans:
 **Plans:** 1/2 plans executed
 Plans:
 - [x] 07-01-PLAN.md — SwarmWebhookManager class, config, and unit tests
-- [ ] 07-02-PLAN.md — Thread sender through IPC and wire swarm routing into DiscordChannel
+- [x] 07-02-PLAN.md — Thread sender through IPC and wire swarm routing into DiscordChannel
 
 ### Phase 8: Per-Channel Context and Migration
 **Goal**: Each Discord channel has themed AI behavior via channel-specific CLAUDE.md, and notifications migrate gradually from Telegram to Discord
