@@ -95,11 +95,19 @@ export interface Channel {
   // Optional: react to a message with an emoji.
   reactToMessage?(jid: string, messageId: string, emoji: string): Promise<void>;
   // Optional: send a message with inline buttons.
-  sendWithButtons?(jid: string, text: string, buttons: any[], rowSize?: number): Promise<void>;
+  sendWithButtons?(
+    jid: string,
+    text: string,
+    buttons: any[],
+    rowSize?: number,
+  ): Promise<void>;
   // Optional: edit a previously sent message (for progress tracker updates).
   editMessage?(jid: string, messageId: string, text: string): Promise<void>;
   // Optional: send a message and return its ID (for edit/button tracking).
-  sendMessageRaw?(jid: string, text: string): Promise<{ message_id: string } | undefined>;
+  sendMessageRaw?(
+    jid: string,
+    text: string,
+  ): Promise<{ message_id: string } | undefined>;
 }
 
 // Callback type that channels use to deliver inbound messages

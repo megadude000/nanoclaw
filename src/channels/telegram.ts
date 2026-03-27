@@ -893,12 +893,18 @@ disown
     }
   }
 
-  async sendMessageRaw(jid: string, text: string): Promise<{ message_id: number } | undefined> {
+  async sendMessageRaw(
+    jid: string,
+    text: string,
+  ): Promise<{ message_id: number } | undefined> {
     if (!this.bot) return undefined;
     try {
       const numericId = Number(jid.replace(/^tg:/, ''));
       const MAX_LENGTH = 4096;
-      const msg = await this.bot.api.sendMessage(numericId, text.slice(0, MAX_LENGTH));
+      const msg = await this.bot.api.sendMessage(
+        numericId,
+        text.slice(0, MAX_LENGTH),
+      );
       return { message_id: msg.message_id };
     } catch (err) {
       logger.debug({ jid, err }, 'sendMessageRaw failed');
@@ -906,14 +912,21 @@ disown
     }
   }
 
-  async editMessage(jid: string, messageId: number, text: string): Promise<void> {
+  async editMessage(
+    jid: string,
+    messageId: number,
+    text: string,
+  ): Promise<void> {
     if (!this.bot) return;
     try {
       const numericId = Number(jid.replace(/^tg:/, ''));
       await this.bot.api.editMessageText(numericId, messageId, text);
     } catch (err: any) {
       if (err?.error_code !== 400) {
-        logger.debug({ jid, messageId, err }, 'Failed to edit Telegram message');
+        logger.debug(
+          { jid, messageId, err },
+          'Failed to edit Telegram message',
+        );
       }
     }
   }
@@ -924,7 +937,10 @@ disown
       const numericId = Number(jid.replace(/^tg:/, ''));
       await this.bot.api.deleteMessage(numericId, messageId);
     } catch (err) {
-      logger.debug({ jid, messageId, err }, 'Failed to delete Telegram message');
+      logger.debug(
+        { jid, messageId, err },
+        'Failed to delete Telegram message',
+      );
     }
   }
 

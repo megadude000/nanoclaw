@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { DiscordServerManager, ServerManagerDeps, ServerConfigSchema } from './discord-server-manager.js';
+import {
+  DiscordServerManager,
+  ServerManagerDeps,
+  ServerConfigSchema,
+} from './discord-server-manager.js';
 import { ChannelType } from 'discord.js';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -45,7 +49,9 @@ describe('DiscordServerManager', () => {
 
   describe('create_channel', () => {
     it('creates a text channel and returns channelId', async () => {
-      const result = await manager.handleAction('create_channel', { name: 'general' });
+      const result = await manager.handleAction('create_channel', {
+        name: 'general',
+      });
       expect(result.success).toBe(true);
       expect(result.channelId).toBe('999');
       expect(guild.channels.create).toHaveBeenCalledWith(
@@ -54,7 +60,10 @@ describe('DiscordServerManager', () => {
     });
 
     it('passes parentId when provided', async () => {
-      await manager.handleAction('create_channel', { name: 'sub', parentId: '888' });
+      await manager.handleAction('create_channel', {
+        name: 'sub',
+        parentId: '888',
+      });
       expect(guild.channels.create).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'sub', parent: '888' }),
       );
@@ -64,7 +73,9 @@ describe('DiscordServerManager', () => {
   describe('create_category', () => {
     it('creates a category and returns categoryId', async () => {
       guild.channels.create.mockResolvedValue({ id: '777', name: 'ops' });
-      const result = await manager.handleAction('create_category', { name: 'ops' });
+      const result = await manager.handleAction('create_category', {
+        name: 'ops',
+      });
       expect(result.success).toBe(true);
       expect(result.categoryId).toBe('777');
     });
@@ -72,14 +83,18 @@ describe('DiscordServerManager', () => {
 
   describe('delete_channel', () => {
     it('deletes an existing channel', async () => {
-      const result = await manager.handleAction('delete_channel', { channelId: '123456789' });
+      const result = await manager.handleAction('delete_channel', {
+        channelId: '123456789',
+      });
       expect(result.success).toBe(true);
       expect(guild._mockChannel.delete).toHaveBeenCalled();
     });
 
     it('returns error for non-existent channel', async () => {
       guild.channels.fetch.mockResolvedValue(null);
-      const result = await manager.handleAction('delete_channel', { channelId: 'bad' });
+      const result = await manager.handleAction('delete_channel', {
+        channelId: 'bad',
+      });
       expect(result.success).toBe(false);
       expect(result.error).toMatch(/not found/i);
     });
@@ -92,7 +107,9 @@ describe('DiscordServerManager', () => {
         name: 'new-name',
       });
       expect(result.success).toBe(true);
-      expect(guild._mockChannel.edit).toHaveBeenCalledWith({ name: 'new-name' });
+      expect(guild._mockChannel.edit).toHaveBeenCalledWith({
+        name: 'new-name',
+      });
     });
   });
 
@@ -106,7 +123,9 @@ describe('DiscordServerManager', () => {
         ],
       });
       expect(result.success).toBe(true);
-      expect(guild._mockChannel.permissionOverwrites.edit).toHaveBeenCalledTimes(2);
+      expect(
+        guild._mockChannel.permissionOverwrites.edit,
+      ).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -120,8 +139,12 @@ describe('DiscordServerManager', () => {
 
   describe('guild not connected', () => {
     it('returns error when guild is null', async () => {
-      const disconnectedManager = new DiscordServerManager({ getGuild: () => null });
-      const result = await disconnectedManager.handleAction('create_channel', { name: 'test' });
+      const disconnectedManager = new DiscordServerManager({
+        getGuild: () => null,
+      });
+      const result = await disconnectedManager.handleAction('create_channel', {
+        name: 'test',
+      });
       expect(result.success).toBe(false);
       expect(result.error).toMatch(/not connected/i);
     });
@@ -130,14 +153,21 @@ describe('DiscordServerManager', () => {
   describe('error handling', () => {
     it('catches discord.js errors and returns them', async () => {
       guild.channels.create.mockRejectedValue(new Error('Missing Permissions'));
-      const result = await manager.handleAction('create_channel', { name: 'test' });
+      const result = await manager.handleAction('create_channel', {
+        name: 'test',
+      });
       expect(result.success).toBe(false);
       expect(result.error).toBe('Missing Permissions');
     });
   });
 
   describe('bootstrap', () => {
-    const configPath = resolve(__dirname, '..', 'config', 'discord-server.json');
+    const configPath = resolve(
+      __dirname,
+      '..',
+      'config',
+      'discord-server.json',
+    );
     let channelIdCounter: number;
 
     function makeChannelEntry(
@@ -166,7 +196,12 @@ describe('DiscordServerManager', () => {
       guild.channels.fetch = vi.fn().mockResolvedValue(new Map());
       guild.channels.create = vi.fn().mockImplementation(async (opts: any) => {
         const id = String(channelIdCounter++);
-        return { id, name: opts.name, type: opts.type, parentId: opts.parent ?? null };
+        return {
+          id,
+          name: opts.name,
+          type: opts.type,
+          parentId: opts.parent ?? null,
+        };
       });
     });
 
@@ -185,7 +220,9 @@ describe('DiscordServerManager', () => {
       );
       expect(categoryCalls).toHaveLength(4);
       const catNames = categoryCalls.map((c: any) => c[0].name);
-      expect(catNames).toEqual(expect.arrayContaining(['General', 'YourWave', 'Dev', 'Admin']));
+      expect(catNames).toEqual(
+        expect.arrayContaining(['General', 'YourWave', 'Dev', 'Admin']),
+      );
     });
 
     it('creates nothing when structure already exists (idempotent)', async () => {
@@ -232,11 +269,18 @@ describe('DiscordServerManager', () => {
     });
 
     it('returns error for invalid config', async () => {
-      const tmpConfig = resolve(__dirname, '..', 'config', '_test_invalid.json');
+      const tmpConfig = resolve(
+        __dirname,
+        '..',
+        'config',
+        '_test_invalid.json',
+      );
       writeFileSync(tmpConfig, '{"bad": true}');
 
       try {
-        const result = await manager.handleAction('bootstrap', { configPath: tmpConfig });
+        const result = await manager.handleAction('bootstrap', {
+          configPath: tmpConfig,
+        });
         expect(result.success).toBe(false);
         expect(result.error).toMatch(/Invalid config/);
       } finally {
@@ -253,7 +297,12 @@ describe('DiscordServerManager', () => {
           throw new Error('Rate limited');
         }
         const id = String(channelIdCounter++);
-        return { id, name: opts.name, type: opts.type, parentId: opts.parent ?? null };
+        return {
+          id,
+          name: opts.name,
+          type: opts.type,
+          parentId: opts.parent ?? null,
+        };
       });
 
       const result = await manager.handleAction('bootstrap', { configPath });

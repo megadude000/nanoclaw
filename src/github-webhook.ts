@@ -167,7 +167,8 @@ async function handleWorkflowRunEvent(
   });
 
   for (const target of targets) {
-    const targetTaskId = targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
+    const targetTaskId =
+      targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
     try {
       createTask({
         id: targetTaskId,
@@ -182,7 +183,14 @@ async function handleWorkflowRunEvent(
         created_at: now,
       });
       logger.info(
-        { repoFullName, runId, conclusion, headBranch, taskId: targetTaskId, jid: target.jid },
+        {
+          repoFullName,
+          runId,
+          conclusion,
+          headBranch,
+          taskId: targetTaskId,
+          jid: target.jid,
+        },
         'GitHub CI task created for target',
       );
     } catch (err) {

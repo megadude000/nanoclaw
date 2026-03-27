@@ -29,8 +29,13 @@ export function chunkMessage(text: string, maxLength = 2000): string[] {
     // We need to figure out if a chunk carved from remaining will end
     // inside a fence. To do that conservatively, reserve space for
     // fence close in case we need it.
-    const reserve = insideFence ? closeTag.length : fenceCloseReserve(remaining, maxLength);
-    const effectiveMax = Math.max(maxLength - reserve, Math.floor(maxLength * 0.3));
+    const reserve = insideFence
+      ? closeTag.length
+      : fenceCloseReserve(remaining, maxLength);
+    const effectiveMax = Math.max(
+      maxLength - reserve,
+      Math.floor(maxLength * 0.3),
+    );
 
     const effectiveSlice = remaining.slice(0, effectiveMax);
 

@@ -37,7 +37,10 @@ export async function handleGitHubIssuesEvent(
   const taskId = `github-issue-${issueNumber}`;
 
   if (getTaskById(taskId)) {
-    logger.debug({ taskId }, 'GitHub issues webhook: duplicate event, skipping');
+    logger.debug(
+      { taskId },
+      'GitHub issues webhook: duplicate event, skipping',
+    );
     return;
   }
 
@@ -52,10 +55,14 @@ export async function handleGitHubIssuesEvent(
 
   // No bug label — send Telegram buttons and exit
   if (!labelNames.includes('bug')) {
-    logger.info({ issueNumber, issueTitle, labelNames }, 'GitHub issue: no bug label, asking user');
+    logger.info(
+      { issueNumber, issueTitle, labelNames },
+      'GitHub issue: no bug label, asking user',
+    );
     const prompt = buildNoBugLabelPrompt({ issueNumber, issueTitle, issueUrl });
     for (const target of targets) {
-      const targetTaskId = targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
+      const targetTaskId =
+        targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
       try {
         createTask({
           id: targetTaskId,
@@ -69,9 +76,15 @@ export async function handleGitHubIssuesEvent(
           status: 'active',
           created_at: now,
         });
-        logger.info({ taskId: targetTaskId, jid: target.jid }, 'GitHub issues webhook: task created for target');
+        logger.info(
+          { taskId: targetTaskId, jid: target.jid },
+          'GitHub issues webhook: task created for target',
+        );
       } catch (err) {
-        logger.error({ err, taskId: targetTaskId, jid: target.jid }, 'GitHub issues webhook: failed to create task for target');
+        logger.error(
+          { err, taskId: targetTaskId, jid: target.jid },
+          'GitHub issues webhook: failed to create task for target',
+        );
       }
     }
     return;
@@ -82,7 +95,10 @@ export async function handleGitHubIssuesEvent(
     ? 'immediate'
     : 'nightshift';
 
-  logger.info({ issueNumber, issueTitle, fixMode, taskId }, 'GitHub bug issue task queued');
+  logger.info(
+    { issueNumber, issueTitle, fixMode, taskId },
+    'GitHub bug issue task queued',
+  );
 
   const prompt = buildBugFixPrompt({
     issueNumber,
@@ -94,7 +110,8 @@ export async function handleGitHubIssuesEvent(
   });
 
   for (const target of targets) {
-    const targetTaskId = targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
+    const targetTaskId =
+      targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
     try {
       createTask({
         id: targetTaskId,
@@ -108,9 +125,15 @@ export async function handleGitHubIssuesEvent(
         status: 'active',
         created_at: now,
       });
-      logger.info({ taskId: targetTaskId, jid: target.jid }, 'GitHub issues webhook: task created for target');
+      logger.info(
+        { taskId: targetTaskId, jid: target.jid },
+        'GitHub issues webhook: task created for target',
+      );
     } catch (err) {
-      logger.error({ err, taskId: targetTaskId, jid: target.jid }, 'GitHub issues webhook: failed to create task for target');
+      logger.error(
+        { err, taskId: targetTaskId, jid: target.jid },
+        'GitHub issues webhook: failed to create task for target',
+      );
     }
   }
 }

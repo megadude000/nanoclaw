@@ -1,12 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { buildBugEmbed, buildTaskEmbed, buildProgressEmbed, COLORS } from './discord-embeds.js';
+import {
+  buildBugEmbed,
+  buildTaskEmbed,
+  buildProgressEmbed,
+  COLORS,
+} from './discord-embeds.js';
 
 describe('COLORS', () => {
   it('has correct color values', () => {
-    expect(COLORS.bug).toBe(0xED4245);
-    expect(COLORS.task).toBe(0x5865F2);
-    expect(COLORS.progress).toBe(0x57F287);
-    expect(COLORS.alert).toBe(0xFEE75C);
+    expect(COLORS.bug).toBe(0xed4245);
+    expect(COLORS.task).toBe(0x5865f2);
+    expect(COLORS.progress).toBe(0x57f287);
+    expect(COLORS.alert).toBe(0xfee75c);
   });
 });
 
@@ -19,7 +24,7 @@ describe('buildBugEmbed', () => {
       labels: ['p1', 'bug'],
     });
     const data = embed.toJSON();
-    expect(data.color).toBe(0xED4245);
+    expect(data.color).toBe(0xed4245);
     expect(data.title).toBe('Bug: crash on login');
     expect(data.description).toBe('App crashes when user logs in');
     expect(data.timestamp).toBeDefined();
@@ -54,7 +59,7 @@ describe('buildTaskEmbed', () => {
       assignee: 'dev1',
     });
     const data = embed.toJSON();
-    expect(data.color).toBe(0x5865F2);
+    expect(data.color).toBe(0x5865f2);
     expect(data.title).toBe('Task: implement feature');
     expect(data.timestamp).toBeDefined();
     const statusField = data.fields?.find((f: any) => f.name === 'Status');
@@ -78,7 +83,7 @@ describe('buildProgressEmbed', () => {
       percent: 75,
     });
     const data = embed.toJSON();
-    expect(data.color).toBe(0x57F287);
+    expect(data.color).toBe(0x57f287);
     expect(data.title).toBe('Progress Update');
     expect(data.timestamp).toBeDefined();
     const phaseField = data.fields?.find((f: any) => f.name === 'Phase');

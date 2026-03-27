@@ -28,7 +28,9 @@ describe('sanitizeDiscordChannelName', () => {
   });
 
   it('falls back to dc-channel for all-emoji string', () => {
-    expect(sanitizeDiscordChannelName('\u{1F600}\u{1F601}\u{1F602}')).toBe('dc-channel');
+    expect(sanitizeDiscordChannelName('\u{1F600}\u{1F601}\u{1F602}')).toBe(
+      'dc-channel',
+    );
   });
 
   it('truncates very long names to 64 chars total', () => {
@@ -47,37 +49,66 @@ describe('sanitizeDiscordChannelName', () => {
   });
 
   it('all outputs pass isValidGroupFolder', () => {
-    const inputs = ['general', 'My Channel', 'bugs', 'yw-tasks', '', '\u{1F600}', 'a'.repeat(100), 'foo   bar', '-hello-'];
+    const inputs = [
+      'general',
+      'My Channel',
+      'bugs',
+      'yw-tasks',
+      '',
+      '\u{1F600}',
+      'a'.repeat(100),
+      'foo   bar',
+      '-hello-',
+    ];
     for (const input of inputs) {
       const result = sanitizeDiscordChannelName(input);
-      expect(isValidGroupFolder(result), `"${input}" -> "${result}" should be valid`).toBe(true);
+      expect(
+        isValidGroupFolder(result),
+        `"${input}" -> "${result}" should be valid`,
+      ).toBe(true);
     }
   });
 });
 
 describe('sanitizeWithCollisionCheck', () => {
   it('returns base name when no collision', () => {
-    const result = sanitizeWithCollisionCheck('general', '123456789012345678', new Set());
+    const result = sanitizeWithCollisionCheck(
+      'general',
+      '123456789012345678',
+      new Set(),
+    );
     expect(result).toBe('dc-general');
   });
 
   it('appends last 6 chars of channelId on collision', () => {
     const existing = new Set(['dc-general']);
-    const result = sanitizeWithCollisionCheck('general', '123456789012345678', existing);
+    const result = sanitizeWithCollisionCheck(
+      'general',
+      '123456789012345678',
+      existing,
+    );
     expect(result).toBe('dc-general-345678');
   });
 
   it('truncates base to fit suffix within 64 chars', () => {
     const longName = 'a'.repeat(100);
     const existing = new Set([sanitizeDiscordChannelName(longName)]);
-    const result = sanitizeWithCollisionCheck(longName, '123456789012345678', existing);
+    const result = sanitizeWithCollisionCheck(
+      longName,
+      '123456789012345678',
+      existing,
+    );
     expect(result.length).toBeLessThanOrEqual(64);
     expect(isValidGroupFolder(result)).toBe(true);
   });
 
   it('collision result passes isValidGroupFolder', () => {
     const existing = new Set(['dc-general']);
-    const result = sanitizeWithCollisionCheck('general', '123456789012345678', existing);
+    const result = sanitizeWithCollisionCheck(
+      'general',
+      '123456789012345678',
+      existing,
+    );
     expect(isValidGroupFolder(result)).toBe(true);
   });
 });

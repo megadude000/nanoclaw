@@ -48,7 +48,7 @@ const validConfig = JSON.stringify({
       { platform: 'discord', jid: 'dc:456' },
     ],
   },
-  'notion': {
+  notion: {
     targets: [{ platform: 'telegram', jid: 'tg:-100123' }],
   },
 });
@@ -65,7 +65,10 @@ describe('resolveTargets', () => {
     const result = resolveTargets('github-issues', mockGroups);
 
     expect(result).toHaveLength(2);
-    expect(result[0]).toEqual({ jid: 'tg:-100123', group: mockGroups['tg:-100123'] });
+    expect(result[0]).toEqual({
+      jid: 'tg:-100123',
+      group: mockGroups['tg:-100123'],
+    });
     expect(result[1]).toEqual({ jid: 'dc:456', group: mockGroups['dc:456'] });
   });
 

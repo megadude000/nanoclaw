@@ -18,17 +18,21 @@ vi.mock('../config.js', () => ({
 // Mock discord-group-utils
 vi.mock('../discord-group-utils.js', () => ({
   sanitizeWithCollisionCheck: vi.fn(
-    (name: string, _id: string, _existing: Set<string>) => `dc-${name}`
+    (name: string, _id: string, _existing: Set<string>) => `dc-${name}`,
   ),
   createGroupStub: vi.fn(
     (name: string, isMain: boolean) =>
-      `# ${name}\n\nDiscord channel group.${isMain ? ' This is the main channel.' : ''}\n`
+      `# ${name}\n\nDiscord channel group.${isMain ? ' This is the main channel.' : ''}\n`,
   ),
 }));
 
 // Mock fs
 vi.mock('fs', () => ({
-  default: { existsSync: vi.fn(() => false), writeFileSync: vi.fn(), mkdirSync: vi.fn() },
+  default: {
+    existsSync: vi.fn(() => false),
+    writeFileSync: vi.fn(),
+    mkdirSync: vi.fn(),
+  },
   existsSync: vi.fn(() => false),
   writeFileSync: vi.fn(),
   mkdirSync: vi.fn(),
@@ -74,14 +78,26 @@ vi.mock('discord.js', () => {
     private _customId = '';
     private _label = '';
     private _style = 0;
-    setCustomId(id: string) { this._customId = id; return this; }
-    setLabel(label: string) { this._label = label; return this; }
-    setStyle(style: number) { this._style = style; return this; }
+    setCustomId(id: string) {
+      this._customId = id;
+      return this;
+    }
+    setLabel(label: string) {
+      this._label = label;
+      return this;
+    }
+    setStyle(style: number) {
+      this._style = style;
+      return this;
+    }
   }
 
   class MockActionRowBuilder {
     components: any[] = [];
-    addComponents(items: any[]) { this.components.push(...items); return this; }
+    addComponents(items: any[]) {
+      this.components.push(...items);
+      return this;
+    }
   }
 
   class MockClient {
@@ -762,9 +778,9 @@ describe('DiscordChannel', () => {
         reference: { messageId: 'orig_id' },
         guildName: 'Server',
       });
-      msg.channel.messages.fetch = vi.fn().mockRejectedValue(
-        new Error('Unknown Message'),
-      );
+      msg.channel.messages.fetch = vi
+        .fn()
+        .mockRejectedValue(new Error('Unknown Message'));
       await triggerMessage(msg);
 
       expect(opts.onMessage).toHaveBeenCalledWith(
@@ -850,7 +866,9 @@ describe('DiscordChannel', () => {
       // Should be split into multiple chunks (markdown-aware chunker handles this)
       expect(mockChannel.send).toHaveBeenCalledTimes(2);
       // All chunks together should equal original text
-      const allSent = mockChannel.send.mock.calls.map((c: any[]) => c[0]).join('');
+      const allSent = mockChannel.send.mock.calls
+        .map((c: any[]) => c[0])
+        .join('');
       expect(allSent).toBe(longText);
     });
   });
@@ -947,9 +965,15 @@ describe('DiscordChannel', () => {
       };
       currentClient().channels.fetch.mockResolvedValue(mockChannel);
 
-      await channel.editMessage('dc:1234567890123456', 'msg_123', 'Updated text');
+      await channel.editMessage(
+        'dc:1234567890123456',
+        'msg_123',
+        'Updated text',
+      );
 
-      expect(currentClient().channels.fetch).toHaveBeenCalledWith('1234567890123456');
+      expect(currentClient().channels.fetch).toHaveBeenCalledWith(
+        '1234567890123456',
+      );
       expect(mockChannel.messages.fetch).toHaveBeenCalledWith('msg_123');
       expect(mockEdit).toHaveBeenCalledWith('Updated text');
     });
@@ -967,7 +991,9 @@ describe('DiscordChannel', () => {
       const channel = new DiscordChannel('test-token', opts);
       await channel.connect();
 
-      currentClient().channels.fetch.mockRejectedValueOnce(new Error('Not found'));
+      currentClient().channels.fetch.mockRejectedValueOnce(
+        new Error('Not found'),
+      );
 
       await expect(
         channel.editMessage('dc:1234567890123456', 'msg_123', 'text'),
@@ -989,7 +1015,10 @@ describe('DiscordChannel', () => {
       };
       currentClient().channels.fetch.mockResolvedValue(mockChannel);
 
-      const result = await channel.sendMessageRaw('dc:1234567890123456', 'Hello raw');
+      const result = await channel.sendMessageRaw(
+        'dc:1234567890123456',
+        'Hello raw',
+      );
 
       expect(result).toEqual({ message_id: 'discord_msg_456' });
       expect(mockChannel.send).toHaveBeenCalledWith('Hello raw');
@@ -999,7 +1028,10 @@ describe('DiscordChannel', () => {
       const opts = createTestOpts();
       const channel = new DiscordChannel('test-token', opts);
       // Don't connect
-      const result = await channel.sendMessageRaw('dc:1234567890123456', 'text');
+      const result = await channel.sendMessageRaw(
+        'dc:1234567890123456',
+        'text',
+      );
       expect(result).toBeUndefined();
     });
 
@@ -1026,7 +1058,10 @@ describe('DiscordChannel', () => {
 
       currentClient().channels.fetch.mockRejectedValueOnce(new Error('fail'));
 
-      const result = await channel.sendMessageRaw('dc:1234567890123456', 'text');
+      const result = await channel.sendMessageRaw(
+        'dc:1234567890123456',
+        'text',
+      );
       expect(result).toBeUndefined();
     });
   });
@@ -1045,7 +1080,11 @@ describe('DiscordChannel', () => {
       };
       currentClient().channels.fetch.mockResolvedValue(mockChannel);
 
-      await channel.sendPhoto('dc:1234567890123456', '/tmp/photo.png', 'My caption');
+      await channel.sendPhoto(
+        'dc:1234567890123456',
+        '/tmp/photo.png',
+        'My caption',
+      );
 
       expect(mockChannel.send).toHaveBeenCalledWith({
         content: 'My caption',
@@ -1186,7 +1225,8 @@ describe('DiscordChannel', () => {
         member: { displayName: 'Alice' },
       };
 
-      const handlers = currentClient().eventHandlers.get('interactionCreate') || [];
+      const handlers =
+        currentClient().eventHandlers.get('interactionCreate') || [];
       for (const h of handlers) await h(mockInteraction);
 
       expect(mockInteraction.deferUpdate).toHaveBeenCalled();
@@ -1212,7 +1252,8 @@ describe('DiscordChannel', () => {
         isButton: () => false,
       };
 
-      const handlers = currentClient().eventHandlers.get('interactionCreate') || [];
+      const handlers =
+        currentClient().eventHandlers.get('interactionCreate') || [];
       for (const h of handlers) await h(mockInteraction);
 
       expect(opts.onMessage).not.toHaveBeenCalled();
@@ -1233,7 +1274,8 @@ describe('DiscordChannel', () => {
         member: null,
       };
 
-      const handlers = currentClient().eventHandlers.get('interactionCreate') || [];
+      const handlers =
+        currentClient().eventHandlers.get('interactionCreate') || [];
       for (const h of handlers) await h(mockInteraction);
 
       expect(opts.onMessage).toHaveBeenCalledWith(

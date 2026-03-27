@@ -13,7 +13,10 @@ import fs from 'fs';
 import path from 'path';
 
 import { chunkMessage } from '../discord-chunker.js';
-import { sanitizeWithCollisionCheck, createGroupStub } from '../discord-group-utils.js';
+import {
+  sanitizeWithCollisionCheck,
+  createGroupStub,
+} from '../discord-group-utils.js';
 import {
   SwarmWebhookManager,
   loadSwarmIdentities,
@@ -167,7 +170,7 @@ export class DiscordChannel implements Channel {
         const isMain = channelId === mainChannelId;
 
         const existingFolders = new Set(
-          Object.values(this.opts.registeredGroups()).map(g => g.folder)
+          Object.values(this.opts.registeredGroups()).map((g) => g.folder),
         );
         const textChannel = message.channel as TextChannel;
         const folder = sanitizeWithCollisionCheck(
@@ -190,7 +193,10 @@ export class DiscordChannel implements Channel {
         const groupDir = path.join(GROUPS_DIR, folder);
         const claudePath = path.join(groupDir, 'CLAUDE.md');
         if (!fs.existsSync(claudePath)) {
-          fs.writeFileSync(claudePath, createGroupStub(textChannel.name, isMain));
+          fs.writeFileSync(
+            claudePath,
+            createGroupStub(textChannel.name, isMain),
+          );
         }
 
         logger.info(
@@ -250,9 +256,11 @@ export class DiscordChannel implements Channel {
         id: interaction.id,
         chat_jid: chatJid,
         sender: interaction.user.id,
-        sender_name: interaction.member && 'displayName' in interaction.member
-          ? (interaction.member as any).displayName || interaction.user.username
-          : interaction.user.username,
+        sender_name:
+          interaction.member && 'displayName' in interaction.member
+            ? (interaction.member as any).displayName ||
+              interaction.user.username
+            : interaction.user.username,
         content: `@${ASSISTANT_NAME} [button:${interaction.customId}]`,
         timestamp: new Date().toISOString(),
         is_from_me: false,
@@ -275,7 +283,9 @@ export class DiscordChannel implements Channel {
           `  Use /chatid command or check channel IDs in Discord settings\n`,
         );
         if (!process.env.DISCORD_MAIN_CHANNEL_ID) {
-          logger.warn('DISCORD_MAIN_CHANNEL_ID not set — no Discord channel will get main group privileges');
+          logger.warn(
+            'DISCORD_MAIN_CHANNEL_ID not set — no Discord channel will get main group privileges',
+          );
         }
 
         // Initialize swarm webhook manager for distinct bot identities
@@ -367,7 +377,11 @@ export class DiscordChannel implements Channel {
     }
   }
 
-  async editMessage(jid: string, messageId: string, text: string): Promise<void> {
+  async editMessage(
+    jid: string,
+    messageId: string,
+    text: string,
+  ): Promise<void> {
     if (!this.client) return;
     try {
       const channelId = jid.replace(/^dc:/, '');
@@ -381,7 +395,10 @@ export class DiscordChannel implements Channel {
     }
   }
 
-  async sendMessageRaw(jid: string, text: string): Promise<{ message_id: string } | undefined> {
+  async sendMessageRaw(
+    jid: string,
+    text: string,
+  ): Promise<{ message_id: string } | undefined> {
     if (!this.client) return undefined;
     try {
       const channelId = jid.replace(/^dc:/, '');
@@ -396,7 +413,11 @@ export class DiscordChannel implements Channel {
     }
   }
 
-  async sendPhoto(jid: string, photoPath: string, caption?: string): Promise<void> {
+  async sendPhoto(
+    jid: string,
+    photoPath: string,
+    caption?: string,
+  ): Promise<void> {
     if (!this.client) return;
     try {
       const channelId = jid.replace(/^dc:/, '');
@@ -407,7 +428,10 @@ export class DiscordChannel implements Channel {
         content: caption || undefined,
         files: [photoPath],
       });
-      logger.info({ jid, photoPath, hasCaption: !!caption }, 'Discord photo sent');
+      logger.info(
+        { jid, photoPath, hasCaption: !!caption },
+        'Discord photo sent',
+      );
     } catch (err) {
       logger.error({ jid, photoPath, err }, 'Failed to send Discord photo');
     }
@@ -429,12 +453,14 @@ export class DiscordChannel implements Channel {
       for (let i = 0; i < buttons.length; i += rowSize) {
         const row = new ActionRowBuilder<ButtonBuilder>();
         row.addComponents(
-          buttons.slice(i, i + rowSize).map((b) =>
-            new ButtonBuilder()
-              .setCustomId(b.data.slice(0, 100))
-              .setLabel(b.label)
-              .setStyle(ButtonStyle.Primary)
-          ),
+          buttons
+            .slice(i, i + rowSize)
+            .map((b) =>
+              new ButtonBuilder()
+                .setCustomId(b.data.slice(0, 100))
+                .setLabel(b.label)
+                .setStyle(ButtonStyle.Primary),
+            ),
         );
         rows.push(row);
       }

@@ -44,9 +44,14 @@ export async function routeOutbound(
   if (!channel) {
     // If we know where the request came from, notify that channel about the failure
     if (originJid && originJid !== jid) {
-      const originChannel = channels.find((c) => c.ownsJid(originJid) && c.isConnected());
+      const originChannel = channels.find(
+        (c) => c.ownsJid(originJid) && c.isConnected(),
+      );
       if (originChannel) {
-        await originChannel.sendMessage(originJid, `[Error] Failed to deliver message to ${jid}: no connected channel found`);
+        await originChannel.sendMessage(
+          originJid,
+          `[Error] Failed to deliver message to ${jid}: no connected channel found`,
+        );
       }
     }
     throw new Error(`No channel for JID: ${jid}`);
@@ -55,10 +60,15 @@ export async function routeOutbound(
     await channel.sendMessage(jid, text);
   } catch (err) {
     if (originJid && originJid !== jid) {
-      const originChannel = channels.find((c) => c.ownsJid(originJid) && c.isConnected());
+      const originChannel = channels.find(
+        (c) => c.ownsJid(originJid) && c.isConnected(),
+      );
       if (originChannel) {
         try {
-          await originChannel.sendMessage(originJid, `[Error] Failed to send message to ${jid}: ${err instanceof Error ? err.message : 'unknown error'}`);
+          await originChannel.sendMessage(
+            originJid,
+            `[Error] Failed to send message to ${jid}: ${err instanceof Error ? err.message : 'unknown error'}`,
+          );
         } catch {
           // Avoid infinite error loops
         }

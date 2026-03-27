@@ -155,7 +155,10 @@ ${report.description}
 - Reported At: ${report.timestamp || new Date().toISOString()}
 - User Agent: ${report.userAgent}`;
 
-  const labels = ['bug', report.fixMode === 'immediate' ? 'immediate' : 'nightshift'];
+  const labels = [
+    'bug',
+    report.fixMode === 'immediate' ? 'immediate' : 'nightshift',
+  ];
 
   try {
     const response = await fetch(
@@ -181,7 +184,10 @@ ${report.description}
       return null;
     }
 
-    const data = (await response.json()) as { number: number; html_url: string };
+    const data = (await response.json()) as {
+      number: number;
+      html_url: string;
+    };
     return { number: data.number, html_url: data.html_url };
   } catch (err) {
     logger.error({ err, url: report.url }, 'Failed to create GitHub Issue');
@@ -203,4 +209,3 @@ function extractBrowser(ua: string): string {
   }
   return ua.slice(0, 50);
 }
-

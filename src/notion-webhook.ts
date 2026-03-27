@@ -187,7 +187,8 @@ async function handleCommentCreated(
   const prompt = buildAgentPrompt(pageId, commentId);
 
   for (const target of targets) {
-    const targetTaskId = targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
+    const targetTaskId =
+      targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
     try {
       createTask({
         id: targetTaskId,
@@ -201,9 +202,15 @@ async function handleCommentCreated(
         status: 'active',
         created_at: now,
       });
-      logger.info({ pageId, commentId, taskId: targetTaskId, jid: target.jid }, 'Notion webhook: task created for target');
+      logger.info(
+        { pageId, commentId, taskId: targetTaskId, jid: target.jid },
+        'Notion webhook: task created for target',
+      );
     } catch (err) {
-      logger.error({ err, taskId: targetTaskId, jid: target.jid }, 'Notion webhook: failed to create task for target');
+      logger.error(
+        { err, taskId: targetTaskId, jid: target.jid },
+        'Notion webhook: failed to create task for target',
+      );
     }
   }
 }
@@ -252,4 +259,3 @@ Comment ID: ${commentId}
 Be substantive. Do real research when needed. Deliver concrete content, not placeholders.
 Always consider the Czech market context (suppliers, regulations, SZPI, S.R.O., VAT 12%).`;
 }
-

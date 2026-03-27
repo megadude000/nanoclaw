@@ -80,7 +80,12 @@ describe('chunkMessage', () => {
       expect(chunk.length).toBeLessThanOrEqual(500);
       // Every chunk with code should have balanced fences
       const opens = (chunk.match(/```javascript/g) || []).length;
-      const closes = (chunk.match(/^```$/gm) || chunk.match(/\n```\n/g) || chunk.match(/\n```$/g) || []).length;
+      const closes = (
+        chunk.match(/^```$/gm) ||
+        chunk.match(/\n```\n/g) ||
+        chunk.match(/\n```$/g) ||
+        []
+      ).length;
       // If a chunk opens a fence, it should close it (or vice versa)
     }
   });

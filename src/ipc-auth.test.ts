@@ -719,7 +719,9 @@ describe('Discord JID IPC authorization', () => {
       'dc:111': DC_MAIN_GROUP,
       'dc:222': DC_OTHER_GROUP,
     };
-    expect(isMessageAuthorized('dc-bugs', false, 'dc:111', dcGroups)).toBe(false);
+    expect(isMessageAuthorized('dc-bugs', false, 'dc:111', dcGroups)).toBe(
+      false,
+    );
   });
 
   it('Discord non-main group can send to own JID', () => {
@@ -727,7 +729,9 @@ describe('Discord JID IPC authorization', () => {
       'dc:111': DC_MAIN_GROUP,
       'dc:222': DC_OTHER_GROUP,
     };
-    expect(isMessageAuthorized('dc-bugs', false, 'dc:222', dcGroups)).toBe(true);
+    expect(isMessageAuthorized('dc-bugs', false, 'dc:222', dcGroups)).toBe(
+      true,
+    );
   });
 });
 
@@ -738,7 +742,9 @@ describe('discord_manage authorization', () => {
 
   beforeEach(() => {
     mockHandleAction = {
-      handleAction: vi.fn().mockResolvedValue({ success: true, channelId: '999' }),
+      handleAction: vi
+        .fn()
+        .mockResolvedValue({ success: true, channelId: '999' }),
     };
   });
 
@@ -749,13 +755,20 @@ describe('discord_manage authorization', () => {
     };
 
     await processTaskIpc(
-      { type: 'discord_manage', action: 'create_channel', params: { name: 'test' } },
+      {
+        type: 'discord_manage',
+        action: 'create_channel',
+        params: { name: 'test' },
+      },
       'whatsapp_main',
       true,
       depsWithManager,
     );
 
-    expect(mockHandleAction!.handleAction).toHaveBeenCalledWith('create_channel', { name: 'test' });
+    expect(mockHandleAction!.handleAction).toHaveBeenCalledWith(
+      'create_channel',
+      { name: 'test' },
+    );
   });
 
   it('blocks discord_manage from non-main group', async () => {
@@ -765,7 +778,11 @@ describe('discord_manage authorization', () => {
     };
 
     await processTaskIpc(
-      { type: 'discord_manage', action: 'create_channel', params: { name: 'test' } },
+      {
+        type: 'discord_manage',
+        action: 'create_channel',
+        params: { name: 'test' },
+      },
       'other-group',
       false,
       depsWithManager,
@@ -778,7 +795,11 @@ describe('discord_manage authorization', () => {
     // deps has no discordServerManager
     await expect(
       processTaskIpc(
-        { type: 'discord_manage', action: 'create_channel', params: { name: 'test' } },
+        {
+          type: 'discord_manage',
+          action: 'create_channel',
+          params: { name: 'test' },
+        },
         'whatsapp_main',
         true,
         deps,
@@ -799,6 +820,9 @@ describe('discord_manage authorization', () => {
       depsWithManager,
     );
 
-    expect(mockHandleAction!.handleAction).toHaveBeenCalledWith('delete_channel', {});
+    expect(mockHandleAction!.handleAction).toHaveBeenCalledWith(
+      'delete_channel',
+      {},
+    );
   });
 });

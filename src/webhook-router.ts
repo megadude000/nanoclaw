@@ -71,7 +71,10 @@ export function resolveTargets(
 
   // Check if config file exists
   if (!existsSync(CONFIG_PATH)) {
-    logger.info({ webhookType }, 'resolveTargets: no routing config, using mainJid fallback');
+    logger.info(
+      { webhookType },
+      'resolveTargets: no routing config, using mainJid fallback',
+    );
     return mainFallback(groups);
   }
 
@@ -83,14 +86,20 @@ export function resolveTargets(
     config = RoutingConfigSchema.parse(json);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    logger.warn({ webhookType, error: message }, 'resolveTargets: invalid routing config, using mainJid fallback');
+    logger.warn(
+      { webhookType, error: message },
+      'resolveTargets: invalid routing config, using mainJid fallback',
+    );
     return mainFallback(groups);
   }
 
   // Check if webhook type is configured
   const route = config[webhookType];
   if (!route) {
-    logger.info({ webhookType }, 'resolveTargets: webhook type not in config, using mainJid fallback');
+    logger.info(
+      { webhookType },
+      'resolveTargets: webhook type not in config, using mainJid fallback',
+    );
     return mainFallback(groups);
   }
 
@@ -99,7 +108,10 @@ export function resolveTargets(
   for (const target of route.targets) {
     const group = groups[target.jid];
     if (!group) {
-      logger.warn({ jid: target.jid, webhookType }, 'resolveTargets: JID not registered, skipping');
+      logger.warn(
+        { jid: target.jid, webhookType },
+        'resolveTargets: JID not registered, skipping',
+      );
       continue;
     }
     resolved.push({ jid: target.jid, group });
@@ -107,7 +119,10 @@ export function resolveTargets(
 
   // If no targets resolved, fall back to mainJid
   if (resolved.length === 0) {
-    logger.warn({ webhookType }, 'resolveTargets: no targets resolved, using mainJid fallback');
+    logger.warn(
+      { webhookType },
+      'resolveTargets: no targets resolved, using mainJid fallback',
+    );
     return mainFallback(groups);
   }
 

@@ -118,7 +118,10 @@ export class DiscordServerManager {
       ...(parentId ? { parent: parentId } : {}),
     });
 
-    logger.info({ channelId: channel.id, name }, 'Created Discord text channel');
+    logger.info(
+      { channelId: channel.id, name },
+      'Created Discord text channel',
+    );
     return { success: true, channelId: channel.id, name: channel.name };
   }
 
@@ -200,7 +203,10 @@ export class DiscordServerManager {
       await channel.permissionOverwrites.edit(overwrite.id, perms);
     }
 
-    logger.info({ channelId, count: overwrites.length }, 'Updated Discord channel permissions');
+    logger.info(
+      { channelId, count: overwrites.length },
+      'Updated Discord channel permissions',
+    );
     return { success: true };
   }
 
@@ -260,11 +266,17 @@ export class DiscordServerManager {
             type: ChannelType.GuildCategory,
           });
           created.push(`category:${categoryConfig.name}`);
-          logger.info({ name: categoryConfig.name, id: category.id }, 'Bootstrap: created category');
+          logger.info(
+            { name: categoryConfig.name, id: category.id },
+            'Bootstrap: created category',
+          );
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           errors.push(`category:${categoryConfig.name}: ${message}`);
-          logger.error({ name: categoryConfig.name, error: message }, 'Bootstrap: failed to create category');
+          logger.error(
+            { name: categoryConfig.name, error: message },
+            'Bootstrap: failed to create category',
+          );
           continue; // Skip channels in this category since parent failed
         }
       }
@@ -292,7 +304,11 @@ export class DiscordServerManager {
             });
             created.push(`channel:${channelConfig.name}`);
             logger.info(
-              { name: channelConfig.name, id: newChannel.id, parent: categoryId },
+              {
+                name: channelConfig.name,
+                id: newChannel.id,
+                parent: categoryId,
+              },
               'Bootstrap: created channel',
             );
           } catch (err) {

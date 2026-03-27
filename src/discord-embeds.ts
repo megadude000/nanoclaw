@@ -8,10 +8,10 @@
 import { EmbedBuilder } from 'discord.js';
 
 export const COLORS = {
-  bug: 0xED4245,      // Red
-  task: 0x5865F2,     // Blurple
-  progress: 0x57F287, // Green
-  alert: 0xFEE75C,    // Yellow
+  bug: 0xed4245, // Red
+  task: 0x5865f2, // Blurple
+  progress: 0x57f287, // Green
+  alert: 0xfee75c, // Yellow
 } as const;
 
 function truncate(str: string | undefined, max: number): string {
@@ -42,7 +42,11 @@ export function buildBugEmbed(issue: {
     embed.addFields({ name: 'Priority', value: issue.priority, inline: true });
   }
   if (issue.labels && issue.labels.length > 0) {
-    embed.addFields({ name: 'Labels', value: issue.labels.join(', '), inline: true });
+    embed.addFields({
+      name: 'Labels',
+      value: issue.labels.join(', '),
+      inline: true,
+    });
   }
 
   return embed;
@@ -98,10 +102,18 @@ export function buildProgressEmbed(data: {
     embed.addFields({ name: 'Plan', value: data.plan, inline: true });
   }
   if (data.percent !== undefined) {
-    embed.addFields({ name: 'Percent', value: `${data.percent}%`, inline: true });
+    embed.addFields({
+      name: 'Percent',
+      value: `${data.percent}%`,
+      inline: true,
+    });
   }
   if (data.details) {
-    embed.addFields({ name: 'Details', value: truncate(data.details, 1024), inline: false });
+    embed.addFields({
+      name: 'Details',
+      value: truncate(data.details, 1024),
+      inline: false,
+    });
   }
 
   return embed;

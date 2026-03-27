@@ -23,9 +23,22 @@ export interface IpcDeps {
     registeredJids: Set<string>,
   ) => void;
   onTasksChanged: () => void;
-  reactToMessage?: (jid: string, messageId: string, emoji: string) => Promise<void>;
-  sendWithButtons?: (jid: string, text: string, buttons: any[], rowSize?: number) => Promise<void>;
-  sendPhoto?: (jid: string, photoPath: string, caption?: string) => Promise<void>;
+  reactToMessage?: (
+    jid: string,
+    messageId: string,
+    emoji: string,
+  ) => Promise<void>;
+  sendWithButtons?: (
+    jid: string,
+    text: string,
+    buttons: any[],
+    rowSize?: number,
+  ) => Promise<void>;
+  sendPhoto?: (
+    jid: string,
+    photoPath: string,
+    caption?: string,
+  ) => Promise<void>;
   discordServerManager?: {
     handleAction(
       action: string,
@@ -469,7 +482,10 @@ export async function processTaskIpc(
 
     case 'discord_manage': {
       if (!isMain) {
-        logger.warn({ sourceGroup }, 'Unauthorized discord_manage attempt blocked');
+        logger.warn(
+          { sourceGroup },
+          'Unauthorized discord_manage attempt blocked',
+        );
         break;
       }
       if (!deps.discordServerManager) {
@@ -478,9 +494,15 @@ export async function processTaskIpc(
       }
       const action = data.action as string;
       const params = (data.params ?? {}) as Record<string, unknown>;
-      const result = await deps.discordServerManager.handleAction(action, params);
+      const result = await deps.discordServerManager.handleAction(
+        action,
+        params,
+      );
       if (!result.success) {
-        logger.error({ action, error: result.error }, 'discord_manage action failed');
+        logger.error(
+          { action, error: result.error },
+          'discord_manage action failed',
+        );
       } else {
         logger.info({ action, result }, 'discord_manage action completed');
       }
