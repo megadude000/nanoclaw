@@ -159,4 +159,117 @@ describe('resolveTargets', () => {
 
     expect(result).toEqual([]);
   });
+
+  // --- enabled toggle tests ---
+
+  it('skips disabled target (enabled: false)', () => {
+    const config = JSON.stringify({
+      'github-issues': {
+        targets: [
+          { platform: 'telegram', jid: 'tg:-100123', enabled: true },
+          { platform: 'discord', jid: 'dc:456', enabled: false },
+        ],
+      },
+    });
+    mockExistsSync.mockReturnValue(true);
+    mockReadFileSync.mockReturnValue(config);
+
+    const result = resolveTargets('github-issues', mockGroups);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].jid).toBe('tg:-100123');
+  });
+
+  it('includes target when enabled is explicitly true', () => {
+    const config = JSON.stringify({
+      'github-issues': {
+        targets: [
+          { platform: 'discord', jid: 'dc:456', enabled: true },
+        ],
+      },
+    });
+    mockExistsSync.mockReturnValue(true);
+    mockReadFileSync.mockReturnValue(config);
+
+    const result = resolveTargets('github-issues', mockGroups);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].jid).toBe('dc:456');
+  });
+
+  it('defaults to enabled when enabled field is missing', () => {
+    // validConfig has no enabled field — should still route
+    mockExistsSync.mockReturnValue(true);
+    mockReadFileSync.mockReturnValue(validConfig);
+
+    const result = resolveTargets('github-issues', mockGroups);
+
+    expect(result).toHaveLength(2);
+    expect(result.map((r) => r.jid)).toEqual(['tg:-100123', 'dc:456']);
+  });
+
+  it('falls back to mainJid when all targets are disabled', () => {
+    const config = JSON.stringify({
+      'github-issues': {
+        targets: [
+          { platform: 'telegram', jid: 'tg:-100123', enabled: false },
+          { platform: 'discord', jid: 'dc:456', enabled: false },
+        ],
+      },
+    });
+    mockExistsSync.mockReturnValue(true);
+    mockReadFileSync.mockReturnValue(config);
+
+    const result = resolveTargets('github-issues', mockGroups);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].jid).toBe('tg:-100123');
+    expect(result[0].group.isMain).toBe(true);
+  });
+
+  it('has independent enabled flags per webhook type', () => {
+    const config = JSON.stringify({
+      'github-issues': {
+        targets: [
+          { platform: 'discord', jid: 'dc:456', enabled: false },
+        ],
+      },
+      notion: {
+        targets: [
+          { platform: 'discord', jid: 'dc:456', enabled: true },
+        ],
+      },
+    });
+    mockExistsSync.mockReturnValue(true);
+    mockReadFileSync.mockReturnValue(config);
+
+    const githubResult = resolveTargets('github-issues', mockGroups);
+    const notionResult = resolveTargets('notion', mockGroups);
+
+    // github-issues Discord disabled — falls back to main
+    expect(githubResult).toHaveLength(1);
+    expect(githubResult[0].group.isMain).toBe(true);
+
+    // notion Discord enabled — routes to dc:456
+    expect(notionResult).toHaveLength(1);
+    expect(notionResult[0].jid).toBe('dc:456');
+  });
+
+  it('rollback scenario: Discord disabled, Telegram enabled', () => {
+    const config = JSON.stringify({
+      'github-issues': {
+        targets: [
+          { platform: 'telegram', jid: 'tg:-100123', enabled: true },
+          { platform: 'discord', jid: 'dc:456', enabled: false },
+        ],
+      },
+    });
+    mockExistsSync.mockReturnValue(true);
+    mockReadFileSync.mockReturnValue(config);
+
+    const result = resolveTargets('github-issues', mockGroups);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].jid).toBe('tg:-100123');
+  });
 });
