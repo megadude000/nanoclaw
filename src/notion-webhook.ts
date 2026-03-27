@@ -9,12 +9,85 @@
  *   - The task scheduler picks it up and runs the agent in main group context
  */
 import crypto from 'crypto';
+import https from 'https';
 import { IncomingMessage, ServerResponse } from 'http';
 
 import { createTask, getTaskById } from './db.js';
+import { readEnvFile } from './env.js';
 import { logger } from './logger.js';
 import { RegisteredGroup } from './types.js';
 import { resolveTargets } from './webhook-router.js';
+
+function notionApiGet(path: string, apiKey: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: 'api.notion.com',
+        path,
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Notion-Version': '2022-06-28',
+        },
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch {
+            reject(new Error(`Notion API parse error: ${data.slice(0, 200)}`));
+          }
+        });
+      },
+    );
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+function extractPlainText(richText: any[]): string {
+  if (!Array.isArray(richText)) return '';
+  return richText.map((t: any) => t.plain_text ?? '').join('');
+}
+
+async function fetchNotionContext(
+  pageId: string,
+  commentId: string,
+): Promise<{ pageTitle: string; commentText: string; agentProp: string }> {
+  const envVars = readEnvFile(['NOTION_API_KEY']);
+  const apiKey = process.env.NOTION_API_KEY || envVars.NOTION_API_KEY || '';
+  if (!apiKey) {
+    return { pageTitle: '(unknown)', commentText: '(unknown)', agentProp: '' };
+  }
+
+  let pageTitle = '(unknown)';
+  let agentProp = '';
+  let commentText = '(unknown)';
+
+  try {
+    const page = await notionApiGet(`/v1/pages/${pageId}`, apiKey);
+    const titleProp = Object.values(page.properties || {}).find(
+      (p: any) => p.type === 'title',
+    ) as any;
+    if (titleProp?.title) pageTitle = extractPlainText(titleProp.title);
+    const agent = page.properties?.Agent || page.properties?.agent;
+    if (agent?.select?.name) agentProp = agent.select.name;
+    else if (agent?.rich_text) agentProp = extractPlainText(agent.rich_text);
+  } catch (err) {
+    logger.warn({ err, pageId }, 'Failed to fetch Notion page');
+  }
+
+  try {
+    const comment = await notionApiGet(`/v1/comments/${commentId}`, apiKey);
+    if (comment.rich_text) commentText = extractPlainText(comment.rich_text);
+  } catch (err) {
+    logger.warn({ err, commentId }, 'Failed to fetch Notion comment');
+  }
+
+  return { pageTitle, commentText, agentProp };
+}
 
 export interface NotionHandlerConfig {
   signingSecret: string;
@@ -151,6 +224,7 @@ async function handleCommentCreated(
 
   const rawPageId: unknown =
     entity?.parent_id ??
+    (data as Record<string, unknown> | undefined)?.page_id ??
     (data?.parent as Record<string, unknown> | undefined)?.page_id ??
     (
       (data?.comment as Record<string, unknown> | undefined)?.parent as
@@ -184,7 +258,8 @@ async function handleCommentCreated(
   }
 
   const now = new Date().toISOString();
-  const prompt = buildAgentPrompt(pageId, commentId);
+  const context = await fetchNotionContext(pageId, commentId);
+  const prompt = buildAgentPrompt(pageId, commentId, context);
 
   for (const target of targets) {
     const targetTaskId =
@@ -215,47 +290,22 @@ async function handleCommentCreated(
   }
 }
 
-function buildAgentPrompt(pageId: string, commentId: string): string {
-  return `You are a Notion task agent for **YourWave** — a specialty coffee startup in Prague, Czech Republic.
+function buildAgentPrompt(
+  pageId: string,
+  commentId: string,
+  context: { pageTitle: string; commentText: string; agentProp: string },
+): string {
+  const agentTag = context.agentProp ? ` [${context.agentProp}]` : '';
 
-Context:
-- YourWave = Coffee Discovery Experience. DTC e-shop + subscription + bundle builder.
-- Phase 1: contract roasting (no own roaster yet). Solo founder, budget €5–15k.
-- Products: Wave Origins (single origins), Morning Wave (blend), Explorer Wave (discovery box), Limited Wave (micro-lots), Guest Wave (curated).
-- Market: Czech Republic, English-first, targeting Coffee Explorers psychographic.
-- Tech: Astro + React + Tailwind + shadcn/ui (Coffee Atlas site), Shopify (e-shop).
-- Content Factory ("Завод"): Claude-orchestrated content pipeline, Notion approval workflow.
+  return `New Notion comment notification. Send a concise summary to the chat — NOT a full analysis.
 
-A new comment was posted on a Notion task page. Take action now.
+**${context.pageTitle}**${agentTag}
+> ${context.commentText}
 
-Page ID: ${pageId}
-Comment ID: ${commentId}
+Reply with a short formatted message (3-5 lines max):
+- Task name (bold) + link hint
+- The comment text (quoted)
+- One-line context if the Agent property suggests an action area
 
-## Steps
-
-1. **Fetch the page** using mcp__notionApi__API-retrieve-a-page with page_id="${pageId}"
-   - Record the task Name (title) and the **Agent** property value
-
-2. **Fetch the comment** using mcp__notionApi__API-retrieve-a-comment with comment_id="${commentId}"
-   - Extract plain text from the rich_text array
-
-3. **Adopt the agent persona** based on the Agent property and act on the comment:
-   - **Strategist** — synthesize, structure, create executive summaries, business planning
-   - **Market Analyst** — use WebSearch + WebFetch to research CZ coffee market, competitors, trends
-   - **Product Designer** — define coffee product specs, pricing tiers, packaging, bundle configs
-   - **Ops Expert** — map workflows for roasting, packing, shipping, HACCP, supplier coordination
-   - **Finance Planner** — build unit economics, projections, cost models for coffee business
-   - **Marketing Expert** — research channels, content strategy, Instagram growth, community building
-   - **Content Creator** — write Coffee Atlas articles, social captions, email copy
-   - **Tech Lead** — plan features for Coffee Atlas site, Shopify setup, integrations
-
-4. **Act on the comment** — choose the most appropriate response:
-   - Create child sub-pages under this task (for research or writing deliverables)
-   - Append structured content to the page body
-   - Post a reply comment with results, a structured answer, or clarifying questions
-
-5. **Update "Last Comment At"** — patch the page's "Last Comment At" date property to today
-
-Be substantive. Do real research when needed. Deliver concrete content, not placeholders.
-Always consider the Czech market context (suppliers, regulations, SZPI, S.R.O., VAT 12%).`;
+Do NOT do research. Do NOT write long responses. Do NOT create Notion pages. This is a notification channel — keep it scannable.`;
 }

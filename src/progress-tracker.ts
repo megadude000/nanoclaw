@@ -46,17 +46,20 @@ export class ProgressTracker {
   private editMsg: EditFn;
   private deleteMsg: DeleteFn;
   private setTyping: TypingFn;
+  private dumpJid: string | null;
 
   constructor(deps: {
     sendMsg: SendFn;
     editMsg: EditFn;
     deleteMsg: DeleteFn;
     setTyping: TypingFn;
+    dumpJid?: string;
   }) {
     this.sendMsg = deps.sendMsg;
     this.editMsg = deps.editMsg;
     this.deleteMsg = deps.deleteMsg;
     this.setTyping = deps.setTyping;
+    this.dumpJid = deps.dumpJid ?? null;
   }
 
   onMessageSent(chatJid: string, groupFolder: string): void {
@@ -113,9 +116,10 @@ export class ProgressTracker {
       ? Math.round((Date.now() - state.startTime) / 1000)
       : 0;
     if (state) state.progressMsgId = null;
+    const targetJid = this.dumpJid ?? chatJid;
     this._cleanup(chatJid);
     if (msgId && state) {
-      this.editMsg(state.chatJid, msgId, `✅ Done in ${elapsed}s`).catch(
+      this.editMsg(targetJid, msgId, `✅ Done in ${elapsed}s`).catch(
         () => {},
       );
     }
@@ -125,9 +129,10 @@ export class ProgressTracker {
     const state = this.states.get(chatJid);
     if (!state) return;
     const msgId = state.progressMsgId;
+    const targetJid = this.dumpJid ?? chatJid;
     this._cleanup(chatJid);
     if (msgId && exitCode !== 0) {
-      this.deleteMsg(chatJid, msgId).catch(() => {});
+      this.deleteMsg(targetJid, msgId).catch(() => {});
     }
   }
 
@@ -253,9 +258,10 @@ export class ProgressTracker {
     const state = this.states.get(chatJid);
     if (!state) return;
     const text = this._formatProgress(state);
+    const targetJid = this.dumpJid ?? chatJid;
     if (!state.progressMsgId) {
       state.sendPending = true;
-      this.sendMsg(chatJid, text)
+      this.sendMsg(targetJid, text)
         .then((res: any) => {
           state.sendPending = false;
           if (
@@ -284,13 +290,14 @@ export class ProgressTracker {
     state.editThrottle = false;
     if (!state.progressMsgId) return;
     const text = this._formatProgress(state);
-    this.editMsg(chatJid, state.progressMsgId, text).catch((err: any) => {
+    const targetJid = this.dumpJid ?? chatJid;
+    this.editMsg(targetJid, state.progressMsgId, text).catch((err: any) => {
       if (err?.error_code === 429) {
         setTimeout(() => {
           const s = this.states.get(chatJid);
           if (s?.progressMsgId)
             this.editMsg(
-              chatJid,
+              targetJid,
               s.progressMsgId,
               this._formatProgress(s),
             ).catch(() => {});
@@ -304,6 +311,7 @@ export class ProgressTracker {
   private _formatProgress(state: TrackerState): string {
     const elapsed = Math.round((Date.now() - state.startTime) / 1000);
     const tool = state.lastTool ?? '🤔 thinking...';
-    return `⏳ ${elapsed}s — ${tool}`;
+    const prefix = this.dumpJid ? `[${state.groupFolder}] ` : '';
+    return `${prefix}⏳ ${elapsed}s — ${tool}`;
   }
 }

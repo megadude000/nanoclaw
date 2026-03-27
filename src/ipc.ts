@@ -114,6 +114,17 @@ export function startIpcWatcher(deps: IpcDeps): void {
                     'Unauthorized IPC message attempt blocked',
                   );
                 }
+              } else if (data.type === 'restart' && isMain) {
+                logger.info({ sourceGroup }, 'Restart requested via IPC');
+                fs.unlinkSync(filePath);
+                // Notify the chat that triggered the restart
+                if (data.chatJid) {
+                  await deps.sendMessage(data.chatJid, '🔄 Restarting NanoClaw...');
+                }
+                // Use exec to restart after a short delay so the message gets sent
+                const { exec } = await import('child_process');
+                exec('sleep 1 && systemctl --user restart nanoclaw');
+                return; // Stop processing — we're about to restart
               }
               fs.unlinkSync(filePath);
             } catch (err) {

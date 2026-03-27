@@ -22,6 +22,12 @@ export async function handleGitHubIssuesEvent(
   config: GitHubIssuesHandlerConfig,
 ): Promise<void> {
   const action = payload.action as string | undefined;
+
+  // Handle label changes on existing issues (e.g. adding "immediate" to trigger fix)
+  if (action === 'labeled') {
+    return handleGitHubIssuesLabeled(payload, config);
+  }
+
   if (action !== 'opened') return;
 
   const issue = payload.issue as Record<string, unknown> | undefined;
@@ -133,6 +139,82 @@ export async function handleGitHubIssuesEvent(
       logger.error(
         { err, taskId: targetTaskId, jid: target.jid },
         'GitHub issues webhook: failed to create task for target',
+      );
+    }
+  }
+}
+
+async function handleGitHubIssuesLabeled(
+  payload: Record<string, unknown>,
+  config: GitHubIssuesHandlerConfig,
+): Promise<void> {
+  const issue = payload.issue as Record<string, unknown> | undefined;
+  if (!issue) return;
+
+  const label = payload.label as Record<string, unknown> | undefined;
+  const labelName = (label?.name as string) ?? '';
+
+  // Only react to "immediate" label being added
+  if (labelName !== 'immediate') return;
+
+  const issueNumber = issue.number as number;
+  const issueTitle = (issue.title as string) ?? '';
+  const issueBody = (issue.body as string) ?? '';
+  const issueUrl = (issue.html_url as string) ?? '';
+  const labels = (issue.labels as Array<Record<string, unknown>>) ?? [];
+  const labelNames = labels.map((l) => (l.name as string) ?? '');
+
+  // Must also have "bug" label
+  if (!labelNames.includes('bug')) return;
+
+  const taskId = `github-issue-${issueNumber}-immediate`;
+
+  if (getTaskById(taskId)) {
+    logger.debug({ taskId }, 'GitHub issues webhook: duplicate labeled event, skipping');
+    return;
+  }
+
+  const groups = config.getRegisteredGroups();
+  const targets = resolveTargets('github-issues', groups);
+  if (targets.length === 0) {
+    logger.warn('GitHub issues webhook: no routing targets for labeled event');
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const prompt = buildBugFixPrompt({
+    issueNumber,
+    issueTitle,
+    issueBody,
+    issueUrl,
+    fixMode: 'immediate',
+    githubRepo: config.githubRepo,
+  });
+
+  for (const target of targets) {
+    const targetTaskId =
+      targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
+    try {
+      createTask({
+        id: targetTaskId,
+        group_folder: target.group.folder,
+        chat_jid: target.jid,
+        prompt,
+        schedule_type: 'once',
+        schedule_value: now,
+        context_mode: 'isolated',
+        next_run: now,
+        status: 'active',
+        created_at: now,
+      });
+      logger.info(
+        { issueNumber, taskId: targetTaskId, jid: target.jid },
+        'GitHub issues webhook: immediate fix triggered via label',
+      );
+    } catch (err) {
+      logger.error(
+        { err, taskId: targetTaskId, jid: target.jid },
+        'GitHub issues webhook: failed to create labeled task',
       );
     }
   }
