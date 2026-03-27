@@ -55,16 +55,17 @@ function extractPlainText(richText: any[]): string {
 async function fetchNotionContext(
   pageId: string,
   commentId: string,
-): Promise<{ pageTitle: string; commentText: string; agentProp: string }> {
+): Promise<{ pageTitle: string; commentText: string; agentProp: string; isBot: boolean }> {
   const envVars = readEnvFile(['NOTION_API_KEY']);
   const apiKey = process.env.NOTION_API_KEY || envVars.NOTION_API_KEY || '';
   if (!apiKey) {
-    return { pageTitle: '(unknown)', commentText: '(unknown)', agentProp: '' };
+    return { pageTitle: '(unknown)', commentText: '(unknown)', agentProp: '', isBot: false };
   }
 
   let pageTitle = '(unknown)';
   let agentProp = '';
   let commentText = '(unknown)';
+  let isBot = false;
 
   try {
     const page = await notionApiGet(`/v1/pages/${pageId}`, apiKey);
@@ -82,11 +83,14 @@ async function fetchNotionContext(
   try {
     const comment = await notionApiGet(`/v1/comments/${commentId}`, apiKey);
     if (comment.rich_text) commentText = extractPlainText(comment.rich_text);
+    // Detect bot-authored comments to prevent infinite loops
+    const createdBy = comment.created_by as Record<string, unknown> | undefined;
+    if (createdBy?.type === 'bot') isBot = true;
   } catch (err) {
     logger.warn({ err, commentId }, 'Failed to fetch Notion comment');
   }
 
-  return { pageTitle, commentText, agentProp };
+  return { pageTitle, commentText, agentProp, isBot };
 }
 
 export interface NotionHandlerConfig {
@@ -257,8 +261,15 @@ async function handleCommentCreated(
     return;
   }
 
-  const now = new Date().toISOString();
   const context = await fetchNotionContext(pageId, commentId);
+
+  // Skip bot-authored comments to prevent infinite webhook loops
+  if (context.isBot) {
+    logger.debug({ commentId, pageId }, 'Notion webhook: skipping bot-authored comment');
+    return;
+  }
+
+  const now = new Date().toISOString();
   const prompt = buildAgentPrompt(pageId, commentId, context);
 
   for (const target of targets) {
@@ -295,17 +306,46 @@ function buildAgentPrompt(
   commentId: string,
   context: { pageTitle: string; commentText: string; agentProp: string },
 ): string {
-  const agentTag = context.agentProp ? ` [${context.agentProp}]` : '';
+  const agentTag = context.agentProp ? ` [Agent: ${context.agentProp}]` : '';
 
-  return `New Notion comment notification. Send a concise summary to the chat — NOT a full analysis.
+  return `You are a context-aware Notion assistant. A new comment was posted on a Notion page. Read the page, understand the comment, and take the most appropriate action.
 
-**${context.pageTitle}**${agentTag}
-> ${context.commentText}
+IMPORTANT: Send ALL messages using mcp__nanoclaw__send_message with sender set to "Alfred". Use ONLY Telegram formatting: single *asterisks* for bold, \`backticks\` for code. No markdown headings.
 
-Reply with a short formatted message (3-5 lines max):
-- Task name (bold) + link hint
-- The comment text (quoted)
-- One-line context if the Agent property suggests an action area
+## Trigger
+**Page:** ${context.pageTitle}${agentTag}
+**Page ID:** ${pageId}
+**Comment:** ${context.commentText}
 
-Do NOT do research. Do NOT write long responses. Do NOT create Notion pages. This is a notification channel — keep it scannable.`;
+## Step 1: Understand context
+- Use the Notion MCP tools to read the full page content (mcp__notionApi__API-retrieve-a-page with page_id "${pageId}")
+- Read the page blocks to get the full body (mcp__notionApi__API-get-block-children with block_id "${pageId}")
+- Understand what this page is about (task, spec, bug, idea, meeting note, etc.)
+
+## Step 2: Classify the comment intent
+Based on the comment text, determine what's being asked:
+- **Question** → Research and reply with an answer as a Notion comment
+- **Action request** ("do X", "fix Y", "update Z") → Execute the action, then report back
+- **Bug report / issue** → Investigate in the codebase (~/YW_Core), diagnose, suggest or apply fix
+- **Review request** → Read the referenced content, provide feedback as a Notion comment
+- **Status update / FYI** → Acknowledge briefly, no heavy action needed
+- **Code task** → Write or modify code in ~/YW_Core as requested
+
+## Step 3: Act
+- For questions/reviews: Reply as a Notion comment on the page (mcp__notionApi__API-create-a-comment with parent.page_id "${pageId}")
+- For code tasks: Work in ~/YW_Core, commit with descriptive message, push if confident
+- For actions: Execute, then reply as a Notion comment confirming what was done
+
+## Step 4: Report to chat
+Send a brief message to the chat summarizing what you did:
+- Page name (bold) + what the comment asked
+- What action you took (1-2 sentences)
+- Result or status
+
+## Rules
+- Always read the full page before acting — context matters
+- If the Agent property is set, it hints at the domain (e.g., "Frontend", "Backend", "Design")
+- For risky changes (deletions, major refactors), describe the plan in a Notion comment first instead of executing
+- If unsure what's being asked, reply on Notion asking for clarification
+- Keep chat messages short (3-5 lines). Put detailed responses in Notion comments.`;
 }

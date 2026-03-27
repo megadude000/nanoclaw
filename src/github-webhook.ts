@@ -119,123 +119,6 @@ async function handleEvent(
     });
   }
 
-  if (event === 'push') {
-    return handlePushEvent(payload, config);
-  }
-}
-
-async function handlePushEvent(
-  payload: Record<string, unknown>,
-  config: GitHubHandlerConfig,
-): Promise<void> {
-  const ref = payload.ref as string | undefined;
-  if (!ref) return;
-
-  // Only deploy on pushes to main/master
-  const branch = ref.replace('refs/heads/', '');
-  if (branch !== 'main' && branch !== 'master') {
-    logger.debug({ branch }, 'GitHub push: ignoring non-main branch');
-    return;
-  }
-
-  const headCommit = payload.head_commit as Record<string, unknown> | undefined;
-  const commitMsg = (headCommit?.message as string) ?? '(no message)';
-  const commitId = ((headCommit?.id as string) ?? '').slice(0, 7);
-  const pusher = (payload.pusher as Record<string, unknown> | undefined)?.name as string ?? 'unknown';
-  const repo = payload.repository as Record<string, unknown> | undefined;
-  const repoName = (repo?.name as string) ?? 'YW_Core';
-  const repoFullName = (repo?.full_name as string) ?? config.githubRepo;
-
-  const deployId = `github-deploy-${commitId}-${Date.now()}`;
-  if (getTaskById(deployId)) return;
-
-  logger.info(
-    { branch, commitId, commitMsg, pusher, repoFullName },
-    'GitHub push to main — starting deploy',
-  );
-
-  const repoDir = `/home/andrii-panasenko/${repoName}`;
-
-  // Run deploy: git pull → npm install → restart services
-  // Source nvm so npm is available in the exec() subshell
-  const deployScript = [
-    'export NVM_DIR="$HOME/.nvm"',
-    '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"',
-    `cd ${repoDir}`,
-    'git pull --ff-only',
-    'npm install --prefer-offline --no-audit',
-    'systemctl --user restart yw-dev',
-    'systemctl --user restart yw-storybook',
-  ].join(' && ');
-
-  const deployStart = Date.now();
-
-  exec(deployScript, { timeout: 120_000, shell: '/bin/bash' }, (err, stdout, stderr) => {
-    const elapsed = ((Date.now() - deployStart) / 1000).toFixed(1);
-
-    if (err) {
-      logger.error(
-        { err, stderr: stderr.slice(0, 500), commitId },
-        'Deploy failed',
-      );
-      // Create notification task for failure
-      const groups = config.getRegisteredGroups();
-      const targets = resolveTargets('github-ci', groups);
-      const now = new Date().toISOString();
-      const failPrompt = `Send this message exactly (no research, no extra text):
-
-❌ **Deploy failed** — \`${repoFullName}\` @ \`${commitId}\`
-> ${commitMsg.split('\n')[0]}
-Error: ${(err.message || 'unknown').slice(0, 200)}
-Duration: ${elapsed}s`;
-
-      for (const target of targets) {
-        const taskId = `${deployId}-fail@${target.jid}`;
-        createTask({
-          id: taskId,
-          group_folder: target.group.folder,
-          chat_jid: target.jid,
-          prompt: failPrompt,
-          schedule_type: 'once',
-          schedule_value: now,
-          context_mode: 'isolated',
-          next_run: now,
-          status: 'active',
-          created_at: now,
-        });
-      }
-      return;
-    }
-
-    logger.info({ commitId, elapsed }, 'Deploy succeeded');
-
-    // Create notification task for success
-    const groups = config.getRegisteredGroups();
-    const targets = resolveTargets('github-ci', groups);
-    const now = new Date().toISOString();
-    const successPrompt = `Send this message exactly (no research, no extra text):
-
-✅ **Deployed** — \`${repoFullName}\` @ \`${commitId}\`
-> ${commitMsg.split('\n')[0]}
-Pushed by: ${pusher} | Duration: ${elapsed}s
-Services restarted: yw-dev, yw-storybook`;
-
-    for (const target of targets) {
-      const taskId = `${deployId}-ok@${target.jid}`;
-      createTask({
-        id: taskId,
-        group_folder: target.group.folder,
-        chat_jid: target.jid,
-        prompt: successPrompt,
-        schedule_type: 'once',
-        schedule_value: now,
-        context_mode: 'isolated',
-        next_run: now,
-        status: 'active',
-        created_at: now,
-      });
-    }
-  });
 }
 
 async function handleWorkflowRunEvent(
@@ -272,6 +155,15 @@ async function handleWorkflowRunEvent(
   if (getTaskById(taskId)) {
     logger.debug({ taskId }, 'GitHub webhook: duplicate event, skipping');
     return;
+  }
+
+  // Deploy on CI pass for main branch
+  if (
+    conclusion === 'success' &&
+    (headBranch === 'main' || headBranch === 'master')
+  ) {
+    const repoName = repoFullName.split('/')[1] || 'YW_Core';
+    deployAfterCI(repoName, repoFullName, displayTitle, runId, config);
   }
 
   const now = new Date().toISOString();
@@ -319,6 +211,91 @@ async function handleWorkflowRunEvent(
       );
     }
   }
+}
+
+function deployAfterCI(
+  repoName: string,
+  repoFullName: string,
+  displayTitle: string,
+  runId: number,
+  config: GitHubHandlerConfig,
+): void {
+  const repoDir = `/home/andrii-panasenko/${repoName}`;
+  const deployId = `github-deploy-ci-${runId}`;
+
+  if (getTaskById(deployId)) return;
+
+  logger.info(
+    { repoFullName, runId, displayTitle },
+    'CI passed on main — starting deploy',
+  );
+
+  const deployScript = [
+    'export NVM_DIR="$HOME/.nvm"',
+    '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"',
+    `cd ${repoDir}`,
+    'git pull --ff-only',
+    'npm install --prefer-offline --no-audit',
+    'systemctl --user restart yw-dev',
+    'systemctl --user restart yw-storybook',
+  ].join(' && ');
+
+  const deployStart = Date.now();
+
+  exec(deployScript, { timeout: 120_000, shell: '/bin/bash' }, (err, _stdout, stderr) => {
+    const elapsed = ((Date.now() - deployStart) / 1000).toFixed(1);
+    const groups = config.getRegisteredGroups();
+    const targets = resolveTargets('github-ci', groups);
+    const now = new Date().toISOString();
+
+    if (err) {
+      logger.error({ err, stderr: stderr.slice(0, 500), runId }, 'Deploy failed');
+      const failPrompt = `Send this message exactly (no research, no extra text):
+
+❌ **Deploy failed** after CI pass — \`${repoFullName}\`
+> ${displayTitle.split('\n')[0]}
+Error: ${(err.message || 'unknown').slice(0, 200)}
+Duration: ${elapsed}s`;
+
+      for (const target of targets) {
+        createTask({
+          id: `${deployId}-fail@${target.jid}`,
+          group_folder: target.group.folder,
+          chat_jid: target.jid,
+          prompt: failPrompt,
+          schedule_type: 'once',
+          schedule_value: now,
+          context_mode: 'isolated',
+          next_run: now,
+          status: 'active',
+          created_at: now,
+        });
+      }
+      return;
+    }
+
+    logger.info({ runId, elapsed }, 'Deploy succeeded after CI pass');
+    const successPrompt = `Send this message exactly (no research, no extra text):
+
+🚀 **Deployed** after CI ✅ — \`${repoFullName}\`
+> ${displayTitle.split('\n')[0]}
+Duration: ${elapsed}s | Services restarted: yw-dev, yw-storybook`;
+
+    for (const target of targets) {
+      createTask({
+        id: `${deployId}-ok@${target.jid}`,
+        group_folder: target.group.folder,
+        chat_jid: target.jid,
+        prompt: successPrompt,
+        schedule_type: 'once',
+        schedule_value: now,
+        context_mode: 'isolated',
+        next_run: now,
+        status: 'active',
+        created_at: now,
+      });
+    }
+  });
 }
 
 interface CIRunInfo {

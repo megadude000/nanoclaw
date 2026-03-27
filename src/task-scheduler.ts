@@ -19,6 +19,7 @@ import {
 import { GroupQueue } from './group-queue.js';
 import { resolveGroupFolderPath } from './group-folder.js';
 import { logger } from './logger.js';
+import { ProgressTracker } from './progress-tracker.js';
 import { RegisteredGroup, ScheduledTask } from './types.js';
 
 /**
@@ -73,6 +74,7 @@ export interface SchedulerDependencies {
     groupFolder: string,
   ) => void;
   sendMessage: (jid: string, text: string) => Promise<void>;
+  progressTracker?: ProgressTracker;
 }
 
 async function runTask(
@@ -169,6 +171,9 @@ async function runTask(
     }, TASK_CLOSE_DELAY_MS);
   };
 
+  // Start progress tracking for this task
+  deps.progressTracker?.onMessageSent(task.chat_jid, task.group_folder);
+
   try {
     const output = await runContainerAgent(
       group,
@@ -214,10 +219,12 @@ async function runTask(
       { taskId: task.id, durationMs: Date.now() - startTime },
       'Task completed',
     );
+    deps.progressTracker?.onResponseReceived(task.chat_jid);
   } catch (err) {
     if (closeTimer) clearTimeout(closeTimer);
     error = err instanceof Error ? err.message : String(err);
     logger.error({ taskId: task.id, error }, 'Task failed');
+    deps.progressTracker?.onContainerStopped(task.chat_jid, 1);
   }
 
   const durationMs = Date.now() - startTime;

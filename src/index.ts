@@ -779,6 +779,7 @@ async function main(): Promise<void> {
       const text = formatOutbound(rawText);
       if (text) await channel.sendMessage(jid, text);
     },
+    progressTracker,
   });
   startIpcWatcher({
     sendMessage: (jid, text, sender) => {
