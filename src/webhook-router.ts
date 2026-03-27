@@ -21,6 +21,7 @@ const __dirname = dirname(__filename);
 const TargetSchema = z.object({
   platform: z.enum(['telegram', 'discord']),
   jid: z.string(),
+  enabled: z.boolean().default(true),
 });
 
 const WebhookRouteSchema = z.object({
@@ -106,6 +107,13 @@ export function resolveTargets(
   // Resolve each target JID against registered groups
   const resolved: RouteTarget[] = [];
   for (const target of route.targets) {
+    if (target.enabled === false) {
+      logger.info(
+        { jid: target.jid, webhookType },
+        'resolveTargets: target disabled, skipping',
+      );
+      continue;
+    }
     const group = groups[target.jid];
     if (!group) {
       logger.warn(
