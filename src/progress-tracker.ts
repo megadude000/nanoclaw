@@ -1,5 +1,5 @@
 /**
- * ProgressTracker — shows real-time progress in Telegram while agent works.
+ * ProgressTracker — shows real-time progress while agent works.
  * Lifecycle: onMessageSent → [typing heartbeat + JSONL poll + 30s silence → progress message] → onResponseReceived
  */
 import fs from 'fs';
@@ -19,8 +19,8 @@ interface TrackerState {
   startTime: number;
   lastActivityTime: number;
   lastTool: string | null;
-  progressMsgId: number | null;
-  logsMsgId: number | null;
+  progressMsgId: string | number | null;
+  logsMsgId: string | number | null;
   sendPending: boolean;
   editThrottle: boolean;
   typingTimer: ReturnType<typeof setInterval> | null;
@@ -33,12 +33,13 @@ interface TrackerState {
   loggedDiscoverWarn: boolean;
 }
 
+type MsgId = string | number;
 type SendFn = (
   jid: string,
   text: string,
-) => Promise<{ message_id: number } | void>;
-type EditFn = (jid: string, msgId: number, text: string) => Promise<void>;
-type DeleteFn = (jid: string, msgId: number) => Promise<void>;
+) => Promise<{ message_id: MsgId } | void>;
+type EditFn = (jid: string, msgId: MsgId, text: string) => Promise<void>;
+type DeleteFn = (jid: string, msgId: MsgId) => Promise<void>;
 type TypingFn = (jid: string, typing: boolean) => Promise<void>;
 
 export class ProgressTracker {

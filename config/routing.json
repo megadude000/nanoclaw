@@ -1,26 +1,17 @@
 {
   "github-issues": {
     "targets": [
-      { "platform": "telegram", "jid": "tg:633706070", "enabled": false },
       { "platform": "discord", "jid": "dc:1486972003167764520", "enabled": true }
     ]
   },
   "github-ci": {
     "targets": [
-      { "platform": "telegram", "jid": "tg:633706070", "enabled": false },
       { "platform": "discord", "jid": "dc:1486972006279807066", "enabled": true }
     ]
   },
   "notion": {
     "targets": [
-      { "platform": "telegram", "jid": "tg:633706070", "enabled": false },
       { "platform": "discord", "jid": "dc:1486972001892438176", "enabled": true }
-    ]
-  },
-  "progress": {
-    "targets": [
-      { "platform": "telegram", "jid": "tg:633706070", "enabled": true },
-      { "platform": "discord", "jid": "dc:1486972004220407949", "enabled": true }
     ]
   },
   "bugreport": {

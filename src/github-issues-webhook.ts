@@ -157,6 +157,14 @@ async function handleGitHubIssuesLabeled(
   // Only react to "immediate" label being added
   if (labelName !== 'immediate') return;
 
+  // Skip if issue was just created — the "opened" handler already processed it
+  // GitHub sends both "opened" and "labeled" events when an issue is created with labels
+  const issueCreatedAt = new Date(issue.created_at as string).getTime();
+  if (Date.now() - issueCreatedAt < 30_000) {
+    logger.debug({ issueNumber: issue.number }, 'GitHub issues webhook: skipping labeled event for freshly opened issue');
+    return;
+  }
+
   const issueNumber = issue.number as number;
   const issueTitle = (issue.title as string) ?? '';
   const issueBody = (issue.body as string) ?? '';
