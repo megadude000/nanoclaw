@@ -695,3 +695,15 @@ function migrateJsonState(): void {
     }
   }
 }
+
+/** Return the most recent non-bot message ID for a chat, or null. */
+export function getLatestUserMessageId(chatJid: string): string | null {
+  const row = db
+    .prepare(
+      `SELECT id FROM messages
+       WHERE chat_jid = ? AND is_from_me = 0 AND is_bot_message = 0
+       ORDER BY timestamp DESC LIMIT 1`,
+    )
+    .get(chatJid) as { id: string } | undefined;
+  return row?.id ?? null;
+}

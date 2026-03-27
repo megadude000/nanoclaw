@@ -896,7 +896,7 @@ disown
   async sendMessageRaw(
     jid: string,
     text: string,
-  ): Promise<{ message_id: number } | undefined> {
+  ): Promise<{ message_id: string } | undefined> {
     if (!this.bot) return undefined;
     try {
       const numericId = Number(jid.replace(/^tg:/, ''));
@@ -905,7 +905,7 @@ disown
         numericId,
         text.slice(0, MAX_LENGTH),
       );
-      return { message_id: msg.message_id };
+      return { message_id: String(msg.message_id) };
     } catch (err) {
       logger.debug({ jid, err }, 'sendMessageRaw failed');
       return undefined;
@@ -914,13 +914,13 @@ disown
 
   async editMessage(
     jid: string,
-    messageId: number,
+    messageId: string,
     text: string,
   ): Promise<void> {
     if (!this.bot) return;
     try {
       const numericId = Number(jid.replace(/^tg:/, ''));
-      await this.bot.api.editMessageText(numericId, messageId, text);
+      await this.bot.api.editMessageText(numericId, Number(messageId), text);
     } catch (err: any) {
       if (err?.error_code !== 400) {
         logger.debug(
@@ -931,11 +931,11 @@ disown
     }
   }
 
-  async deleteMessage(jid: string, messageId: number): Promise<void> {
+  async deleteMessage(jid: string, messageId: string): Promise<void> {
     if (!this.bot) return;
     try {
       const numericId = Number(jid.replace(/^tg:/, ''));
-      await this.bot.api.deleteMessage(numericId, messageId);
+      await this.bot.api.deleteMessage(numericId, Number(messageId));
     } catch (err) {
       logger.debug(
         { jid, messageId, err },

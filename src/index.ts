@@ -735,6 +735,9 @@ async function main(): Promise<void> {
     getAvailableGroups,
     writeGroupsSnapshot: (gf, im, ag, rj) =>
       writeGroupsSnapshot(gf, im, ag, rj),
+    onTasksChanged: () => {
+      /* placeholder — task change notifications not yet wired */
+    },
   });
   queue.setProcessMessagesFn(processGroupMessages);
   recoverPendingMessages();

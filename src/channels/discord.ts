@@ -46,10 +46,12 @@ export class DiscordChannel implements Channel {
   private client: Client | null = null;
   private opts: DiscordChannelOpts;
   private botToken: string;
+  private mainChannelId: string;
   private swarmManager: SwarmWebhookManager | null = null;
 
-  constructor(botToken: string, opts: DiscordChannelOpts) {
+  constructor(botToken: string, mainChannelId: string, opts: DiscordChannelOpts) {
     this.botToken = botToken;
+    this.mainChannelId = mainChannelId;
     this.opts = opts;
   }
 
@@ -166,7 +168,7 @@ export class DiscordChannel implements Channel {
 
       // Auto-register Discord channel as group on first message (D-04, D-05)
       if (!this.opts.registeredGroups()[chatJid] && this.opts.registerGroup) {
-        const mainChannelId = process.env.DISCORD_MAIN_CHANNEL_ID || '';
+        const mainChannelId = this.mainChannelId;
         const isMain = channelId === mainChannelId;
 
         const existingFolders = new Set(
@@ -282,7 +284,7 @@ export class DiscordChannel implements Channel {
         console.log(
           `  Use /chatid command or check channel IDs in Discord settings\n`,
         );
-        if (!process.env.DISCORD_MAIN_CHANNEL_ID) {
+        if (!this.mainChannelId) {
           logger.warn(
             'DISCORD_MAIN_CHANNEL_ID not set — no Discord channel will get main group privileges',
           );
@@ -485,12 +487,14 @@ export class DiscordChannel implements Channel {
 }
 
 registerChannel('discord', (opts: ChannelOpts) => {
-  const envVars = readEnvFile(['DISCORD_BOT_TOKEN']);
+  const envVars = readEnvFile(['DISCORD_BOT_TOKEN', 'DISCORD_MAIN_CHANNEL_ID']);
   const token =
     process.env.DISCORD_BOT_TOKEN || envVars.DISCORD_BOT_TOKEN || '';
   if (!token) {
     logger.warn('Discord: DISCORD_BOT_TOKEN not set');
     return null;
   }
-  return new DiscordChannel(token, opts);
+  const mainChannelId =
+    process.env.DISCORD_MAIN_CHANNEL_ID || envVars.DISCORD_MAIN_CHANNEL_ID || '';
+  return new DiscordChannel(token, mainChannelId, opts);
 });

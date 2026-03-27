@@ -180,6 +180,12 @@ function buildVolumeMounts(
       const srcDir = path.join(skillsSrc, skillDir);
       if (!fs.statSync(srcDir).isDirectory()) continue;
       const dstDir = path.join(skillsDst, skillDir);
+      // Skip if src and dst resolve to the same path (e.g. symlinks)
+      try {
+        const realSrc = fs.realpathSync(srcDir);
+        const realDst = fs.existsSync(dstDir) ? fs.realpathSync(dstDir) : '';
+        if (realSrc === realDst) continue;
+      } catch { /* dst doesn't exist yet, safe to copy */ }
       fs.cpSync(srcDir, dstDir, { recursive: true });
     }
   }
@@ -309,21 +315,29 @@ function buildContainerArgs(
     if (value) args.push('-e', `${key}=${value}`);
   }
 
-  // Route API traffic through the credential proxy (containers never see real secrets)
-  args.push(
-    '-e',
-    `ANTHROPIC_BASE_URL=http://${CONTAINER_HOST_GATEWAY}:${CREDENTIAL_PROXY_PORT}`,
-  );
-
-  // Mirror the host's auth method with a placeholder value.
-  // API key mode: SDK sends x-api-key, proxy replaces with real key.
-  // OAuth mode:   SDK exchanges placeholder token for temp API key,
-  //               proxy injects real OAuth token on that exchange request.
-  const authMode = detectAuthMode();
-  if (authMode === 'api-key') {
-    args.push('-e', 'ANTHROPIC_API_KEY=placeholder');
+  // Route API traffic through the credential proxy when available,
+  // otherwise pass credentials directly to the container.
+  if (CREDENTIAL_PROXY_PORT) {
+    args.push(
+      '-e',
+      `ANTHROPIC_BASE_URL=http://${CONTAINER_HOST_GATEWAY}:${CREDENTIAL_PROXY_PORT}`,
+    );
+    const authMode = detectAuthMode();
+    if (authMode === 'api-key') {
+      args.push('-e', 'ANTHROPIC_API_KEY=placeholder');
+    } else {
+      args.push('-e', 'CLAUDE_CODE_OAUTH_TOKEN=placeholder');
+    }
   } else {
-    args.push('-e', 'CLAUDE_CODE_OAUTH_TOKEN=placeholder');
+    // No proxy — pass real credentials directly (check .env since process.env may not have them)
+    const envCreds = readEnvFile(['CLAUDE_CODE_OAUTH_TOKEN', 'ANTHROPIC_API_KEY']);
+    const oauthToken = process.env.CLAUDE_CODE_OAUTH_TOKEN || envCreds.CLAUDE_CODE_OAUTH_TOKEN || '';
+    const apiKey = process.env.ANTHROPIC_API_KEY || envCreds.ANTHROPIC_API_KEY || '';
+    if (oauthToken) {
+      args.push('-e', `CLAUDE_CODE_OAUTH_TOKEN=${oauthToken}`);
+    } else if (apiKey) {
+      args.push('-e', `ANTHROPIC_API_KEY=${apiKey}`);
+    }
   }
 
   // Runtime-specific args for host gateway resolution

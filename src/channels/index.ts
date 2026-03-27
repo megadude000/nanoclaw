@@ -12,5 +12,7 @@ import './gmail.js';
 // telegram
 import './telegram.js';
 
-// whatsapp
-import './whatsapp.js';
+// whatsapp (dynamic — @whiskeysockets/baileys may not be installed)
+import('./whatsapp.js').catch(() => {
+  /* whatsapp skill not installed, skip */
+});

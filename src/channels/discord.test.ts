@@ -269,7 +269,7 @@ describe('DiscordChannel', () => {
   describe('connection lifecycle', () => {
     it('resolves connect() when client is ready', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
 
       await channel.connect();
 
@@ -278,7 +278,7 @@ describe('DiscordChannel', () => {
 
     it('registers message handlers on connect', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
 
       await channel.connect();
 
@@ -289,7 +289,7 @@ describe('DiscordChannel', () => {
 
     it('disconnects cleanly', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
 
       await channel.connect();
       expect(channel.isConnected()).toBe(true);
@@ -300,7 +300,7 @@ describe('DiscordChannel', () => {
 
     it('isConnected() returns false before connect', () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
 
       expect(channel.isConnected()).toBe(false);
     });
@@ -311,7 +311,7 @@ describe('DiscordChannel', () => {
   describe('text message handling', () => {
     it('delivers message for registered channel', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -343,7 +343,7 @@ describe('DiscordChannel', () => {
 
     it('only emits metadata for unregistered channels', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -365,7 +365,7 @@ describe('DiscordChannel', () => {
 
     it('ignores bot messages', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({ isBot: true, content: 'I am a bot' });
@@ -377,7 +377,7 @@ describe('DiscordChannel', () => {
 
     it('uses member displayName when available (server nickname)', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -396,7 +396,7 @@ describe('DiscordChannel', () => {
 
     it('falls back to author displayName when no member', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -424,7 +424,7 @@ describe('DiscordChannel', () => {
           },
         })),
       });
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -445,7 +445,7 @@ describe('DiscordChannel', () => {
 
     it('uses guild name + channel name for server messages', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -470,7 +470,7 @@ describe('DiscordChannel', () => {
   describe('@mention translation', () => {
     it('translates <@botId> mention to trigger format', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -490,7 +490,7 @@ describe('DiscordChannel', () => {
 
     it('does not translate if message already matches trigger', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -512,7 +512,7 @@ describe('DiscordChannel', () => {
 
     it('does not translate when bot is not mentioned', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -531,7 +531,7 @@ describe('DiscordChannel', () => {
 
     it('handles <@!botId> (nickname mention format)', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -555,7 +555,7 @@ describe('DiscordChannel', () => {
   describe('attachments', () => {
     it('stores image attachment with placeholder', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const attachments = new Map([
@@ -578,7 +578,7 @@ describe('DiscordChannel', () => {
 
     it('stores video attachment with placeholder', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const attachments = new Map([
@@ -601,7 +601,7 @@ describe('DiscordChannel', () => {
 
     it('stores file attachment with placeholder', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const attachments = new Map([
@@ -624,7 +624,7 @@ describe('DiscordChannel', () => {
 
     it('includes text content with attachments', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const attachments = new Map([
@@ -647,7 +647,7 @@ describe('DiscordChannel', () => {
 
     it('handles multiple attachments', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const attachments = new Map([
@@ -675,7 +675,7 @@ describe('DiscordChannel', () => {
   describe('reply context', () => {
     it('includes reply author in content', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -695,7 +695,7 @@ describe('DiscordChannel', () => {
 
     it('includes reply message preview in content', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -720,7 +720,7 @@ describe('DiscordChannel', () => {
 
     it('truncates long reply preview at 100 chars', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -745,7 +745,7 @@ describe('DiscordChannel', () => {
 
     it('handles reply to message with no text content', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -770,7 +770,7 @@ describe('DiscordChannel', () => {
 
     it('handles deleted referenced message gracefully', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -802,7 +802,7 @@ describe('DiscordChannel', () => {
   describe('sendMessage', () => {
     it('sends message via channel', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       await channel.sendMessage('dc:1234567890123456', 'Hello');
@@ -816,7 +816,7 @@ describe('DiscordChannel', () => {
 
     it('strips dc: prefix from JID', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       await channel.sendMessage('dc:9876543210', 'Test');
@@ -826,7 +826,7 @@ describe('DiscordChannel', () => {
 
     it('handles send failure gracefully', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       currentClient().channels.fetch.mockRejectedValueOnce(
@@ -841,7 +841,7 @@ describe('DiscordChannel', () => {
 
     it('does nothing when client is not initialized', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
 
       // Don't connect — client is null
       await channel.sendMessage('dc:1234567890123456', 'No client');
@@ -851,7 +851,7 @@ describe('DiscordChannel', () => {
 
     it('splits messages exceeding 2000 characters using markdown-aware chunker', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const mockChannel = {
@@ -902,7 +902,7 @@ describe('DiscordChannel', () => {
   describe('setTyping', () => {
     it('sends typing indicator when isTyping is true', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const mockChannel = {
@@ -918,7 +918,7 @@ describe('DiscordChannel', () => {
 
     it('does nothing when isTyping is false', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       await channel.setTyping('dc:1234567890123456', false);
@@ -929,7 +929,7 @@ describe('DiscordChannel', () => {
 
     it('does nothing when client is not initialized', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
 
       // Don't connect
       await channel.setTyping('dc:1234567890123456', true);
@@ -952,7 +952,7 @@ describe('DiscordChannel', () => {
   describe('editMessage', () => {
     it('edits a message by fetching channel and message', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const mockEdit = vi.fn().mockResolvedValue(undefined);
@@ -980,7 +980,7 @@ describe('DiscordChannel', () => {
 
     it('does nothing when client is not initialized', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       // Don't connect
       await channel.editMessage('dc:1234567890123456', 'msg_123', 'text');
       // No error thrown
@@ -988,7 +988,7 @@ describe('DiscordChannel', () => {
 
     it('handles edit failure gracefully', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       currentClient().channels.fetch.mockRejectedValueOnce(
@@ -1006,7 +1006,7 @@ describe('DiscordChannel', () => {
   describe('sendMessageRaw', () => {
     it('returns message_id from sent message', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const mockChannel = {
@@ -1026,7 +1026,7 @@ describe('DiscordChannel', () => {
 
     it('returns undefined when client is not initialized', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       // Don't connect
       const result = await channel.sendMessageRaw(
         'dc:1234567890123456',
@@ -1037,7 +1037,7 @@ describe('DiscordChannel', () => {
 
     it('truncates to 2000 chars', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const mockChannel = {
@@ -1053,7 +1053,7 @@ describe('DiscordChannel', () => {
 
     it('returns undefined on failure', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       currentClient().channels.fetch.mockRejectedValueOnce(new Error('fail'));
@@ -1071,7 +1071,7 @@ describe('DiscordChannel', () => {
   describe('sendPhoto', () => {
     it('sends photo with caption', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const mockChannel = {
@@ -1094,7 +1094,7 @@ describe('DiscordChannel', () => {
 
     it('sends photo without caption', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const mockChannel = {
@@ -1113,14 +1113,14 @@ describe('DiscordChannel', () => {
 
     it('does nothing when client is not initialized', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.sendPhoto('dc:1234567890123456', '/tmp/photo.png');
       // No error
     });
 
     it('handles failure gracefully', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       currentClient().channels.fetch.mockRejectedValueOnce(new Error('fail'));
@@ -1136,7 +1136,7 @@ describe('DiscordChannel', () => {
   describe('sendWithButtons', () => {
     it('sends message with button components', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const mockChannel = {
@@ -1168,7 +1168,7 @@ describe('DiscordChannel', () => {
 
     it('splits buttons into rows based on rowSize', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const mockChannel = {
@@ -1193,7 +1193,7 @@ describe('DiscordChannel', () => {
 
     it('does nothing when client is not initialized', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.sendWithButtons('dc:1234567890123456', 'text', []);
       // No error
     });
@@ -1204,7 +1204,7 @@ describe('DiscordChannel', () => {
   describe('interactionCreate handler', () => {
     it('registers interactionCreate handler on connect', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       expect(currentClient().eventHandlers.has('interactionCreate')).toBe(true);
@@ -1212,7 +1212,7 @@ describe('DiscordChannel', () => {
 
     it('routes button clicks as messages to onMessage', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const mockInteraction = {
@@ -1245,7 +1245,7 @@ describe('DiscordChannel', () => {
 
     it('ignores non-button interactions', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const mockInteraction = {
@@ -1261,7 +1261,7 @@ describe('DiscordChannel', () => {
 
     it('falls back to username when no displayName on member', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const mockInteraction = {
@@ -1292,7 +1292,7 @@ describe('DiscordChannel', () => {
   describe('shard lifecycle logging', () => {
     it('registers shard event handlers on connect', async () => {
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const client = currentClient();
@@ -1304,7 +1304,7 @@ describe('DiscordChannel', () => {
     it('logs warning on ShardDisconnect with shardId and code', async () => {
       const { logger } = await import('../logger.js');
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const client = currentClient();
@@ -1320,7 +1320,7 @@ describe('DiscordChannel', () => {
     it('logs info on ShardReconnecting with shardId', async () => {
       const { logger } = await import('../logger.js');
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const client = currentClient();
@@ -1336,7 +1336,7 @@ describe('DiscordChannel', () => {
     it('logs info on ShardResume with shardId and replayedEvents', async () => {
       const { logger } = await import('../logger.js');
       const opts = createTestOpts();
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const client = currentClient();
@@ -1359,7 +1359,7 @@ describe('DiscordChannel', () => {
       const opts = createTestOpts({
         registeredGroups: vi.fn(() => ({})),
       });
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -1382,14 +1382,11 @@ describe('DiscordChannel', () => {
     });
 
     it('sets isMain=true when channelId matches DISCORD_MAIN_CHANNEL_ID', async () => {
-      const originalEnv = process.env.DISCORD_MAIN_CHANNEL_ID;
-      process.env.DISCORD_MAIN_CHANNEL_ID = UNREGISTERED_CHANNEL_ID;
-
       try {
         const opts = createTestOpts({
           registeredGroups: vi.fn(() => ({})),
         });
-        const channel = new DiscordChannel('test-token', opts);
+        const channel = new DiscordChannel('test-token', UNREGISTERED_CHANNEL_ID, opts);
         await channel.connect();
 
         const msg = createMessage({
@@ -1408,11 +1405,7 @@ describe('DiscordChannel', () => {
           }),
         );
       } finally {
-        if (originalEnv === undefined) {
-          delete process.env.DISCORD_MAIN_CHANNEL_ID;
-        } else {
-          process.env.DISCORD_MAIN_CHANNEL_ID = originalEnv;
-        }
+        // mainChannelId is now a constructor param, no env cleanup needed
       }
     });
 
@@ -1427,7 +1420,7 @@ describe('DiscordChannel', () => {
           },
         })),
       });
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({
@@ -1446,7 +1439,7 @@ describe('DiscordChannel', () => {
       const opts = createTestOpts({
         registeredGroups: vi.fn(() => ({})),
       });
-      const channel = new DiscordChannel('test-token', opts);
+      const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
       const msg = createMessage({

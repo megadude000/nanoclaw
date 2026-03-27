@@ -71,3 +71,23 @@ export const TRIGGER_PATTERN = new RegExp(
 // Uses system timezone by default
 export const TIMEZONE =
   process.env.TZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+// Credential proxy port (0 = disabled)
+export const CREDENTIAL_PROXY_PORT = parseInt(
+  process.env.CREDENTIAL_PROXY_PORT || '0',
+  10,
+);
+
+// Webhook server port
+export const NOTION_WEBHOOK_PORT = parseInt(
+  process.env.NOTION_WEBHOOK_PORT || '0',
+  10,
+);
+
+// Telegram bot pool tokens (comma-separated)
+export const TELEGRAM_BOT_POOL: string[] = (
+  process.env.TELEGRAM_BOT_POOL || ''
+)
+  .split(',')
+  .map((t) => t.trim())
+  .filter(Boolean);
