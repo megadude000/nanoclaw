@@ -1,0 +1,496 @@
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  Client,
+  Events,
+  GatewayIntentBits,
+  Message,
+  TextChannel,
+} from 'discord.js';
+
+import fs from 'fs';
+import path from 'path';
+
+import { chunkMessage } from '../discord-chunker.js';
+import {
+  sanitizeWithCollisionCheck,
+  createGroupStub,
+} from '../discord-group-utils.js';
+import {
+  SwarmWebhookManager,
+  loadSwarmIdentities,
+} from '../swarm-webhook-manager.js';
+
+import { ASSISTANT_NAME, GROUPS_DIR, TRIGGER_PATTERN } from '../config.js';
+import { readEnvFile } from '../env.js';
+import { logger } from '../logger.js';
+import { registerChannel, ChannelOpts } from './registry.js';
+import {
+  Channel,
+  OnChatMetadata,
+  OnInboundMessage,
+  RegisteredGroup,
+} from '../types.js';
+
+export interface DiscordChannelOpts {
+  onMessage: OnInboundMessage;
+  onChatMetadata: OnChatMetadata;
+  registeredGroups: () => Record<string, RegisteredGroup>;
+  registerGroup?: (jid: string, group: RegisteredGroup) => void;
+}
+
+export class DiscordChannel implements Channel {
+  name = 'discord';
+
+  private client: Client | null = null;
+  private opts: DiscordChannelOpts;
+  private botToken: string;
+  private swarmManager: SwarmWebhookManager | null = null;
+
+  constructor(botToken: string, opts: DiscordChannelOpts) {
+    this.botToken = botToken;
+    this.opts = opts;
+  }
+
+  async connect(): Promise<void> {
+    this.client = new Client({
+      intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.DirectMessages,
+      ],
+    });
+
+    this.client.on(Events.MessageCreate, async (message: Message) => {
+      // Ignore bot messages (including own)
+      if (message.author.bot) return;
+
+      const channelId = message.channelId;
+      const chatJid = `dc:${channelId}`;
+      let content = message.content;
+      const timestamp = message.createdAt.toISOString();
+      const senderName =
+        message.member?.displayName ||
+        message.author.displayName ||
+        message.author.username;
+      const sender = message.author.id;
+      const msgId = message.id;
+
+      // Determine chat name
+      let chatName: string;
+      if (message.guild) {
+        const textChannel = message.channel as TextChannel;
+        chatName = `${message.guild.name} #${textChannel.name}`;
+      } else {
+        chatName = senderName;
+      }
+
+      // Translate Discord @bot mentions into TRIGGER_PATTERN format.
+      // Discord mentions look like <@botUserId> — these won't match
+      // TRIGGER_PATTERN (e.g., ^@Andy\b), so we prepend the trigger
+      // when the bot is @mentioned.
+      if (this.client?.user) {
+        const botId = this.client.user.id;
+        const isBotMentioned =
+          message.mentions.users.has(botId) ||
+          content.includes(`<@${botId}>`) ||
+          content.includes(`<@!${botId}>`);
+
+        if (isBotMentioned) {
+          // Strip the <@botId> mention to avoid visual clutter
+          content = content
+            .replace(new RegExp(`<@!?${botId}>`, 'g'), '')
+            .trim();
+          // Prepend trigger if not already present
+          if (!TRIGGER_PATTERN.test(content)) {
+            content = `@${ASSISTANT_NAME} ${content}`;
+          }
+        }
+      }
+
+      // Handle attachments — store placeholders so the agent knows something was sent
+      if (message.attachments.size > 0) {
+        const attachmentDescriptions = [...message.attachments.values()].map(
+          (att) => {
+            const contentType = att.contentType || '';
+            if (contentType.startsWith('image/')) {
+              return `[Image: ${att.name || 'image'}]`;
+            } else if (contentType.startsWith('video/')) {
+              return `[Video: ${att.name || 'video'}]`;
+            } else if (contentType.startsWith('audio/')) {
+              return `[Audio: ${att.name || 'audio'}]`;
+            } else {
+              return `[File: ${att.name || 'file'}]`;
+            }
+          },
+        );
+        if (content) {
+          content = `${content}\n${attachmentDescriptions.join('\n')}`;
+        } else {
+          content = attachmentDescriptions.join('\n');
+        }
+      }
+
+      // Handle reply context — include who the user is replying to
+      if (message.reference?.messageId) {
+        try {
+          const repliedTo = await message.channel.messages.fetch(
+            message.reference.messageId,
+          );
+          const replyAuthor =
+            repliedTo.member?.displayName ||
+            repliedTo.author.displayName ||
+            repliedTo.author.username;
+          const preview = repliedTo.content
+            ? repliedTo.content.slice(0, 100) +
+              (repliedTo.content.length > 100 ? '...' : '')
+            : '';
+          const previewPart = preview ? `: "${preview}"` : '';
+          content = `[Reply to ${replyAuthor}${previewPart}] ${content}`;
+        } catch {
+          // Referenced message may have been deleted
+        }
+      }
+
+      // Store chat metadata for discovery
+      const isGroup = message.guild !== null;
+      this.opts.onChatMetadata(
+        chatJid,
+        timestamp,
+        chatName,
+        'discord',
+        isGroup,
+      );
+
+      // Auto-register Discord channel as group on first message (D-04, D-05)
+      if (!this.opts.registeredGroups()[chatJid] && this.opts.registerGroup) {
+        const mainChannelId = process.env.DISCORD_MAIN_CHANNEL_ID || '';
+        const isMain = channelId === mainChannelId;
+
+        const existingFolders = new Set(
+          Object.values(this.opts.registeredGroups()).map((g) => g.folder),
+        );
+        const textChannel = message.channel as TextChannel;
+        const folder = sanitizeWithCollisionCheck(
+          textChannel.name,
+          channelId,
+          existingFolders,
+        );
+
+        // Per D-06/D-07/D-08: main gets isMain+no trigger, non-main gets trigger required
+        this.opts.registerGroup(chatJid, {
+          name: chatName,
+          folder,
+          trigger: `@${ASSISTANT_NAME}`,
+          added_at: new Date().toISOString(),
+          requiresTrigger: !isMain,
+          isMain: isMain || undefined,
+        });
+
+        // Create CLAUDE.md stub per D-09
+        const groupDir = path.join(GROUPS_DIR, folder);
+        const claudePath = path.join(groupDir, 'CLAUDE.md');
+        if (!fs.existsSync(claudePath)) {
+          fs.writeFileSync(
+            claudePath,
+            createGroupStub(textChannel.name, isMain),
+          );
+        }
+
+        logger.info(
+          { chatJid, folder, isMain },
+          'Discord channel auto-registered as group',
+        );
+      }
+
+      // Only deliver full message for registered groups
+      const group = this.opts.registeredGroups()[chatJid];
+      if (!group) {
+        logger.debug(
+          { chatJid, chatName },
+          'Message from unregistered Discord channel',
+        );
+        return;
+      }
+
+      // Deliver message — startMessageLoop() will pick it up
+      this.opts.onMessage(chatJid, {
+        id: msgId,
+        chat_jid: chatJid,
+        sender,
+        sender_name: senderName,
+        content,
+        timestamp,
+        is_from_me: false,
+      });
+
+      logger.info(
+        { chatJid, chatName, sender: senderName },
+        'Discord message stored',
+      );
+    });
+
+    // Shard lifecycle logging for reconnection observability (CHAN-03)
+    this.client.on(Events.ShardDisconnect, (event, shardId) => {
+      logger.warn({ shardId, code: event.code }, 'Discord shard disconnected');
+    });
+    this.client.on(Events.ShardReconnecting, (shardId) => {
+      logger.info({ shardId }, 'Discord shard reconnecting');
+    });
+    this.client.on(Events.ShardResume, (shardId, replayedEvents) => {
+      logger.info({ shardId, replayedEvents }, 'Discord shard resumed');
+    });
+
+    // Handle button interactions — route back to agent as messages
+    this.client.on(Events.InteractionCreate, async (interaction) => {
+      if (!interaction.isButton()) return;
+      try {
+        await interaction.deferUpdate();
+      } catch (err) {
+        logger.debug({ err }, 'Failed to defer button interaction');
+      }
+      const chatJid = `dc:${interaction.channelId}`;
+      this.opts.onMessage(chatJid, {
+        id: interaction.id,
+        chat_jid: chatJid,
+        sender: interaction.user.id,
+        sender_name:
+          interaction.member && 'displayName' in interaction.member
+            ? (interaction.member as any).displayName ||
+              interaction.user.username
+            : interaction.user.username,
+        content: `@${ASSISTANT_NAME} [button:${interaction.customId}]`,
+        timestamp: new Date().toISOString(),
+        is_from_me: false,
+      });
+    });
+
+    // Handle errors gracefully
+    this.client.on(Events.Error, (err) => {
+      logger.error({ err: err.message }, 'Discord client error');
+    });
+
+    return new Promise<void>((resolve) => {
+      this.client!.once(Events.ClientReady, (readyClient) => {
+        logger.info(
+          { username: readyClient.user.tag, id: readyClient.user.id },
+          'Discord bot connected',
+        );
+        console.log(`\n  Discord bot: ${readyClient.user.tag}`);
+        console.log(
+          `  Use /chatid command or check channel IDs in Discord settings\n`,
+        );
+        if (!process.env.DISCORD_MAIN_CHANNEL_ID) {
+          logger.warn(
+            'DISCORD_MAIN_CHANNEL_ID not set — no Discord channel will get main group privileges',
+          );
+        }
+
+        // Initialize swarm webhook manager for distinct bot identities
+        const identities = loadSwarmIdentities();
+        if (identities.length > 0) {
+          this.swarmManager = new SwarmWebhookManager(identities);
+          logger.info(
+            { identities: identities.map((i) => i.name) },
+            'Swarm webhook manager initialized',
+          );
+        }
+
+        resolve();
+      });
+
+      this.client!.login(this.botToken);
+    });
+  }
+
+  async sendMessage(jid: string, text: string, sender?: string): Promise<void> {
+    if (!this.client) {
+      logger.warn('Discord client not initialized');
+      return;
+    }
+
+    // Swarm identity routing (D-13): check sender before normal send
+    if (sender && this.swarmManager?.hasIdentity(sender)) {
+      try {
+        const channelId = jid.replace(/^dc:/, '');
+        const channel = await this.client.channels.fetch(channelId);
+        if (channel && 'send' in channel) {
+          const textChannel = channel as TextChannel;
+          const sent = await this.swarmManager.send(textChannel, text, sender);
+          if (sent) {
+            logger.info(
+              { jid, sender, length: text.length },
+              'Discord swarm message sent via webhook',
+            );
+            return;
+          }
+          // Fallback: prefix message with sender name (D-11)
+          logger.warn({ jid, sender }, 'Swarm webhook fallback to main bot');
+          text = `[${sender}] ${text}`;
+        }
+      } catch (err) {
+        logger.warn(
+          { jid, sender, err },
+          'Swarm webhook routing failed, falling back to main bot',
+        );
+        text = `[${sender}] ${text}`;
+      }
+    }
+
+    try {
+      const channelId = jid.replace(/^dc:/, '');
+      const channel = await this.client.channels.fetch(channelId);
+
+      if (!channel || !('send' in channel)) {
+        logger.warn({ jid }, 'Discord channel not found or not text-based');
+        return;
+      }
+
+      const textChannel = channel as TextChannel;
+
+      // Use markdown-aware chunking to split at natural boundaries
+      const chunks = chunkMessage(text);
+      for (const chunk of chunks) {
+        await textChannel.send(chunk);
+      }
+      logger.info({ jid, length: text.length }, 'Discord message sent');
+    } catch (err) {
+      logger.error({ jid, err }, 'Failed to send Discord message');
+    }
+  }
+
+  isConnected(): boolean {
+    return this.client !== null && this.client.isReady();
+  }
+
+  ownsJid(jid: string): boolean {
+    return jid.startsWith('dc:');
+  }
+
+  async disconnect(): Promise<void> {
+    if (this.client) {
+      this.client.destroy();
+      this.client = null;
+      logger.info('Discord bot stopped');
+    }
+  }
+
+  async editMessage(
+    jid: string,
+    messageId: string,
+    text: string,
+  ): Promise<void> {
+    if (!this.client) return;
+    try {
+      const channelId = jid.replace(/^dc:/, '');
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel || !('messages' in channel)) return;
+      const textChannel = channel as TextChannel;
+      const message = await textChannel.messages.fetch(messageId);
+      await message.edit(text);
+    } catch (err) {
+      logger.debug({ jid, messageId, err }, 'Failed to edit Discord message');
+    }
+  }
+
+  async sendMessageRaw(
+    jid: string,
+    text: string,
+  ): Promise<{ message_id: string } | undefined> {
+    if (!this.client) return undefined;
+    try {
+      const channelId = jid.replace(/^dc:/, '');
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel || !('send' in channel)) return undefined;
+      const textChannel = channel as TextChannel;
+      const msg = await textChannel.send(text.slice(0, 2000));
+      return { message_id: msg.id };
+    } catch (err) {
+      logger.debug({ jid, err }, 'sendMessageRaw failed');
+      return undefined;
+    }
+  }
+
+  async sendPhoto(
+    jid: string,
+    photoPath: string,
+    caption?: string,
+  ): Promise<void> {
+    if (!this.client) return;
+    try {
+      const channelId = jid.replace(/^dc:/, '');
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel || !('send' in channel)) return;
+      const textChannel = channel as TextChannel;
+      await textChannel.send({
+        content: caption || undefined,
+        files: [photoPath],
+      });
+      logger.info(
+        { jid, photoPath, hasCaption: !!caption },
+        'Discord photo sent',
+      );
+    } catch (err) {
+      logger.error({ jid, photoPath, err }, 'Failed to send Discord photo');
+    }
+  }
+
+  async sendWithButtons(
+    jid: string,
+    text: string,
+    buttons: Array<{ label: string; data: string }>,
+    rowSize: number = 5,
+  ): Promise<void> {
+    if (!this.client) return;
+    try {
+      const channelId = jid.replace(/^dc:/, '');
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel || !('send' in channel)) return;
+      const textChannel = channel as TextChannel;
+      const rows: ActionRowBuilder<ButtonBuilder>[] = [];
+      for (let i = 0; i < buttons.length; i += rowSize) {
+        const row = new ActionRowBuilder<ButtonBuilder>();
+        row.addComponents(
+          buttons
+            .slice(i, i + rowSize)
+            .map((b) =>
+              new ButtonBuilder()
+                .setCustomId(b.data.slice(0, 100))
+                .setLabel(b.label)
+                .setStyle(ButtonStyle.Primary),
+            ),
+        );
+        rows.push(row);
+      }
+      await textChannel.send({ content: text, components: rows });
+    } catch (err) {
+      logger.error({ jid, err }, 'Failed to send Discord message with buttons');
+    }
+  }
+
+  async setTyping(jid: string, isTyping: boolean): Promise<void> {
+    if (!this.client || !isTyping) return;
+    try {
+      const channelId = jid.replace(/^dc:/, '');
+      const channel = await this.client.channels.fetch(channelId);
+      if (channel && 'sendTyping' in channel) {
+        await (channel as TextChannel).sendTyping();
+      }
+    } catch (err) {
+      logger.debug({ jid, err }, 'Failed to send Discord typing indicator');
+    }
+  }
+}
+
+registerChannel('discord', (opts: ChannelOpts) => {
+  const envVars = readEnvFile(['DISCORD_BOT_TOKEN']);
+  const token =
+    process.env.DISCORD_BOT_TOKEN || envVars.DISCORD_BOT_TOKEN || '';
+  if (!token) {
+    logger.warn('Discord: DISCORD_BOT_TOKEN not set');
+    return null;
+  }
+  return new DiscordChannel(token, opts);
+});
