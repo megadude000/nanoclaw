@@ -135,7 +135,7 @@ Plans:
   5. User can roll back any webhook to Telegram-only if Discord routing has issues
 **Plans:** 2 plans
 Plans:
-- [ ] 08-01-PLAN.md — Channel-specific CLAUDE.md templates + enhanced createGroupStub()
+- [x] 08-01-PLAN.md — Channel-specific CLAUDE.md templates + enhanced createGroupStub()
 - [ ] 08-02-PLAN.md — Routing enabled toggle + migration checklist documentation
 
 ## Progress

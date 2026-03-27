@@ -63,11 +63,11 @@
 
 ### Per-Channel Context
 
-- [ ] **CTX-01**: Each Discord channel group gets a channel-specific CLAUDE.md with themed instructions
-- [ ] **CTX-02**: `#bugs` channel agent responds in bug-triage mode using Cortex knowledge
-- [ ] **CTX-03**: `#yw-tasks` channel agent responds in project management mode
-- [ ] **CTX-04**: `#main` channel agent responds as general Jarvis assistant
-- [ ] **CTX-05**: Agent uses Cortex/Obsidian knowledge base for contextual responses per channel
+- [x] **CTX-01**: Each Discord channel group gets a channel-specific CLAUDE.md with themed instructions
+- [x] **CTX-02**: `#bugs` channel agent responds in bug-triage mode using Cortex knowledge
+- [x] **CTX-03**: `#yw-tasks` channel agent responds in project management mode
+- [x] **CTX-04**: `#main` channel agent responds as general Jarvis assistant
+- [x] **CTX-05**: Agent uses Cortex/Obsidian knowledge base for contextual responses per channel
 
 ### Migration Controls
 
@@ -143,11 +143,11 @@
 | SWRM-02 | Phase 7 | Complete |
 | SWRM-03 | Phase 7 | Complete |
 | SWRM-04 | Phase 7 | Complete |
-| CTX-01 | Phase 8 | Pending |
-| CTX-02 | Phase 8 | Pending |
-| CTX-03 | Phase 8 | Pending |
-| CTX-04 | Phase 8 | Pending |
-| CTX-05 | Phase 8 | Pending |
+| CTX-01 | Phase 8 | Complete |
+| CTX-02 | Phase 8 | Complete |
+| CTX-03 | Phase 8 | Complete |
+| CTX-04 | Phase 8 | Complete |
+| CTX-05 | Phase 8 | Complete |
 | MIG-01 | Phase 8 | Pending |
 | MIG-02 | Phase 8 | Pending |
 | MIG-03 | Phase 8 | Pending |
