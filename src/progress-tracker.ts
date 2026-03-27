@@ -20,6 +20,7 @@ interface TrackerState {
   lastActivityTime: number;
   lastTool: string | null;
   progressMsgId: number | null;
+  logsMsgId: number | null;
   sendPending: boolean;
   editThrottle: boolean;
   typingTimer: ReturnType<typeof setInterval> | null;
@@ -71,6 +72,7 @@ export class ProgressTracker {
       lastActivityTime: Date.now(),
       lastTool: null,
       progressMsgId: null,
+      logsMsgId: null,
       sendPending: false,
       editThrottle: false,
       typingTimer: null,
@@ -89,10 +91,8 @@ export class ProgressTracker {
       () => this.setTyping(chatJid, true).catch(() => {}),
       TYPING_INTERVAL_MS,
     );
-    state.silenceTimer = setTimeout(
-      () => this._onSilence(chatJid),
-      SILENCE_THRESHOLD_MS,
-    );
+    // Send initial progress message immediately
+    this._onSilence(chatJid);
     state.pollTimer = setInterval(
       () => this._pollJSONL(chatJid),
       JSONL_POLL_MS,
@@ -112,16 +112,22 @@ export class ProgressTracker {
   onResponseReceived(chatJid: string): void {
     const state = this.states.get(chatJid);
     const msgId = state?.progressMsgId ?? null;
+    const logsMsgId = state?.logsMsgId ?? null;
     const elapsed = state
       ? Math.round((Date.now() - state.startTime) / 1000)
       : 0;
-    if (state) state.progressMsgId = null;
-    const targetJid = this.dumpJid ?? chatJid;
+    if (state) {
+      state.progressMsgId = null;
+      state.logsMsgId = null;
+    }
     this._cleanup(chatJid);
-    if (msgId && state) {
-      this.editMsg(targetJid, msgId, `✅ Done in ${elapsed}s`).catch(
-        () => {},
-      );
+    const doneText = `✅ Done in ${elapsed}s`;
+    if (msgId) {
+      this.editMsg(chatJid, msgId, doneText).catch(() => {});
+    }
+    if (logsMsgId && this.dumpJid) {
+      const logsText = `[${state?.groupFolder ?? chatJid}] ${doneText}`;
+      this.editMsg(this.dumpJid, logsMsgId, logsText).catch(() => {});
     }
   }
 
@@ -129,10 +135,11 @@ export class ProgressTracker {
     const state = this.states.get(chatJid);
     if (!state) return;
     const msgId = state.progressMsgId;
-    const targetJid = this.dumpJid ?? chatJid;
+    const logsMsgId = state.logsMsgId;
     this._cleanup(chatJid);
-    if (msgId && exitCode !== 0) {
-      this.deleteMsg(targetJid, msgId).catch(() => {});
+    if (exitCode !== 0) {
+      if (msgId) this.deleteMsg(chatJid, msgId).catch(() => {});
+      if (logsMsgId && this.dumpJid) this.deleteMsg(this.dumpJid, logsMsgId).catch(() => {});
     }
   }
 
@@ -258,10 +265,10 @@ export class ProgressTracker {
     const state = this.states.get(chatJid);
     if (!state) return;
     const text = this._formatProgress(state);
-    const targetJid = this.dumpJid ?? chatJid;
     if (!state.progressMsgId) {
       state.sendPending = true;
-      this.sendMsg(targetJid, text)
+      // Send to source channel
+      this.sendMsg(chatJid, text)
         .then((res: any) => {
           state.sendPending = false;
           if (
@@ -275,6 +282,17 @@ export class ProgressTracker {
         .catch(() => {
           state.sendPending = false;
         });
+      // Mirror to logs channel
+      if (this.dumpJid && this.dumpJid !== chatJid) {
+        const logsText = `[${state.groupFolder}] ${text}`;
+        this.sendMsg(this.dumpJid, logsText)
+          .then((res: any) => {
+            if (state.logsMsgId === null && res?.message_id && this.states.has(chatJid)) {
+              state.logsMsgId = res.message_id;
+            }
+          })
+          .catch(() => {});
+      }
     } else {
       this._flushEdit(chatJid);
     }
@@ -290,28 +308,30 @@ export class ProgressTracker {
     state.editThrottle = false;
     if (!state.progressMsgId) return;
     const text = this._formatProgress(state);
-    const targetJid = this.dumpJid ?? chatJid;
-    this.editMsg(targetJid, state.progressMsgId, text).catch((err: any) => {
+    // Edit source channel
+    this.editMsg(chatJid, state.progressMsgId, text).catch((err: any) => {
       if (err?.error_code === 429) {
         setTimeout(() => {
           const s = this.states.get(chatJid);
           if (s?.progressMsgId)
-            this.editMsg(
-              targetJid,
-              s.progressMsgId,
-              this._formatProgress(s),
-            ).catch(() => {});
+            this.editMsg(chatJid, s.progressMsgId, this._formatProgress(s)).catch(() => {});
         }, 5000);
       } else if (err?.error_code === 400) {
         if (state) state.progressMsgId = null;
       }
     });
+    // Edit logs channel
+    if (state.logsMsgId && this.dumpJid && this.dumpJid !== chatJid) {
+      const logsText = `[${state.groupFolder}] ${text}`;
+      this.editMsg(this.dumpJid, state.logsMsgId, logsText).catch((err: any) => {
+        if (err?.error_code === 400) state.logsMsgId = null;
+      });
+    }
   }
 
   private _formatProgress(state: TrackerState): string {
     const elapsed = Math.round((Date.now() - state.startTime) / 1000);
     const tool = state.lastTool ?? '🤔 thinking...';
-    const prefix = this.dumpJid ? `[${state.groupFolder}] ` : '';
-    return `${prefix}⏳ ${elapsed}s — ${tool}`;
+    return `⏳ ${elapsed}s — ${tool}`;
   }
 }
