@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: verifying
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-03-27T15:34:11.668Z"
+milestone: v2.0
+milestone_name: Agent Dashboard
+status: planning
+stopped_at: ~
+last_updated: "2026-03-27T00:00:00.000Z"
 last_activity: 2026-03-27
 progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 15
-  completed_plans: 15
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 
 ## Current Position
 
-Phase: 06 (webhook-routing-architecture) — DISCUSSING
-Plan: 0 of 0
-Status: Phase complete — ready for verification
-Last activity: 2026-03-27
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-27 — Milestone v2.0 Agent Dashboard started
 
 Progress: [░░░░░░░░░░] 0%
 

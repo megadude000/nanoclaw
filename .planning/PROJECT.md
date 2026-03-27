@@ -1,5 +1,16 @@
 # Discord Integration for NanoClaw
 
+## Current Milestone: v2.0 Agent Dashboard
+
+**Goal:** Make #agents a live operational dashboard where agents report status, blockers, handoffs, and health alerts — keeping Telegram main chat clean for personal conversation.
+
+**Target features:**
+- Task status reporting: agents post "took #9" / "closed #9, PR #12" to #agents
+- Blocker reporting: agent reports when blocked (no permissions, service down, conflict)
+- Handoffs: structured handoff messages between Friday/Alfred (e.g. "passing to Alfred — service X down, needs restart")
+- Morning Digest routing: nightly summary goes to #agents instead of main chat
+- Health alerts: Alfred monitors tunnels/services and posts to #agents
+
 ## What This Is
 
 A structured Discord server integration for NanoClaw that moves automated notifications and project management outputs (GitHub Issues, Notion tasks, bug reports, progress tracking, swarm agent output) from the single Telegram main chat into categorized Discord channels. Each Discord channel becomes a contextual workspace where the agent responds in-context using Cortex knowledge and channel-specific configuration. Telegram remains the primary conversational interface for mobile and quick interactions.
@@ -117,4 +128,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after Phase 4 completion*
+*Last updated: 2026-03-27 — Milestone v2.0 Agent Dashboard started*
