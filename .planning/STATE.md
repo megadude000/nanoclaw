@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Agent Dashboard
-status: executing
-stopped_at: Completed 13-01-PLAN.md (health-monitor-core)
-last_updated: "2026-03-28T09:08:02.704Z"
+status: verifying
+stopped_at: Completed 13-02-PLAN.md (health-monitor-wiring)
+last_updated: "2026-03-28T09:13:59.784Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 Phase: 13 (health-monitoring) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 11-blocker-handoff-reporting P02 | 5 | 2 tasks | 2 files |
 | Phase 12 P01 | 7 | 3 tasks | 6 files |
 | Phase 13 P01 | 6m | 2 tasks | 4 files |
+| Phase 13 P02 | 5m | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Recent decisions affecting current work:
 - [Phase 12]: resolveTargets results filtered to exclude task.chat_jid to prevent accidental double-send when fallback returns main group
 - [Phase 13]: buildDownEmbed omits description when errorSnippet not provided — keeps embed clean for brief alerts
 - [Phase 13]: Health monitor exports individual named functions (not class) consistent with discord-embeds.ts and agent-status-embeds.ts patterns
+- [Phase 13]: sendHealthEmbed reuses dumpJid (DISCORD_LOGS_CHANNEL_ID) — health alerts go to #logs, same channel as sendToLogs text messages
+- [Phase 13]: stopHealthMonitor called first in shutdown handler before proxyServer/webhookServer close, ensuring clean interval cleanup
 
 ### Pending Todos
 
@@ -95,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T09:08:02.700Z
-Stopped at: Completed 13-01-PLAN.md (health-monitor-core)
+Last session: 2026-03-28T09:13:59.781Z
+Stopped at: Completed 13-02-PLAN.md (health-monitor-wiring)
 Resume file: None

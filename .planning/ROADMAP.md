@@ -149,7 +149,7 @@ Plans:
 
 Plans:
 - [x] 13-01-PLAN.md — Health monitor embeds, core polling loop, state tracking with tests
-- [ ] 13-02-PLAN.md — Wire startHealthMonitor into index.ts startup and shutdown
+- [x] 13-02-PLAN.md — Wire startHealthMonitor into index.ts startup and shutdown
 
 #### Phase 14: Agent History Search
 **Goal**: Agents can query #agents message history via IPC and the channel serves as a persistent activity log
@@ -181,5 +181,5 @@ Note: Phase 12 depends only on Phase 6 (already complete) and can execute in par
 | 10. Agent Status Reporting | v2.0 | 2/2 | Complete    | 2026-03-28 |
 | 11. Blocker & Handoff Reporting | v2.0 | 2/2 | Complete    | 2026-03-28 |
 | 12. Morning Digest Routing | v2.0 | 1/1 | Complete    | 2026-03-28 |
-| 13. Health Monitoring | v2.0 | 1/2 | In Progress|  |
+| 13. Health Monitoring | v2.0 | 2/2 | Complete   | 2026-03-28 |
 | 14. Agent History Search | v2.0 | 0/? | Not started | - |
