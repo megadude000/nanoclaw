@@ -116,7 +116,11 @@ Plans:
   3. When an agent needs human input due to ambiguity, a blocker embed appears in #agents with the question
   4. When an agent hands off to another agent, a structured handoff embed appears in #agents with what, to whom, and why
   5. All blocker and handoff embeds carry the structured metadata defined in Phase 9
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Blocker and handoff embed builders with unit tests
+- [ ] 11-02-PLAN.md — IPC MCP tools (container) and host-side IPC handlers
 
 #### Phase 12: Morning Digest Routing
 **Goal**: Morning Digest posts to #agents instead of Telegram main chat
@@ -168,7 +172,7 @@ Note: Phase 12 depends only on Phase 6 (already complete) and can execute in par
 | 8. Channel Templates | v1.0 | 1/1 | Complete | 2026-03-27 |
 | 9. Agent Message Schema | v2.0 | 0/1 | Not started | - |
 | 10. Agent Status Reporting | v2.0 | 2/2 | Complete    | 2026-03-28 |
-| 11. Blocker & Handoff Reporting | v2.0 | 0/? | Not started | - |
+| 11. Blocker & Handoff Reporting | v2.0 | 0/2 | Not started | - |
 | 12. Morning Digest Routing | v2.0 | 0/? | Not started | - |
 | 13. Health Monitoring | v2.0 | 0/? | Not started | - |
 | 14. Agent History Search | v2.0 | 0/? | Not started | - |
