@@ -2,13 +2,14 @@
 
 ## Milestones
 
-- ✅ **v1.0 Discord Integration** - Phases 1-8 (shipped 2014-03-27)
-- 🚧 **v2.0 Agent Dashboard** - Phases 9-14 (in progress)
+- ✅ **v1.0 Discord Integration** — Phases 1-8 (shipped 2026-03-27)
+- ✅ **v2.0 Agent Dashboard** — Phases 9-13 (shipped 2026-03-28)
+- 📋 **v3.0** — Phases 14+ (planned)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0 Discord Integration (Phases 1-8) - SHIPPED 2014-03-27</summary>
+<summary>✅ v1.0 Discord Integration (Phases 1-8) — SHIPPED 2026-03-27</summary>
 
 ### Phase 1: Bot Foundation
 **Goal**: Discord bot connects and self-registers as a channel
@@ -74,79 +75,49 @@ Plans:
 
 </details>
 
-### 🚧 v2.0 Agent Dashboard (In Progress)
+<details>
+<summary>✅ v2.0 Agent Dashboard (Phases 9-13) — SHIPPED 2026-03-28</summary>
 
-**Milestone Goal:** Make #agents a live operational dashboard where agents report status, blockers, handoffs, and health alerts — keeping Telegram main chat clean for personal conversation.
-
-#### Phase 9: Agent Message Schema
+### Phase 9: Agent Message Schema
 **Goal**: All #agents messages carry structured, machine-parseable embed metadata
-**Depends on**: Phase 8
-**Requirements**: SEARCH-01
-**Success Criteria** (what must be TRUE):
-  1. Every message posted to #agents includes embed fields: agent name, task ID, message type (status/blocker/handoff/digest)
-  2. Embed fields use consistent, documented field names that can be filtered programmatically
-  3. A TypeScript type or schema defines the required fields and valid message-type values
 **Plans**: 1 plan
 
 Plans:
-- [x] 09-01-PLAN.md — Zod schema, AgentMessageMeta types, withAgentMeta() helper, AGENT_COLORS
+- [x] 09-01: Zod schema, AgentMessageMeta types, withAgentMeta() helper, AGENT_COLORS
 
-#### Phase 10: Agent Status Reporting
+### Phase 10: Agent Status Reporting
 **Goal**: Agents announce task lifecycle events (picked up, in progress, closed) to #agents
-**Depends on**: Phase 9
-**Requirements**: ASTATUS-01, ASTATUS-02, ASTATUS-03
-**Success Criteria** (what must be TRUE):
-  1. When an agent picks up a task or GitHub issue, a "took #N [title]" embed appears in #agents
-  2. When an agent closes a task, a "closed #N, PR #M" embed appears in #agents with PR link
-  3. During a long-running task, progress update embeds appear in #agents at meaningful intervals
-  4. All status embeds carry the structured metadata defined in Phase 9
 **Plans**: 2 plans
 
 Plans:
-- [x] 10-01-PLAN.md — Embed builders (took/closed/progress) with tests, sendEmbed channel method
-- [x] 10-02-PLAN.md — Host-side wiring: sendToAgents, scheduler reporting, IPC handler, MCP tool
+- [x] 10-01: Embed builders (took/closed/progress) with tests, sendEmbed channel method
+- [x] 10-02: Host-side wiring: sendToAgents, scheduler reporting, IPC handler, MCP tool
 
-#### Phase 11: Blocker & Handoff Reporting
+### Phase 11: Blocker & Handoff Reporting
 **Goal**: Agents surface blockers and handoffs as actionable embeds in #agents
-**Depends on**: Phase 9
-**Requirements**: BLOCK-01, BLOCK-02, BLOCK-03, HAND-01
-**Success Criteria** (what must be TRUE):
-  1. When an agent hits a permission error, a blocker embed appears in #agents naming the resource and the error
-  2. When a service or tunnel is unavailable, a blocker embed appears in #agents naming the service
-  3. When an agent needs human input due to ambiguity, a blocker embed appears in #agents with the question
-  4. When an agent hands off to another agent, a structured handoff embed appears in #agents with what, to whom, and why
-  5. All blocker and handoff embeds carry the structured metadata defined in Phase 9
 **Plans**: 2 plans
 
 Plans:
-- [x] 11-01-PLAN.md — Blocker and handoff embed builders with unit tests
-- [x] 11-02-PLAN.md — IPC MCP tools (container) and host-side IPC handlers
+- [x] 11-01: Blocker and handoff embed builders with unit tests
+- [x] 11-02: IPC MCP tools (container) and host-side IPC handlers
 
-#### Phase 12: Morning Digest Routing
+### Phase 12: Morning Digest Routing
 **Goal**: Morning Digest posts to #agents instead of Telegram main chat
-**Depends on**: Phase 6
-**Requirements**: DIGEST-01, DIGEST-02
-**Success Criteria** (what must be TRUE):
-  1. The Morning Digest message appears in the Discord #agents channel each morning
-  2. The Morning Digest no longer appears in the Telegram main chat
-  3. The routing change is driven by discord-routing.json config (no hardcoded JIDs)
 **Plans**: 1 plan
 
 Plans:
-- [x] 12-01-PLAN.md — Schema migration, routing.json config, task-scheduler routing logic
+- [x] 12-01: Schema migration, routing.json config, task-scheduler routing logic
 
-#### Phase 13: Health Monitoring
+### Phase 13: Health Monitoring
 **Goal**: Alfred monitors tunnel and service health and posts state changes to #logs
-**Depends on**: Phase 8
-**Requirements**: HEALTH-01, HEALTH-02, HEALTH-03
-**Success Criteria** (what must be TRUE):
-  1. When a Cloudflare tunnel goes down or comes back up, a status embed appears in #logs within one check interval
-  2. When a monitored service (yw-dev, nanoclaw systemd) changes state, a status embed appears in #logs
-  3. When all monitored services are operational, a periodic heartbeat embed appears in #logs confirming health
-  4. Health monitoring runs as a scheduled task without requiring manual agent invocation
 **Plans**: 2 plans
-**UI hint**: no
 
 Plans:
-- [x] 13-01-PLAN.md — Health monitor embeds, core polling loop, state tracking with tests
-- [x] 13-02-PLAN.md — Wire startHealthMonitor into index.ts startup and shutdown
+- [x] 13-01: Health monitor embeds, core polling loop, state tracking with tests
+- [x] 13-02: Wire startHealthMonitor into index.ts startup and shutdown
+
+</details>
+
+### 📋 v3.0 (Planned)
+
+*Next milestone to be defined. See /gsd:new-milestone.*

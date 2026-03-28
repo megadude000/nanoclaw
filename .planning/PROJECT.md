@@ -1,15 +1,16 @@
 # Discord Integration for NanoClaw
 
-## Current Milestone: v2.0 Agent Dashboard
+## Current State: v2.0 Shipped (2026-03-28)
 
-**Goal:** Make #agents a live operational dashboard where agents report status, blockers, handoffs, and health alerts — keeping Telegram main chat clean for personal conversation.
+Both v1.0 and v2.0 are complete. The Discord integration is fully operational:
 
-**Target features:**
-- Task status reporting: agents post "took #9" / "closed #9, PR #12" to #agents
-- Blocker reporting: agent reports when blocked (no permissions, service down, conflict)
-- Handoffs: structured handoff messages between Friday/Alfred (e.g. "passing to Alfred — service X down, needs restart")
-- Morning Digest routing: nightly summary goes to #agents instead of main chat
-- Health alerts: Alfred monitors tunnels/services and posts to #agents
+**v1.0 (Phases 1-8):** Full Discord channel — bot, inbound/outbound messaging, group registration, server management, webhook routing, swarm bot presence, channel templates.
+
+**v2.0 (Phases 9-13):** Agent Dashboard — #agents is a live operational dashboard with structured status reports, blocker alerts, handoffs, morning digest routing, and #logs health monitoring.
+
+**Next:** v3.0 (to be defined — candidate directions: Agent Cortex Intelligence, channel history search, expanded operational coverage).
+
+---
 
 ## What This Is
 
@@ -35,24 +36,23 @@ Clear separation of automated notifications and project workstreams into dedicat
 - Discord inbound message handling: trigger detection, reply context with preview, attachment metadata — Validated in Phase 2
 - Discord outbound formatting: rich embeds, markdown-aware chunking, editMessage, sendWithButtons + callbacks, sendPhoto, cross-channel error feedback — Validated in Phase 3
 - Discord group registration: auto-registration on first message, human-readable folder naming, DISCORD_MAIN_CHANNEL_ID env var, IPC authorization for Discord JIDs — Validated in Phase 4
+- Discord server management: DiscordServerManager with 5 CRUD actions, IPC wiring with main-only authorization — Validated in Phase 5
+- Webhook routing: discord-routing.json config, Zod validation, mainJid fallback, task ID @jid suffix for dual-send uniqueness — Validated in Phase 6
+- Swarm bot presence: SwarmWebhookManager, NanoClaw- prefix naming, Dicebear avatars, lazy webhook hydration — Validated in Phase 7
+- Channel templates: 8 themed CLAUDE.md templates with Cortex knowledge references, loaded via createGroupStub() — Validated in Phase 8
 - Agent message schema: withAgentMeta, AGENT_COLORS, AgentMessageType — typed metadata for all agent embeds — Validated in Phase 9
 - Agent status reporting: buildTookEmbed/buildClosedEmbed/buildProgressEmbed builders, Channel.sendEmbed, DiscordChannel.sendEmbed; scheduled tasks auto-post took/closed to #agents; container agents call report_agent_status MCP tool; NANOCLAW_ASSISTANT_NAME forwarded — Validated in Phase 10
+- Blocker & handoff reporting: buildBlockerEmbed/buildHandoffEmbed, report_blocker/report_handoff MCP tools, IPC handlers on host — Validated in Phase 11
 - Morning Digest routing: routing_tag column on scheduled_tasks, resolveTargets() wiring in task-scheduler.ts, config/routing.json morning-digest entry, Telegram suppressed when routed — Validated in Phase 12
 - Health monitoring: startHealthMonitor polling loop, buildDownEmbed/buildUpEmbed/buildHeartbeatEmbed, state persistence to data/health-state.json, startup spam suppression, systemctl --user for app services / system-level for cloudflared, wired to #logs via sendEmbed — Validated in Phase 13
 
-### Active
+### Active (Candidates for v3.0)
 
-- [ ] Discord bot with full server admin capabilities (create/delete channels, categories, permissions)
-- [ ] Contextual agent responses — agent responds in-theme per channel using Cortex knowledge
-- [ ] GitHub Issues webhook routable to Discord `#bugs` channel
-- [ ] Notion webhook routable to Discord `#yw-tasks` channel
-- [ ] Progress tracker routable to Discord `#progress` channel
-- [ ] Dev/CI notifications to Discord `#dev-alerts` channel
-- [ ] Swarm bot presence in Discord (Friday/Alfred post with their identities)
-- [ ] Server management via IPC commands (create channels, set permissions from agent)
-- [ ] Gradual migration support — dual-send to both Telegram and Discord during transition
-- [ ] Configurable routing per webhook/notification — target Telegram, Discord, or both
-- [ ] Discord message handling (text, attachments, replies, threads, reactions)
+- [ ] Agent can query #agents message history via IPC command (SEARCH-02 — deferred from v2.0)
+- [ ] #agents serves as persistent activity log — messages never deleted (SEARCH-03 — deferred from v2.0)
+- [ ] Bidirectional handoff acknowledgement — receiving agent confirms pickup
+- [ ] #logs query capability (same as SEARCH-02 but for #logs)
+- [ ] Cross-channel activity summary (daily digest of #agents + #logs)
 
 ### Out of Scope
 
@@ -61,37 +61,39 @@ Clear separation of automated notifications and project workstreams into dedicat
 - Discord slash commands — NanoClaw uses its own trigger pattern system
 - Public Discord server — this is a private ops server
 - Discord webhook endpoints for external services — route through NanoClaw, not directly
+- Health alerts in #agents — health monitoring routes to #logs only
 
 ## Context
 
-**Current Architecture:**
-- Single registered group: `tg:633706070` (personal Telegram chat, main, no trigger required)
-- All webhooks (GitHub Issues, Notion, bug reports) route to `mainJid` in Telegram
-- Swarm bots Friday and Alfred are Telegram bot pool members
-- Existing `add-discord` skill provides base Discord channel integration (discord.js, self-registration)
-- Channel system uses JID format: `tg:`, `dc:`, `wa:`, `gm:` prefixes
+**Current Architecture (post v2.0):**
+- Discord is fully wired: inbound, outbound, group registration, server management, webhook routing, swarm bots, channel templates
+- #agents receives: took/closed/progress embeds, blocker alerts, handoffs, morning digest
+- #logs receives: health monitoring alerts (down/up/heartbeat) from host-side poller
+- Telegram: remains primary conversational interface (personal chat)
+- Swarm bots Friday and Alfred: Telegram + Discord presence
+- Channel system JID format: `tg:`, `dc:`, `wa:`, `gm:` prefixes
 - IPC authorization: main group can send to all groups; non-main groups can only send to own JID
 
-**Target Discord Server Structure:**
+**Discord Server Structure (as deployed):**
 ```
 Andy HQ (server)
 +-- General
 |   +-- #main          (conversational, backup to Telegram)
-|   +-- #agents        (Friday/Alfred swarm output)
+|   +-- #agents        (Friday/Alfred swarm output — live dashboard)
 +-- YourWave
 |   +-- #yw-tasks      (Notion webhook -> task updates)
 |   +-- #bugs          (GitHub Issues webhook -> bug reports)
 |   +-- #progress      (Progress tracker output)
 +-- Dev
 |   +-- #dev-alerts    (CI/build/deploy notifications)
-|   +-- #logs          (System logs, container events)
+|   +-- #logs          (System logs, health alerts)
 +-- Admin
     +-- #bot-control   (Server management commands)
 ```
 
-**Key Insight:** Discord bot with Administrator permission can programmatically manage the entire server — no SSH or manual config needed. The agent can restructure the server via IPC commands.
-
-**Cortex Integration:** Each Discord channel gets a channel-specific CLAUDE.md that instructs the agent on the channel's theme and available Cortex knowledge sections. When a user writes in `#bugs`, the agent responds in bug-triage mode. When in `#yw-tasks`, it responds in project management mode.
+**Known Gaps (v2.0):**
+- MessageContent privileged intent must be enabled in Discord Developer Portal
+- SEARCH-02/03 (channel history query) pending design decision: Discord paginated API vs. SQLite mirror
 
 ## Constraints
 
@@ -107,16 +109,19 @@ Andy HQ (server)
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Full server admin bot | User wants programmatic server management (channels, categories, permissions) | -- Pending |
-| Gradual migration | Dual-send during transition, disable Telegram notifications one by one | -- Pending |
-| Contextual channel responses | Each channel has themed CLAUDE.md + Cortex knowledge sections | -- Pending |
-| Quality model profile | User chose Opus for research/roadmap agents | -- Pending |
-| Fine granularity | 8-12 phases for careful, detailed implementation | -- Pending |
-| Swarm bots in Discord | Friday/Alfred get Discord presence alongside Telegram | -- Pending |
+| Full server admin bot | User wants programmatic server management | ✓ Shipped in Phase 5 |
+| Swarm bots in Discord | Friday/Alfred get Discord presence alongside Telegram | ✓ Shipped in Phase 7 |
+| Contextual channel responses | Each channel has themed CLAUDE.md + Cortex knowledge sections | ✓ Shipped in Phase 8 |
+| Fine granularity | 8-12 phases for careful, detailed implementation | ✓ Worked well — clean phase isolation |
+| Zod schema for AgentMessageMeta | Runtime validation for IPC messages + 8 fine-grained types | ✓ Shipped in Phase 9, foundation for Phases 10-14 |
+| addFields() not setFooter() for metadata | Field names queryable programmatically | ✓ Enables SEARCH-02 in v3.0 |
+| Dual reporting model (host auto + MCP tool) | Guaranteed coverage at zero cost for scheduled tasks | ✓ Shipped in Phase 10 |
+| routing_tag column for digest routing | Config-driven, consistent with webhook routing pattern | ✓ Shipped in Phase 12 |
+| Host-side health polling (not agent-based) | Zero token cost, instant alerts, same process | ✓ Shipped in Phase 13 |
+| Gradual migration | Dual-send during transition, disable Telegram notifications one by one | — Ongoing |
+| Quality model profile | User chose Opus for research/roadmap agents | ✓ Good quality/cost balance |
 
 ## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
 
 **After each phase transition** (via `/gsd:transition`):
 1. Requirements invalidated? -> Move to Out of Scope with reason
@@ -132,4 +137,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — Phase 13 complete: health monitoring for tunnels/services, posts state-change embeds to #logs*
+*Last updated: 2026-03-28 — v2.0 Agent Dashboard complete: #agents live operational dashboard, health monitoring, morning digest routing*
