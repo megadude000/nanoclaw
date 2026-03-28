@@ -35,6 +35,7 @@ interface ContainerInput {
   assistantName?: string;
   script?: string;
   imageAttachments?: ImageAttachment[];
+  model?: string;
 }
 
 interface ContainerOutput {
@@ -438,6 +439,7 @@ async function runQuery(
       additionalDirectories: extraDirs.length > 0 ? extraDirs : undefined,
       resume: sessionId,
       resumeSessionAt: resumeAt,
+      model: containerInput.model,
       systemPrompt: globalClaudeMd
         ? { type: 'preset' as const, preset: 'claude_code' as const, append: globalClaudeMd }
         : undefined,
@@ -464,6 +466,7 @@ async function runQuery(
             NANOCLAW_CHAT_JID: containerInput.chatJid,
             NANOCLAW_GROUP_FOLDER: containerInput.groupFolder,
             NANOCLAW_IS_MAIN: containerInput.isMain ? '1' : '0',
+            NANOCLAW_ASSISTANT_NAME: containerInput.assistantName || 'Agent',
           },
         },
         gmail: {

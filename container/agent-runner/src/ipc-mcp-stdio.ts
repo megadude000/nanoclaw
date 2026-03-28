@@ -19,6 +19,7 @@ const TASKS_DIR = path.join(IPC_DIR, 'tasks');
 const chatJid = process.env.NANOCLAW_CHAT_JID!;
 const groupFolder = process.env.NANOCLAW_GROUP_FOLDER!;
 const isMain = process.env.NANOCLAW_IS_MAIN === '1';
+const assistantName = process.env.NANOCLAW_ASSISTANT_NAME || 'Agent';
 
 function writeIpcFile(dir: string, data: object): string {
   fs.mkdirSync(dir, { recursive: true });
@@ -45,11 +46,12 @@ server.tool(
   {
     text: z.string().describe('The message text to send'),
     sender: z.string().optional().describe('Your role/identity name (e.g. "Researcher"). When set, messages appear from a dedicated bot in Telegram.'),
+    target_jid: z.string().optional().describe('(Main group only) Override destination JID — e.g. a Discord channel like dc:1234567890. Defaults to the current group chat.'),
   },
   async (args) => {
     const data: Record<string, string | undefined> = {
       type: 'message',
-      chatJid,
+      chatJid: args.target_jid || chatJid,
       text: args.text,
       sender: args.sender || undefined,
       groupFolder,
@@ -59,6 +61,35 @@ server.tool(
     writeIpcFile(MESSAGES_DIR, data);
 
     return { content: [{ type: 'text' as const, text: 'Message sent.' }] };
+  },
+);
+
+server.tool(
+  'report_agent_status',
+  `Report task lifecycle status to the #agents Discord channel. Call this to announce task pickup, completion, or progress updates. Use 'took' when starting work, 'closed' when finishing, 'progress' for intermediate updates. DO NOT use for chat messages — use send_message for that.`,
+  {
+    messageType: z.enum(['took', 'closed', 'progress']).describe('Status type: took=started task, closed=completed task, progress=in-flight update'),
+    title: z.string().describe('Short task title (80 chars recommended)'),
+    taskId: z.string().optional().describe('Task ID, e.g. task-1234567890-abc123'),
+    description: z.string().optional().describe('What is being worked on (progress) or description snippet (took)'),
+    prUrl: z.string().optional().describe('PR URL if applicable (for closed type)'),
+    summary: z.string().optional().describe('What was accomplished (for closed/progress — avoids opaque status messages)'),
+  },
+  async (args) => {
+    const data = {
+      type: 'agent_status',
+      messageType: args.messageType,
+      title: args.title,
+      taskId: args.taskId,
+      description: args.description,
+      prUrl: args.prUrl,
+      summary: args.summary,
+      agentName: assistantName,
+      groupFolder,
+      timestamp: new Date().toISOString(),
+    };
+    writeIpcFile(MESSAGES_DIR, data);
+    return { content: [{ type: 'text' as const, text: `Status "${args.messageType}" reported to #agents.` }] };
   },
 );
 

@@ -2,8 +2,10 @@ import fs from 'fs';
 import path from 'path';
 
 import { CronExpressionParser } from 'cron-parser';
+import { EmbedBuilder } from 'discord.js';
 
 import { DATA_DIR, IPC_POLL_INTERVAL, TIMEZONE } from './config.js';
+import { buildTookEmbed, buildClosedEmbed, buildProgressEmbed } from './agent-status-embeds.js';
 import { AvailableGroup } from './container-runner.js';
 import { createTask, deleteTask, getTaskById, updateTask } from './db.js';
 import { isValidGroupFolder } from './group-folder.js';
@@ -45,6 +47,7 @@ export interface IpcDeps {
       params: Record<string, unknown>,
     ): Promise<{ success: boolean; error?: string; [key: string]: unknown }>;
   };
+  sendToAgents?: (embed: EmbedBuilder) => Promise<void>;
 }
 
 let ipcWatcherRunning = false;
@@ -125,6 +128,20 @@ export function startIpcWatcher(deps: IpcDeps): void {
                 const { exec } = await import('child_process');
                 exec('sleep 1 && systemctl --user restart nanoclaw');
                 return; // Stop processing — we're about to restart
+              } else if (data.type === 'agent_status' && data.messageType && data.title) {
+                // ASTATUS-03: Agent-initiated status reporting — no authorization check needed
+                if (deps.sendToAgents) {
+                  const agentName = data.agentName || data.groupFolder || sourceGroup || 'Agent';
+                  let embed: EmbedBuilder;
+                  if (data.messageType === 'took') {
+                    embed = buildTookEmbed({ title: data.title, taskId: data.taskId || '-', agentName, description: data.description });
+                  } else if (data.messageType === 'closed') {
+                    embed = buildClosedEmbed({ title: data.title, taskId: data.taskId || '-', agentName, prUrl: data.prUrl, summary: data.summary });
+                  } else {
+                    embed = buildProgressEmbed({ title: data.title, agentName, taskId: data.taskId, description: data.description || data.title, summary: data.summary });
+                  }
+                  await deps.sendToAgents(embed).catch(() => {});
+                }
               }
               fs.unlinkSync(filePath);
             } catch (err) {
