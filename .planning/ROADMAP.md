@@ -89,7 +89,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 09-01-PLAN.md — Zod schema, AgentMessageMeta types, withAgentMeta() helper, AGENT_COLORS
+- [x] 09-01-PLAN.md — Zod schema, AgentMessageMeta types, withAgentMeta() helper, AGENT_COLORS
 
 #### Phase 10: Agent Status Reporting
 **Goal**: Agents announce task lifecycle events (picked up, in progress, closed) to #agents
