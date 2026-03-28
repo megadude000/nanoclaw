@@ -391,6 +391,48 @@ describe('task CRUD', () => {
   });
 });
 
+// --- routing_tag schema ---
+
+describe('routing_tag schema', () => {
+  it('routing_tag column exists and round-trips through create/get', () => {
+    createTask({
+      id: 'task-routing',
+      group_folder: 'main',
+      chat_jid: 'group@g.us',
+      prompt: 'Morning Digest test',
+      schedule_type: 'cron',
+      schedule_value: '0 8 * * *',
+      context_mode: 'isolated',
+      next_run: '2026-04-01T08:00:00.000Z',
+      status: 'active',
+      created_at: '2026-03-28T00:00:00.000Z',
+      routing_tag: 'morning-digest',
+    });
+
+    const task = getTaskById('task-routing');
+    expect(task).toBeDefined();
+    expect(task!.routing_tag).toBe('morning-digest');
+  });
+
+  it('routing_tag defaults to null when not provided', () => {
+    createTask({
+      id: 'task-no-tag',
+      group_folder: 'main',
+      chat_jid: 'group@g.us',
+      prompt: 'no tag',
+      schedule_type: 'once',
+      schedule_value: '2026-04-01T00:00:00.000Z',
+      context_mode: 'isolated',
+      next_run: null,
+      status: 'active',
+      created_at: '2026-03-28T00:00:00.000Z',
+    });
+
+    const task = getTaskById('task-no-tag');
+    expect(task!.routing_tag).toBeNull();
+  });
+});
+
 // --- LIMIT behavior ---
 
 describe('message query LIMIT', () => {
