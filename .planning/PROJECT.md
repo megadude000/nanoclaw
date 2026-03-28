@@ -37,6 +37,7 @@ Clear separation of automated notifications and project workstreams into dedicat
 - Discord group registration: auto-registration on first message, human-readable folder naming, DISCORD_MAIN_CHANNEL_ID env var, IPC authorization for Discord JIDs — Validated in Phase 4
 - Agent message schema: withAgentMeta, AGENT_COLORS, AgentMessageType — typed metadata for all agent embeds — Validated in Phase 9
 - Agent status reporting: buildTookEmbed/buildClosedEmbed/buildProgressEmbed builders, Channel.sendEmbed, DiscordChannel.sendEmbed; scheduled tasks auto-post took/closed to #agents; container agents call report_agent_status MCP tool; NANOCLAW_ASSISTANT_NAME forwarded — Validated in Phase 10
+- Morning Digest routing: routing_tag column on scheduled_tasks, resolveTargets() wiring in task-scheduler.ts, config/routing.json morning-digest entry, Telegram suppressed when routed — Validated in Phase 12
 
 ### Active
 
@@ -130,4 +131,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — Phase 10 complete: agent status reporting pipeline live*
+*Last updated: 2026-03-28 — Phase 12 complete: morning digest routing to Discord #agents live*
