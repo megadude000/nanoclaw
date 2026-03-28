@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Agent Dashboard
-status: executing
-stopped_at: Completed 11-01-PLAN.md (blocker-handoff-embed-builders)
-last_updated: "2026-03-28T07:45:08.032Z"
+status: verifying
+stopped_at: Completed 11-02-PLAN.md (ipc-blocker-handoff-wire-up)
+last_updated: "2026-03-28T07:47:50.675Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 Phase: 11 (blocker-handoff-reporting) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 10-agent-status-reporting P01 | 3 | 2 tasks | 4 files |
 | Phase 10-agent-status-reporting P02 | 7 | 2 tasks | 5 files |
 | Phase 11-blocker-handoff-reporting P01 | 2 | 1 tasks | 2 files |
+| Phase 11-blocker-handoff-reporting P02 | 5 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,7 @@ Recent decisions affecting current work:
 - [Phase 10-agent-status-reporting]: sendToAgents follows sendToLogs pattern — optional, failure-safe, wired from DISCORD_AGENTS_CHANNEL_ID at startup
 - [Phase 10-agent-status-reporting]: agent_status IPC handler has no authorization check — status reporting is non-privileged
 - [Phase 11-blocker-handoff-reporting]: blockerType maps to messageType via string concatenation 'blocker-${blockerType}' as AgentMessageType for dynamic AGENT_COLORS lookup
+- [Phase 11-blocker-handoff-reporting]: resource is required (not optional) in report_blocker — blockers must identify what is blocked
 
 ### Pending Todos
 
@@ -87,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T07:45:08.028Z
-Stopped at: Completed 11-01-PLAN.md (blocker-handoff-embed-builders)
+Last session: 2026-03-28T07:47:50.672Z
+Stopped at: Completed 11-02-PLAN.md (ipc-blocker-handoff-wire-up)
 Resume file: None
