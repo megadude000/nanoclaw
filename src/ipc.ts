@@ -5,7 +5,7 @@ import { CronExpressionParser } from 'cron-parser';
 import { EmbedBuilder } from 'discord.js';
 
 import { DATA_DIR, IPC_POLL_INTERVAL, TIMEZONE } from './config.js';
-import { buildTookEmbed, buildClosedEmbed, buildProgressEmbed } from './agent-status-embeds.js';
+import { buildTookEmbed, buildClosedEmbed, buildProgressEmbed, buildBlockerEmbed, buildHandoffEmbed } from './agent-status-embeds.js';
 import { AvailableGroup } from './container-runner.js';
 import { createTask, deleteTask, getTaskById, updateTask } from './db.js';
 import { isValidGroupFolder } from './group-folder.js';
@@ -140,6 +140,30 @@ export function startIpcWatcher(deps: IpcDeps): void {
                   } else {
                     embed = buildProgressEmbed({ title: data.title, agentName, taskId: data.taskId, description: data.description || data.title, summary: data.summary });
                   }
+                  await deps.sendToAgents(embed).catch(() => {});
+                }
+              } else if (data.type === 'agent_blocker' && data.blockerType && data.resource) {
+                if (deps.sendToAgents) {
+                  const agentName = data.agentName || sourceGroup || 'Agent';
+                  const embed = buildBlockerEmbed({
+                    blockerType: data.blockerType,
+                    resource: data.resource,
+                    description: data.description || 'No details provided',
+                    agentName,
+                    taskId: data.taskId,
+                  });
+                  await deps.sendToAgents(embed).catch(() => {});
+                }
+              } else if (data.type === 'agent_handoff' && data.toAgent && data.what) {
+                if (deps.sendToAgents) {
+                  const agentName = data.agentName || sourceGroup || 'Agent';
+                  const embed = buildHandoffEmbed({
+                    toAgent: data.toAgent,
+                    what: data.what,
+                    why: data.why || '',
+                    agentName,
+                    taskId: data.taskId,
+                  });
                   await deps.sendToAgents(embed).catch(() => {});
                 }
               }
