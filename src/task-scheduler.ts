@@ -25,6 +25,7 @@ import { resolveGroupFolderPath } from './group-folder.js';
 import { logger } from './logger.js';
 import { ProgressTracker } from './progress-tracker.js';
 import { RegisteredGroup, ScheduledTask } from './types.js';
+import { resolveTargets } from './webhook-router.js';
 
 /**
  * Compute the next run time for a recurring task, anchored to the
@@ -137,6 +138,21 @@ async function runTask(
     return;
   }
 
+  // DIGEST-01/02: Resolve routing targets for tasks with routing_tag
+  const routingTargets = task.routing_tag
+    ? resolveTargets(task.routing_tag, groups).filter(
+        (t) => t.jid !== task.chat_jid, // exclude original chatJid to avoid double-send
+      )
+    : [];
+  const isRouted = routingTargets.length > 0;
+
+  if (task.routing_tag && !isRouted) {
+    logger.warn(
+      { taskId: task.id, routingTag: task.routing_tag },
+      'Task has routing_tag but no targets resolved (fallback to original chatJid)',
+    );
+  }
+
   // Update tasks snapshot for container to read (filtered by group)
   const isMain = group.isMain === true;
   const tasks = getAllTasks();
@@ -207,8 +223,14 @@ async function runTask(
       async (streamedOutput: ContainerOutput) => {
         if (streamedOutput.result) {
           result = streamedOutput.result;
-          // Forward result to user (sendMessage handles formatting)
-          await deps.sendMessage(task.chat_jid, streamedOutput.result);
+          // DIGEST-01/02: Route to configured targets, or fall back to original chatJid
+          if (isRouted) {
+            for (const target of routingTargets) {
+              await deps.sendMessage(target.jid, streamedOutput.result);
+            }
+          } else {
+            await deps.sendMessage(task.chat_jid, streamedOutput.result);
+          }
           scheduleClose();
         }
         if (streamedOutput.status === 'success') {
