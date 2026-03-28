@@ -4,6 +4,8 @@ import {
   buildTookEmbed,
   buildClosedEmbed,
   buildProgressEmbed,
+  buildBlockerEmbed,
+  buildHandoffEmbed,
 } from './agent-status-embeds.js';
 
 describe('agent-status-embeds', () => {
@@ -186,6 +188,327 @@ describe('agent-status-embeds', () => {
       const longTitle = 'A'.repeat(300);
       const embed = buildProgressEmbed({ title: longTitle, agentName: 'Friday', description: 'test' });
       expect(embed.data.title!.length).toBeLessThanOrEqual(256);
+    });
+  });
+
+  describe('buildBlockerEmbed', () => {
+    it('returns EmbedBuilder with color 0xed4245 for blockerType perm', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'perm',
+        resource: '/etc/secrets',
+        description: 'No read permission',
+        agentName: 'Friday',
+      });
+      expect(embed).toBeInstanceOf(EmbedBuilder);
+      expect(embed.data.color).toBe(0xed4245);
+    });
+
+    it('returns EmbedBuilder with color 0xed4245 for blockerType service', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'service',
+        resource: 'redis',
+        description: 'Redis is down',
+        agentName: 'Friday',
+      });
+      expect(embed.data.color).toBe(0xed4245);
+    });
+
+    it('returns EmbedBuilder with color 0xed4245 for blockerType conflict', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'conflict',
+        resource: 'branch main',
+        description: 'Merge conflict detected',
+        agentName: 'Friday',
+      });
+      expect(embed.data.color).toBe(0xed4245);
+    });
+
+    it('sets title starting with "Blocked:" followed by resource name', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'perm',
+        resource: '/etc/secrets',
+        description: 'No read permission',
+        agentName: 'Friday',
+      });
+      expect(embed.data.title).toBe('Blocked: /etc/secrets');
+    });
+
+    it('sets description to params.description', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'perm',
+        resource: '/etc/secrets',
+        description: 'No read permission on the file',
+        agentName: 'Friday',
+      });
+      expect(embed.data.description).toBe('No read permission on the file');
+    });
+
+    it('includes Resource field (inline: true) with params.resource value', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'perm',
+        resource: '/etc/secrets',
+        description: 'No read permission',
+        agentName: 'Friday',
+      });
+      const fields = embed.data.fields ?? [];
+      const resourceField = fields.find((f) => f.name === 'Resource');
+      expect(resourceField).toBeDefined();
+      expect(resourceField?.value).toBe('/etc/secrets');
+      expect(resourceField?.inline).toBe(true);
+    });
+
+    it('includes "Blocker Type" field (inline: true) with params.blockerType value', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'service',
+        resource: 'redis',
+        description: 'Redis is down',
+        agentName: 'Friday',
+      });
+      const fields = embed.data.fields ?? [];
+      const blockerTypeField = fields.find((f) => f.name === 'Blocker Type');
+      expect(blockerTypeField).toBeDefined();
+      expect(blockerTypeField?.value).toBe('service');
+      expect(blockerTypeField?.inline).toBe(true);
+    });
+
+    it('includes Task ID field (inline: true) when taskId is provided', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'perm',
+        resource: '/etc/secrets',
+        description: 'No read permission',
+        agentName: 'Friday',
+        taskId: 'task-42',
+      });
+      const fields = embed.data.fields ?? [];
+      const taskField = fields.find((f) => f.name === 'Task ID');
+      expect(taskField).toBeDefined();
+      expect(taskField?.value).toBe('task-42');
+      expect(taskField?.inline).toBe(true);
+    });
+
+    it('omits Task ID field when taskId is not provided', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'perm',
+        resource: '/etc/secrets',
+        description: 'No read permission',
+        agentName: 'Friday',
+      });
+      const fields = embed.data.fields ?? [];
+      const taskField = fields.find((f) => f.name === 'Task ID');
+      expect(taskField).toBeUndefined();
+    });
+
+    it('includes Agent metadata field from withAgentMeta with params.agentName value', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'perm',
+        resource: '/etc/secrets',
+        description: 'No read permission',
+        agentName: 'Alfred',
+      });
+      const fields = embed.data.fields ?? [];
+      const agentField = fields.find((f) => f.name === 'Agent');
+      expect(agentField?.value).toBe('Alfred');
+    });
+
+    it('includes Type metadata field from withAgentMeta with value "blocker-perm"', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'perm',
+        resource: '/etc/secrets',
+        description: 'No read permission',
+        agentName: 'Friday',
+      });
+      const fields = embed.data.fields ?? [];
+      const typeField = fields.find((f) => f.name === 'Type');
+      expect(typeField?.value).toBe('blocker-perm');
+    });
+
+    it('includes Type metadata field with value "blocker-service" for service type', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'service',
+        resource: 'redis',
+        description: 'Redis is down',
+        agentName: 'Friday',
+      });
+      const fields = embed.data.fields ?? [];
+      const typeField = fields.find((f) => f.name === 'Type');
+      expect(typeField?.value).toBe('blocker-service');
+    });
+
+    it('includes Type metadata field with value "blocker-conflict" for conflict type', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'conflict',
+        resource: 'branch main',
+        description: 'Merge conflict',
+        agentName: 'Friday',
+      });
+      const fields = embed.data.fields ?? [];
+      const typeField = fields.find((f) => f.name === 'Type');
+      expect(typeField?.value).toBe('blocker-conflict');
+    });
+
+    it('has a timestamp set', () => {
+      const embed = buildBlockerEmbed({
+        blockerType: 'perm',
+        resource: '/etc/secrets',
+        description: 'No read permission',
+        agentName: 'Friday',
+      });
+      expect(embed.data.timestamp).toBeDefined();
+    });
+
+    it('truncates title at 256 chars', () => {
+      const longResource = 'R'.repeat(300);
+      const embed = buildBlockerEmbed({
+        blockerType: 'perm',
+        resource: longResource,
+        description: 'desc',
+        agentName: 'Friday',
+      });
+      expect(embed.data.title!.length).toBeLessThanOrEqual(256);
+    });
+
+    it('truncates description at 4096 chars', () => {
+      const longDesc = 'D'.repeat(5000);
+      const embed = buildBlockerEmbed({
+        blockerType: 'perm',
+        resource: '/etc/secrets',
+        description: longDesc,
+        agentName: 'Friday',
+      });
+      expect(embed.data.description!.length).toBeLessThanOrEqual(4096);
+    });
+  });
+
+  describe('buildHandoffEmbed', () => {
+    it('returns EmbedBuilder with color 0x9b59b6 (AGENT_COLORS.handoff)', () => {
+      const embed = buildHandoffEmbed({
+        toAgent: 'Alfred',
+        what: 'Fix the auth bug',
+        why: 'Service needs restart',
+        agentName: 'Friday',
+      });
+      expect(embed).toBeInstanceOf(EmbedBuilder);
+      expect(embed.data.color).toBe(0x9b59b6);
+    });
+
+    it('sets title starting with "Handoff" followed by arrow and toAgent name', () => {
+      const embed = buildHandoffEmbed({
+        toAgent: 'Alfred',
+        what: 'Fix the auth bug',
+        why: 'Service needs restart',
+        agentName: 'Friday',
+      });
+      expect(embed.data.title).toContain('Handoff');
+      expect(embed.data.title).toContain('Alfred');
+    });
+
+    it('includes To field (inline: true) with params.toAgent value', () => {
+      const embed = buildHandoffEmbed({
+        toAgent: 'Alfred',
+        what: 'Fix the auth bug',
+        why: 'Service needs restart',
+        agentName: 'Friday',
+      });
+      const fields = embed.data.fields ?? [];
+      const toField = fields.find((f) => f.name === 'To');
+      expect(toField).toBeDefined();
+      expect(toField?.value).toBe('Alfred');
+      expect(toField?.inline).toBe(true);
+    });
+
+    it('includes Task field (inline: true) when taskId is provided', () => {
+      const embed = buildHandoffEmbed({
+        toAgent: 'Alfred',
+        what: 'Fix the auth bug',
+        why: 'Service needs restart',
+        agentName: 'Friday',
+        taskId: 'task-99',
+      });
+      const fields = embed.data.fields ?? [];
+      const taskField = fields.find((f) => f.name === 'Task');
+      // Note: 'Task' may conflict with withAgentMeta Task field, using Task ID for handoff
+      expect(taskField).toBeDefined();
+    });
+
+    it('omits Task field when taskId is not provided (beyond withAgentMeta fields)', () => {
+      const embed = buildHandoffEmbed({
+        toAgent: 'Alfred',
+        what: 'Fix the auth bug',
+        why: 'Service needs restart',
+        agentName: 'Friday',
+      });
+      // withAgentMeta adds 'Task' field only if taskId present — none here
+      const fields = embed.data.fields ?? [];
+      const taskField = fields.find((f) => f.name === 'Task');
+      expect(taskField).toBeUndefined();
+    });
+
+    it('description contains params.what and params.why', () => {
+      const embed = buildHandoffEmbed({
+        toAgent: 'Alfred',
+        what: 'Fix the auth bug',
+        why: 'Service needs restart',
+        agentName: 'Friday',
+      });
+      expect(embed.data.description).toContain('Fix the auth bug');
+      expect(embed.data.description).toContain('Service needs restart');
+    });
+
+    it('includes Agent metadata field from withAgentMeta with params.agentName value', () => {
+      const embed = buildHandoffEmbed({
+        toAgent: 'Alfred',
+        what: 'Fix the auth bug',
+        why: 'Service needs restart',
+        agentName: 'Friday',
+      });
+      const fields = embed.data.fields ?? [];
+      const agentField = fields.find((f) => f.name === 'Agent');
+      expect(agentField?.value).toBe('Friday');
+    });
+
+    it('includes Type metadata field from withAgentMeta with value "handoff"', () => {
+      const embed = buildHandoffEmbed({
+        toAgent: 'Alfred',
+        what: 'Fix the auth bug',
+        why: 'Service needs restart',
+        agentName: 'Friday',
+      });
+      const fields = embed.data.fields ?? [];
+      const typeField = fields.find((f) => f.name === 'Type');
+      expect(typeField?.value).toBe('handoff');
+    });
+
+    it('has a timestamp set', () => {
+      const embed = buildHandoffEmbed({
+        toAgent: 'Alfred',
+        what: 'Fix the auth bug',
+        why: 'Service needs restart',
+        agentName: 'Friday',
+      });
+      expect(embed.data.timestamp).toBeDefined();
+    });
+
+    it('truncates title at 256 chars', () => {
+      const longAgent = 'A'.repeat(300);
+      const embed = buildHandoffEmbed({
+        toAgent: longAgent,
+        what: 'Fix the auth bug',
+        why: 'Service needs restart',
+        agentName: 'Friday',
+      });
+      expect(embed.data.title!.length).toBeLessThanOrEqual(256);
+    });
+
+    it('truncates description at 4096 chars', () => {
+      const longWhat = 'W'.repeat(3000);
+      const longWhy = 'Y'.repeat(2000);
+      const embed = buildHandoffEmbed({
+        toAgent: 'Alfred',
+        what: longWhat,
+        why: longWhy,
+        agentName: 'Friday',
+      });
+      expect(embed.data.description!.length).toBeLessThanOrEqual(4096);
     });
   });
 });
