@@ -1,6 +1,22 @@
-# Discord Integration for NanoClaw
+# NanoClaw — Agent Intelligence Platform
 
-## Current State: v2.0 Shipped (2026-03-28)
+## Current Milestone: v3.0 Agent Cortex Intelligence
+
+**Goal:** Build a bullet-fast queryable knowledge layer so agents can retrieve surgically scoped context before every task — closing the "decision shadow" problem where agents see what code does but not why decisions were made.
+
+**Target features:**
+- Cortex schema: YAML frontmatter standard, L10-L50 knowledge pyramid adapted to NanoClaw ecosystem
+- Qdrant: local Docker container, `cortex-entries` collection, embedding pipeline with 4-step reconciliation
+- Cortex MCP tools: `cortex_search`, `cortex_read`, `cortex_write` available inside container agents
+- cortex-graph.json: explicit edges (BUILT_FROM, REFERENCES, BLOCKS, CROSS_LINK)
+- Lore Protocol: adopt Ian's CLI for git trailer knowledge atoms (Constraint/Rejected/Directive)
+- Nightshift reconciliation: Alfred runs nightly staleness cascade, CROSS_LINK discovery, orphan cleanup
+- Knowledge bootstrap: L10-L20 population for NanoClaw (src/), YourWave (YW_Core), Night Shift system, Content Factory
+- Agent integration: container CLAUDE.md wiring so agents auto-query Cortex at task start
+
+---
+
+## Previous: v2.0 Shipped (2026-03-28)
 
 Both v1.0 and v2.0 are complete. The Discord integration is fully operational:
 
