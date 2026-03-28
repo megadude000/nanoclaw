@@ -31,9 +31,9 @@ Transform #agents into a live operational dashboard and machine-searchable activ
 
 ### Health Monitoring (#logs)
 
-- [ ] **HEALTH-01**: Alfred monitors Cloudflare tunnels and posts status to #logs on state change (up/down)
-- [ ] **HEALTH-02**: Alfred monitors key services (yw-dev, nanoclaw systemd) and posts to #logs on state change
-- [ ] **HEALTH-03**: Alfred posts periodic heartbeat to #logs when all services are operational
+- [x] **HEALTH-01**: Alfred monitors Cloudflare tunnels and posts status to #logs on state change (up/down)
+- [x] **HEALTH-02**: Alfred monitors key services (yw-dev, nanoclaw systemd) and posts to #logs on state change
+- [x] **HEALTH-03**: Alfred posts periodic heartbeat to #logs when all services are operational
 
 ### Agent Memory / Searchability
 
@@ -71,9 +71,9 @@ Transform #agents into a live operational dashboard and machine-searchable activ
 | HAND-01 | Phase 11 | Complete |
 | DIGEST-01 | Phase 12 | Complete |
 | DIGEST-02 | Phase 12 | Complete |
-| HEALTH-01 | Phase 13 | Pending |
-| HEALTH-02 | Phase 13 | Pending |
-| HEALTH-03 | Phase 13 | Pending |
+| HEALTH-01 | Phase 13 | Complete |
+| HEALTH-02 | Phase 13 | Complete |
+| HEALTH-03 | Phase 13 | Complete |
 | SEARCH-01 | Phase 9 | Complete |
 | SEARCH-02 | Phase 14 | Pending |
 | SEARCH-03 | Phase 14 | Pending |
