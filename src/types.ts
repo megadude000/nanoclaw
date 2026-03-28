@@ -64,6 +64,7 @@ export interface ScheduledTask {
   schedule_value: string;
   context_mode: 'group' | 'isolated';
   model?: string | null; // Claude model override for this task
+  routing_tag?: string | null; // Route output to targets in config/routing.json instead of chat_jid
   next_run: string | null;
   last_run: string | null;
   last_result: string | null;

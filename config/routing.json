@@ -18,5 +18,10 @@
     "targets": [
       { "platform": "discord", "jid": "dc:1486972003167764520", "enabled": true }
     ]
+  },
+  "morning-digest": {
+    "targets": [
+      { "platform": "discord", "jid": "dc:1486971999543889972", "enabled": true }
+    ]
   }
 }

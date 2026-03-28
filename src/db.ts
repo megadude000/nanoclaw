@@ -100,6 +100,28 @@ function createSchema(database: Database.Database): void {
     /* column already exists */
   }
 
+  // Add model column if it doesn't exist (migration for existing DBs)
+  try {
+    database.exec(`ALTER TABLE scheduled_tasks ADD COLUMN model TEXT`);
+  } catch {
+    /* column already exists */
+  }
+
+  // Add routing_tag column if it doesn't exist (migration for existing DBs)
+  try {
+    database.exec(
+      `ALTER TABLE scheduled_tasks ADD COLUMN routing_tag TEXT`,
+    );
+  } catch {
+    /* column already exists */
+  }
+
+  // Backfill: tag the morning digest task for Discord #agents routing
+  // Use broad OR conditions to catch various prompt phrasings
+  database.exec(
+    `UPDATE scheduled_tasks SET routing_tag = 'morning-digest' WHERE (prompt LIKE '%morning%' OR prompt LIKE '%digest%') AND routing_tag IS NULL`,
+  );
+
   // Add is_bot_message column if it doesn't exist (migration for existing DBs)
   try {
     database.exec(
@@ -380,8 +402,8 @@ export function createTask(
 ): void {
   db.prepare(
     `
-    INSERT INTO scheduled_tasks (id, group_folder, chat_jid, prompt, script, schedule_type, schedule_value, context_mode, next_run, status, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO scheduled_tasks (id, group_folder, chat_jid, prompt, script, schedule_type, schedule_value, context_mode, model, routing_tag, next_run, status, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `,
   ).run(
     task.id,
@@ -392,6 +414,8 @@ export function createTask(
     task.schedule_type,
     task.schedule_value,
     task.context_mode || 'isolated',
+    task.model || null,
+    task.routing_tag || null,
     task.next_run,
     task.status,
     task.created_at,
@@ -429,6 +453,8 @@ export function updateTask(
       | 'schedule_value'
       | 'next_run'
       | 'status'
+      | 'model'
+      | 'routing_tag'
     >
   >,
 ): void {
@@ -458,6 +484,14 @@ export function updateTask(
   if (updates.status !== undefined) {
     fields.push('status = ?');
     values.push(updates.status);
+  }
+  if (updates.model !== undefined) {
+    fields.push('model = ?');
+    values.push(updates.model || null);
+  }
+  if (updates.routing_tag !== undefined) {
+    fields.push('routing_tag = ?');
+    values.push(updates.routing_tag || null);
   }
 
   if (fields.length === 0) return;
