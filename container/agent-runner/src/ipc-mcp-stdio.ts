@@ -94,6 +94,56 @@ server.tool(
 );
 
 server.tool(
+  'report_blocker',
+  `Report a blocker to the #agents Discord channel. Call this when you hit a permission error, a service/tunnel is unavailable, or you need human input to resolve an ambiguity. The blocker will appear as a red embed in #agents so the user can act on it.`,
+  {
+    blockerType: z.enum(['perm', 'service', 'conflict']).describe('perm=permission/access denied, service=service/tunnel unavailable, conflict=ambiguity needing human input'),
+    resource: z.string().describe('What is blocked — repo name, API endpoint, service name, or decision needed'),
+    description: z.string().describe('Error detail or context about the blocker'),
+    taskId: z.string().optional().describe('Task ID if applicable, e.g. task-1234567890-abc123'),
+  },
+  async (args) => {
+    const data = {
+      type: 'agent_blocker',
+      blockerType: args.blockerType,
+      resource: args.resource,
+      description: args.description,
+      taskId: args.taskId,
+      agentName: assistantName,
+      groupFolder,
+      timestamp: new Date().toISOString(),
+    };
+    writeIpcFile(MESSAGES_DIR, data);
+    return { content: [{ type: 'text' as const, text: 'Blocker reported to #agents.' }] };
+  },
+);
+
+server.tool(
+  'report_handoff',
+  `Report a task handoff to the #agents Discord channel. Call this when you are passing work to another agent. The handoff will appear as a purple embed in #agents so the receiving agent and user have context.`,
+  {
+    toAgent: z.string().describe('Name of the agent receiving the work (e.g. "Alfred", "Friday")'),
+    what: z.string().describe('Description of the task being handed off'),
+    why: z.string().describe('Reason for the handoff — context the receiving agent needs'),
+    taskId: z.string().optional().describe('Task ID if applicable, e.g. task-1234567890-abc123'),
+  },
+  async (args) => {
+    const data = {
+      type: 'agent_handoff',
+      toAgent: args.toAgent,
+      what: args.what,
+      why: args.why,
+      taskId: args.taskId,
+      agentName: assistantName,
+      groupFolder,
+      timestamp: new Date().toISOString(),
+    };
+    writeIpcFile(MESSAGES_DIR, data);
+    return { content: [{ type: 'text' as const, text: 'Handoff reported to #agents.' }] };
+  },
+);
+
+server.tool(
   'schedule_task',
   `Schedule a recurring or one-time task. The task will run as a full agent with access to all tools. Returns the task ID for future reference. To modify an existing task, use update_task instead.
 
