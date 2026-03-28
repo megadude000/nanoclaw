@@ -2,8 +2,8 @@
 phase: 13
 slug: health-monitoring
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-28
 ---
 
@@ -38,21 +38,20 @@ created: 2026-03-28
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 13-01-00 | 01 | 0 | HEALTH-01, HEALTH-02, HEALTH-03 | unit (TDD RED) | `npx vitest run src/health-monitor.test.ts src/health-monitor-embeds.test.ts 2>&1 \| tail -20` | Wave 0 gap | ⬜ pending |
-| 13-01-01 | 01 | 1 | HEALTH-01, HEALTH-02 | unit + build | `npm run build && npx vitest run src/health-monitor.test.ts src/health-monitor-embeds.test.ts` | src/health-monitor.ts, src/health-monitor-embeds.ts | ⬜ pending |
-| 13-01-02 | 01 | 2 | HEALTH-03 | unit + build | `npm run build && npx vitest run src/health-monitor.test.ts` | src/health-monitor.ts | ⬜ pending |
-| 13-01-03 | 01 | 2 | HEALTH-01, HEALTH-02, HEALTH-03 | unit + build | `npm run build && npx vitest run src/health-monitor.test.ts` | src/index.ts or src/task-scheduler.ts | ⬜ pending |
+| 13-01-01 | 01 | 1 | HEALTH-01, HEALTH-02 | unit (TDD in-task) | `npx vitest run src/health-monitor-embeds.test.ts 2>&1 \| tail -20` | src/health-monitor-embeds.ts, src/health-monitor-embeds.test.ts | ⬜ pending |
+| 13-01-02 | 01 | 1 | HEALTH-01, HEALTH-02, HEALTH-03 | unit + build (TDD in-task) | `npm run build && npx vitest run src/health-monitor.test.ts src/health-monitor-embeds.test.ts 2>&1 \| tail -30` | src/health-monitor.ts, src/health-monitor.test.ts | ⬜ pending |
+| 13-02-01 | 02 | 2 | HEALTH-01, HEALTH-02, HEALTH-03 | build + full suite | `npm run build && npm run test 2>&1 \| tail -30` | src/index.ts | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
 ---
 
-## Wave 0 Requirements
+## TDD Approach
 
-- [ ] `src/health-monitor.test.ts` — covers HEALTH-01 (tunnel state transitions), HEALTH-02 (service state transitions), HEALTH-03 (heartbeat when all up). Tests are RED until implementation.
-- [ ] `src/health-monitor-embeds.test.ts` — covers embed builder output (colors, titles, fields for DOWN/UP/HEARTBEAT embeds). Tests are RED until implementation.
-
-*Wave 0 creates TDD test stubs that define expected behavior before implementation.*
+Plan 01 tasks use `tdd="true"` with `<behavior>` blocks. Tests are written RED-first within
+each task before implementation (inline TDD), not in a separate Wave 0 plan. This is appropriate
+because the test files and implementation files are co-located in the same task, and the executor
+follows the RED-GREEN cycle within a single task execution.
 
 ---
 
@@ -67,11 +66,11 @@ created: 2026-03-28
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify commands
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers test stubs for HEALTH-01, HEALTH-02, HEALTH-03
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify commands
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] TDD coverage: Plan 01 tasks use tdd="true" with behavior blocks for HEALTH-01, HEALTH-02, HEALTH-03
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** signed-off (revision pass — Wave 0 consolidated into in-task TDD)
