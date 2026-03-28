@@ -35,6 +35,8 @@ Clear separation of automated notifications and project workstreams into dedicat
 - Discord inbound message handling: trigger detection, reply context with preview, attachment metadata — Validated in Phase 2
 - Discord outbound formatting: rich embeds, markdown-aware chunking, editMessage, sendWithButtons + callbacks, sendPhoto, cross-channel error feedback — Validated in Phase 3
 - Discord group registration: auto-registration on first message, human-readable folder naming, DISCORD_MAIN_CHANNEL_ID env var, IPC authorization for Discord JIDs — Validated in Phase 4
+- Agent message schema: withAgentMeta, AGENT_COLORS, AgentMessageType — typed metadata for all agent embeds — Validated in Phase 9
+- Agent status reporting: buildTookEmbed/buildClosedEmbed/buildProgressEmbed builders, Channel.sendEmbed, DiscordChannel.sendEmbed; scheduled tasks auto-post took/closed to #agents; container agents call report_agent_status MCP tool; NANOCLAW_ASSISTANT_NAME forwarded — Validated in Phase 10
 
 ### Active
 
@@ -128,4 +130,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 — Milestone v2.0 Agent Dashboard started*
+*Last updated: 2026-03-28 — Phase 10 complete: agent status reporting pipeline live*
