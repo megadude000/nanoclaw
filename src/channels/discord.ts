@@ -2,8 +2,10 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
   ChatInputCommandInteraction,
   Client,
+  EmbedBuilder,
   Events,
   GatewayIntentBits,
   Message,
@@ -719,6 +721,50 @@ export class DiscordChannel implements Channel {
     return null;
   }
 
+  /**
+   * Find a text channel by name, or create it (optionally under a category).
+   * Returns the JID `dc:{channelId}` and whether it was just created.
+   */
+  async provisionChannel(
+    name: string,
+    categoryName?: string,
+  ): Promise<{ jid: string; created: boolean } | null> {
+    if (!this.client) return null;
+    const guild = this.client.guilds.cache.first();
+    if (!guild) return null;
+
+    // Check if channel already exists
+    const existing = guild.channels.cache.find(
+      (c) => c.isTextBased() && 'name' in c && c.name === name,
+    );
+    if (existing) return { jid: `dc:${existing.id}`, created: false };
+
+    // Find or create category
+    let parentId: string | undefined;
+    if (categoryName) {
+      const cat = guild.channels.cache.find(
+        (c) => c.type === ChannelType.GuildCategory && c.name.toLowerCase() === categoryName.toLowerCase(),
+      );
+      if (cat) {
+        parentId = cat.id;
+      } else {
+        const newCat = await guild.channels.create({
+          name: categoryName,
+          type: ChannelType.GuildCategory,
+        });
+        parentId = newCat.id;
+      }
+    }
+
+    const channel = await guild.channels.create({
+      name,
+      type: ChannelType.GuildText,
+      topic: 'Night Shift activity log — automated progress from Friday & Alfred',
+      ...(parentId ? { parent: parentId } : {}),
+    });
+    return { jid: `dc:${channel.id}`, created: true };
+  }
+
   async setTyping(jid: string, isTyping: boolean): Promise<void> {
     if (!this.client || !isTyping) return;
     try {
@@ -729,6 +775,19 @@ export class DiscordChannel implements Channel {
       }
     } catch (err) {
       logger.debug({ jid, err }, 'Failed to send Discord typing indicator');
+    }
+  }
+
+  async sendEmbed(jid: string, embed: EmbedBuilder): Promise<void> {
+    if (!this.client) return;
+    try {
+      const channelId = jid.replace(/^dc:/, '');
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel || !('send' in channel)) return;
+      await (channel as TextChannel).send({ embeds: [embed] });
+      logger.info({ jid }, 'Discord embed sent');
+    } catch (err) {
+      logger.error({ jid, err }, 'Failed to send Discord embed');
     }
   }
 }
