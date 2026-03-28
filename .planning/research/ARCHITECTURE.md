@@ -1,376 +1,590 @@
-# Architecture Patterns
+# Architecture Patterns: v3.0 Agent Cortex Intelligence
 
-**Domain:** Discord bot integration into multi-channel chat bot (NanoClaw)
-**Researched:** 2026-03-26
+**Domain:** Knowledge retrieval layer for AI agent system
+**Researched:** 2026-03-28
 
 ## Recommended Architecture
 
-Discord integrates as a **peer channel** alongside Telegram, following the existing self-registration pattern. The Discord channel module owns all `dc:` prefixed JIDs and manages both inbound message handling and server administration capabilities.
+### High-Level Overview
 
 ```
                      +------------------+
-                     |   NanoClaw Core  |
-                     |   (index.ts)     |
-                     |   Message Loop   |
+                     |   cortex/ vault  |  (Obsidian markdown files)
+                     |   (source of     |
+                     |    truth)        |
                      +--------+---------+
                               |
-              +---------------+---------------+
-              |                               |
-     +--------v--------+            +--------v--------+
-     | Channel Registry |            |   IPC Watcher   |
-     | (registry.ts)    |            |   (ipc.ts)      |
-     +--------+---------+            +--------+--------+
-              |                               |
-    +---------+---------+            +--------+--------+
-    |         |         |            | File-based JSON |
-    v         v         v            | per group dir   |
- Telegram  Discord   Gmail          +-----------------+
- (tg:)     (dc:)     (gm:)
+                   +----------v-----------+
+                   |  Embedding Pipeline   |  NEW -- host-side service
+                   |  (watch + embed +     |
+                   |   upsert to Qdrant)   |
+                   +----------+-----------+
+                              |
+                   +----------v-----------+
+                   |  Qdrant (Docker)      |  NEW -- vector DB container
+                   |  cortex-entries       |
+                   |  collection           |
+                   +----------+-----------+
+                              |
+            +-----------------+-----------------+
+            |                                   |
++-----------v-----------+           +-----------v-----------+
+| Cortex MCP Server     |  NEW     | Nightshift Reconciler |  NEW
+| (inside agent         |          | (scheduled task,      |
+|  containers)          |          |  host-side)           |
+| cortex_search         |          | staleness, orphans,   |
+| cortex_read           |          | cross-links           |
+| cortex_write          |          +----------+------------+
++-----------+-----------+                     |
+            |                      +----------v-----------+
+            |                      | cortex-graph.json    |  NEW
+            |                      | (explicit edges)     |
+            +                      +----------------------+
+    Agent containers
+    (existing infra)
 ```
+
+### Component Inventory: New vs Modified
+
+| Component | Status | Location | Purpose |
+|-----------|--------|----------|---------|
+| Qdrant Docker container | **NEW** | Alongside NanoClaw via systemd | Vector storage for cortex entries |
+| Embedding pipeline | **NEW** | `src/cortex-embedder.ts` (host) | Watch cortex/ files, generate embeddings, upsert |
+| Cortex MCP server | **NEW** | `container/agent-runner/src/cortex-mcp.ts` | cortex_search/read/write tools for agents |
+| cortex-graph.json | **NEW** | `cortex/cortex-graph.json` | Explicit relationship edges between entries |
+| Nightshift reconciler | **NEW** | `container/skills/cortex-reconcile/` | Nightly staleness cascade, orphan cleanup |
+| Lore Protocol atoms | **NEW** | Git trailers on commits | Constraint/Rejected/Directive annotations |
+| Cortex schema (YAML) | **NEW** | Convention in cortex/ .md files | Standardized frontmatter for L10-L50 pyramid |
+| Knowledge bootstrap | **NEW** | One-time scripts + cortex-reconcile | Initial L10-L20 population |
+| `container/agent-runner/src/index.ts` | **MODIFIED** | Existing | Add cortex MCP server to mcpServers config |
+| `container/agent-runner/src/ipc-mcp-stdio.ts` | **MODIFIED** | Existing | Add cortex_write IPC handler |
+| `src/container-runner.ts` | **MODIFIED** | Existing | Mount Qdrant access + cortex/ read-only into containers |
+| `src/config.ts` | **MODIFIED** | Existing | QDRANT_URL, EMBEDDING_MODEL env vars |
+| `src/task-scheduler.ts` | **NO CHANGE** | Existing | Nightshift already uses scheduled tasks |
+| `src/ipc.ts` | **MODIFIED** | Existing | Handle cortex_write IPC messages from containers |
+| `src/db.ts` | **NO CHANGE** | Existing | No schema changes needed |
+| `groups/main/CLAUDE.md` | **MODIFIED** | Existing | Wire auto-query instructions |
 
 ### Component Boundaries
 
 | Component | Responsibility | Communicates With |
 |-----------|---------------|-------------------|
-| **DiscordChannel** (`src/channels/discord.ts`) | Connects to Discord Gateway, handles inbound messages, sends outbound messages, owns `dc:*` JIDs | Channel Registry, NanoClaw Core (via callbacks) |
-| **DiscordServerManager** (internal to discord.ts) | Creates/deletes channels, categories, sets permissions programmatically | Discord API (discord.js), IPC Watcher (receives commands) |
-| **Channel Registry** (`src/channels/registry.ts`) | Stores channel factories, routes JIDs to channels | All channel modules |
-| **IPC Watcher** (`src/ipc.ts`) | Processes file-based commands from agent containers | DiscordChannel (for `dc:` targeted messages), DiscordServerManager (for server management IPC commands) |
-| **Webhook Router** (`src/github-issues-webhook.ts`, `src/notion-webhook.ts`) | Routes webhook events to target JIDs | Any channel via `sendMessage(jid, text)` |
-| **Progress Tracker** (`src/progress-tracker.ts`) | Shows real-time agent progress in chat | Any channel with `sendMessageRaw`/`editMessage`/`deleteMessage` support |
-| **Bot Pool** (discord-side equivalent of Telegram pool) | Friday/Alfred identities in Discord via webhooks | Discord webhook API per channel |
+| Qdrant (Docker) | Store/query vector embeddings | Embedding pipeline (upsert), Cortex MCP (query) |
+| Embedding pipeline | Watch cortex/ for changes, generate vectors | Qdrant (REST API), filesystem (cortex/) |
+| Cortex MCP server | Expose search/read/write to agents inside containers | Qdrant (REST via host gateway), cortex/ (mounted read-only), IPC (for writes) |
+| cortex-graph.json | Store explicit edges between cortex entries | Read by Cortex MCP, updated by reconciler |
+| Nightshift reconciler | Nightly maintenance: staleness, orphans, cross-links | cortex/ filesystem, cortex-graph.json, Qdrant |
+| Agent containers (existing) | Execute Claude Agent SDK with MCP tools | Cortex MCP server (stdio), IPC (file-based) |
+| Host IPC watcher (existing) | Process IPC files from containers | Cortex writes land here, forwarded to embedding pipeline |
 
-### Data Flow
+---
 
-#### Inbound Message Flow (User writes in Discord)
+## Detailed Architecture
 
-```
-Discord Gateway
-  -> discord.js Client event: messageCreate
-  -> DiscordChannel.handleMessage()
-     1. Build JID: "dc:{guildId}:{channelId}" or "dc:{channelId}" for DMs
-     2. Check registeredGroups() — skip if unregistered
-     3. Translate @bot mentions to TRIGGER_PATTERN format
-     4. Call onChatMetadata(jid, timestamp, channelName, "discord", true)
-     5. Call onMessage(jid, { id, chat_jid, sender, sender_name, content, timestamp })
-  -> NanoClaw message loop picks up message
-  -> Spawns agent container with group's CLAUDE.md
-  -> Agent produces response
-  -> routeOutbound(channels, "dc:...", text)
-  -> DiscordChannel.sendMessage() formats for Discord markdown
+### 1. Qdrant Vector Database
+
+**Deployment:** Docker container managed by systemd user service, same pattern as NanoClaw itself.
+
+```bash
+# systemd user service: qdrant.service
+docker run -d --name qdrant \
+  -p 6333:6333 \
+  -v ~/nanoclaw/data/qdrant:/qdrant/storage \
+  qdrant/qdrant
 ```
 
-#### Outbound Notification Flow (Webhook to Discord)
+**Collection:** `cortex-entries`
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `id` | UUID (deterministic from file path) | Stable across re-embeds |
+| `vector` | float[1536] | text-embedding-3-small output |
+| `payload.path` | string | Relative path from cortex/ root |
+| `payload.title` | string | Extracted from H1 or frontmatter |
+| `payload.level` | string | L10/L20/L30/L40/L50 pyramid level |
+| `payload.type` | string | project/decision/architecture/session-log/daily |
+| `payload.tags` | string[] | From frontmatter tags |
+| `payload.updated` | string | File mtime ISO |
+| `payload.chunk_index` | number | 0-based chunk index within document |
+| `payload.content_hash` | string | MD5 of chunk content (skip re-embed if unchanged) |
+
+**Why Qdrant over alternatives:**
+- Already Docker-native (NanoClaw is container-first)
+- Official MCP server exists (even though Python, validates the pattern)
+- REST API works from inside containers via host gateway (no additional network config)
+- Single-node is free, zero config, 50ms p99 for <100K vectors
+- `@qdrant/js-client-rest` v1.17 -- TypeScript SDK, well-maintained
+
+**Why NOT Chroma/Pinecone/pgvector:**
+- Chroma: Python-first, JS client unstable, in-process mode does not work cross-container
+- Pinecone: Cloud-only, violates zero-cost constraint
+- pgvector: Would require PostgreSQL (NanoClaw uses SQLite), overkill
+
+### 2. Embedding Pipeline
+
+**Location:** `src/cortex-embedder.ts` -- runs on the host process
+
+**Architecture choice:** Host-side watcher, NOT container-side. Embedding must happen on the host because:
+1. Containers are ephemeral (spawn per message/task, die after)
+2. Embedding needs to be continuous (file changes between container runs)
+3. Single source of truth for what is embedded avoids race conditions
+
+**Pipeline steps:**
 
 ```
-GitHub/Notion webhook HTTP request
-  -> Webhook handler identifies event type
-  -> Looks up target JID from routing config (NEW: configurable per-webhook)
-     e.g., bugs -> "dc:guild:bugs-channel-id"
-           tasks -> "dc:guild:tasks-channel-id"
-           fallback -> "tg:633706070" (Telegram main)
-  -> routeOutbound(channels, targetJid, formattedText)
-  -> DiscordChannel.sendMessage(jid, text)
-  -> Discord API posts to correct channel
+1. WATCH -- fs.watch on cortex/ directory (recursive)
+2. PARSE -- Extract frontmatter (YAML) + body markdown
+3. CHUNK -- Split into ~500 token chunks (preserve heading context)
+4. HASH -- MD5 each chunk, skip if payload.content_hash matches
+5. EMBED -- Call OpenAI text-embedding-3-small API
+6. UPSERT -- Write to Qdrant cortex-entries collection
+7. PRUNE -- Delete vectors for files that no longer exist
 ```
 
-#### Server Management Flow (Agent manages Discord server)
+**Embedding model:** OpenAI `text-embedding-3-small`
+- $0.02/M tokens -- cortex vault is ~200 files, ~500 chunks = ~$0.01 per full re-index
+- 1536 dimensions -- good balance of quality/speed
+- Already have ANTHROPIC_API_KEY infrastructure; adding OPENAI_API_KEY is minimal
+- Alternative: Voyage AI voyage-3-large is better for code/technical docs but costs 3x more and adds another vendor. For a ~200 file personal vault, text-embedding-3-small is sufficient
 
-```
-Agent container writes IPC JSON:
-  { type: "discord_manage", action: "create_channel", ... }
-  -> to /workspace/ipc/{group}/messages/{timestamp}.json
+**Why NOT local embeddings (Ollama/FastEmbed):**
+- Additional GPU/CPU load on the VPS
+- Quality gap vs API embeddings for multi-language content (EN/UK in cortex)
+- Cost is negligible (<$0.01/month for this vault size)
 
-IPC Watcher reads file
-  -> Validates: sourceGroup isMain (only main can manage server)
-  -> Dispatches to DiscordServerManager
-  -> DiscordServerManager calls discord.js API:
-     guild.channels.create(), channel.delete(), etc.
-  -> Writes response to /workspace/ipc/{group}/responses/
-```
+**Chunking strategy:**
+- Split on `## ` headings (natural markdown sections)
+- If section > 500 tokens, split on paragraphs
+- Prepend document title + frontmatter summary to each chunk (heading context)
+- This preserves the "what file is this from" context in every chunk
 
-#### Dual-Send Flow (Gradual Migration)
+**Integration with host process:**
+- Starts alongside NanoClaw in `src/index.ts` (like health monitor)
+- Initial full scan on startup
+- fs.watch for incremental updates
+- Debounce 2s after file change before re-embedding (handles burst writes)
 
-```
-Webhook event arrives
-  -> Routing config says: target = ["dc:guild:bugs", "tg:633706070"]
-  -> For each target JID:
-     routeOutbound(channels, jid, text)
-  -> Both Telegram and Discord receive the notification
+### 3. Cortex MCP Server (Inside Containers)
 
-Config update (later): target = ["dc:guild:bugs"]
-  -> Only Discord receives it now
-```
+**Location:** Add cortex tools to existing `container/agent-runner/src/ipc-mcp-stdio.ts`
 
-## Component Design Details
+**Recommendation:** Add cortex tools to the existing MCP server rather than spawning a separate process. Reasons:
+- Fewer processes per container = less overhead
+- Same IPC pattern already works
+- Tools share the same NanoClaw context (chatJid, groupFolder, isMain)
 
-### 1. DiscordChannel Class
-
-Implements the `Channel` interface. Mirrors TelegramChannel structure:
+**Tools:**
 
 ```typescript
-export class DiscordChannel implements Channel {
-  name = 'discord';
+// cortex_search -- semantic search across cortex entries
+server.tool('cortex_search', {
+  query: z.string(),           // Natural language query
+  level: z.enum(['L10','L20','L30','L40','L50']).optional(),
+  type: z.string().optional(),  // Filter by entry type
+  limit: z.number().default(5), // Max results
+})
+// Implementation: HTTP to Qdrant REST API via host gateway
 
-  // Required by Channel interface
-  async connect(): Promise<void>;           // Login to Discord Gateway
-  async sendMessage(jid: string, text: string): Promise<void>;
-  isConnected(): boolean;
-  ownsJid(jid: string): boolean;            // jid.startsWith('dc:')
-  async disconnect(): Promise<void>;
+// cortex_read -- read full cortex entry by path
+server.tool('cortex_read', {
+  path: z.string(),  // Relative path, e.g. "Areas/Projects/YourWave/YourWave.md"
+})
+// Implementation: Read from mounted cortex/ directory (read-only mount)
 
-  // Optional Channel interface methods
-  async setTyping?(jid: string, isTyping: boolean): Promise<void>;
-  async reactToMessage?(jid: string, messageId: string, emoji: string): Promise<void>;
-  async sendWithButtons?(jid, text, buttons, rowSize): Promise<void>;
-  async sendPhoto?(jid, photoPath, caption?): Promise<void>;
-
-  // Discord-specific (for progress tracker)
-  async sendMessageRaw(jid, text): Promise<{ message_id: number } | undefined>;
-  async editMessage(jid, messageId, text): Promise<void>;
-  async deleteMessage(jid, messageId): Promise<void>;
-
-  // Server management (called by IPC watcher)
-  async createChannel(guildId, name, categoryId?, options?): Promise<string>;
-  async deleteChannel(channelId): Promise<void>;
-  async createCategory(guildId, name): Promise<string>;
-  async setPermissions(channelId, overrides): Promise<void>;
-}
+// cortex_write -- create or update a cortex entry
+server.tool('cortex_write', {
+  path: z.string(),
+  content: z.string(),
+  frontmatter: z.object({
+    type: z.string(),
+    tags: z.array(z.string()).optional(),
+    level: z.string().optional(),
+  }).optional(),
+})
+// Implementation: Write IPC file -> host picks up -> writes to cortex/ -> triggers re-embed
 ```
 
-### 2. JID Format for Discord
+**Network access pattern:**
+- Qdrant runs on host at `localhost:6333`
+- Containers access it via `host.docker.internal:6333` (CONTAINER_HOST_GATEWAY)
+- Same pattern as the credential proxy (ANTHROPIC_BASE_URL)
+- Pass `QDRANT_URL=http://host.docker.internal:6333` as container env var
 
-```
-dc:{channelId}              — DM channels (no guild context)
-dc:{guildId}:{channelId}    — Server channels (with guild context)
-```
+**Embedding queries inside containers:**
+- cortex_search needs to embed the query text before calling Qdrant
+- Two options: (a) call OpenAI API directly from container, (b) use a query-embed endpoint on host
+- Recommendation: Option (a) -- call OpenAI directly from inside the container. The container already has network access for claude-code API calls. Pass OPENAI_API_KEY via env var (same pattern as NOTION_API_KEY, GITHUB_TOKEN in container-runner.ts line 318-327).
 
-Rationale: Guild ID is needed for server management operations. Channel ID alone is sufficient for messaging but guild context enables the agent to understand which server a channel belongs to. Keep the simpler `dc:{channelId}` form for DMs since no guild context exists.
-
-### 3. Discord-to-NanoClaw Markdown Translation
-
-Discord and Claude both use standard Markdown, but Discord has specific formatting:
-- **Bold**: `**text**` (Discord) vs `*text*` (Telegram Markdown v1)
-- **Code blocks**: Both use triple backticks
-- **Mentions**: `<@userId>`, `<#channelId>`, `<@&roleId>`
-- **Embeds**: Discord supports rich embeds for structured notifications
-
-For outbound messages, use Discord embeds for webhook notifications (bugs, tasks, progress) and plain markdown for conversational responses. No translation layer needed for inbound -- Discord markdown maps cleanly to what Claude expects.
-
-### 4. Webhook Routing Configuration
-
-Add to config or per-group settings:
-
+**Mount changes in container-runner.ts:**
 ```typescript
-interface WebhookRouting {
-  // Maps webhook event type to target JID(s)
-  // Array enables dual-send during migration
-  github_issues_bug: string[];      // e.g., ["dc:guild:bugs-channel"]
-  github_issues_other: string[];    // e.g., ["dc:guild:bugs-channel", "tg:main"]
-  notion_tasks: string[];           // e.g., ["dc:guild:yw-tasks"]
-  progress: string[];               // e.g., ["dc:guild:progress"]
-  dev_alerts: string[];             // e.g., ["dc:guild:dev-alerts"]
-  default: string[];                // fallback: ["tg:633706070"]
-}
-```
-
-Store in `.env` or `data/webhook-routing.json`. Agent can update via IPC.
-
-### 5. Per-Channel CLAUDE.md (Contextual Responses)
-
-Each Discord channel registered as a group gets its own `groups/{folder}/CLAUDE.md`:
-
-```
-groups/
-  dc-bugs/
-    CLAUDE.md          # "You are in the #bugs channel. Respond in bug-triage mode..."
-  dc-yw-tasks/
-    CLAUDE.md          # "You are in the #yw-tasks channel. Focus on project management..."
-  dc-progress/
-    CLAUDE.md          # "You are in #progress. Summarize agent activity..."
-  dc-main/
-    CLAUDE.md          # "You are in Discord #main. General conversation backup..."
-```
-
-### 6. Swarm Bot Identity in Discord
-
-Discord approach differs from Telegram's bot pool:
-- **Telegram**: Multiple bot tokens, each renamed to match agent identity (Friday, Alfred)
-- **Discord**: Use **channel webhooks** per agent identity. Each webhook has its own name and avatar.
-
-```typescript
-// Per-channel webhook for each swarm bot identity
-interface DiscordSwarmBot {
-  name: string;           // "Friday", "Alfred"
-  avatarUrl: string;      // Bot-specific avatar
-  webhookId: string;      // Discord webhook ID (created via API)
-  webhookToken: string;   // Discord webhook token
-}
-```
-
-The IPC message handler checks `data.sender` -- if it matches a swarm bot name and target is `dc:*`, route through that bot's webhook instead of the main bot.
-
-### 7. IPC Extensions for Discord Server Management
-
-New IPC message types (main group only):
-
-```typescript
-// Create a channel
-{ type: "discord_manage", action: "create_channel", guildId, name, categoryId?, topic? }
-
-// Delete a channel
-{ type: "discord_manage", action: "delete_channel", channelId }
-
-// Create a category
-{ type: "discord_manage", action: "create_category", guildId, name }
-
-// Set channel permissions
-{ type: "discord_manage", action: "set_permissions", channelId, overrides: [...] }
-
-// Create webhook for swarm bot
-{ type: "discord_manage", action: "create_webhook", channelId, name, avatarUrl? }
-```
-
-Response written to `ipc/{group}/responses/discord-manage-{timestamp}.json`.
-
-## Patterns to Follow
-
-### Pattern 1: Self-Registration (Existing)
-**What:** Channel modules call `registerChannel()` at import time with a factory function.
-**When:** Always -- this is how NanoClaw discovers channels.
-**Implementation:**
-```typescript
-// Bottom of src/channels/discord.ts
-registerChannel('discord', (opts: ChannelOpts) => {
-  const envVars = readEnvFile(['DISCORD_BOT_TOKEN']);
-  const token = process.env.DISCORD_BOT_TOKEN || envVars.DISCORD_BOT_TOKEN || '';
-  if (!token) {
-    logger.warn('Discord: DISCORD_BOT_TOKEN not set');
-    return null;
-  }
-  return new DiscordChannel(token, opts);
+// cortex/ directory -- read-only for all groups
+mounts.push({
+  hostPath: path.join(projectRoot, 'cortex'),
+  containerPath: '/workspace/cortex',
+  readonly: true,
 });
 ```
 
-### Pattern 2: JID-Based Routing (Existing)
-**What:** Every chat has a JID with channel prefix. Router finds correct channel via `ownsJid()`.
-**When:** All message routing -- inbound identification and outbound delivery.
+### 4. cortex-graph.json -- Knowledge Graph
 
-### Pattern 3: IPC Authorization (Existing)
-**What:** Main group can send to any JID. Non-main groups can only send to their own JID.
-**When:** All IPC message processing. Discord server management is main-only.
+**Location:** `cortex/cortex-graph.json`
 
-### Pattern 4: Embed-Based Notifications (New, Discord-specific)
-**What:** Use Discord embeds for structured webhook notifications instead of plain text.
-**When:** GitHub Issues, Notion tasks, progress updates routed to Discord channels.
-**Why:** Embeds provide color-coded, structured display. Bug = red sidebar, task = blue, progress = green.
+**Design:** Simple adjacency list, not a full graph database. The cortex vault is ~200 files -- a graph DB would be absurd overhead.
 
-### Pattern 5: Webhook-Based Identities (New, Discord-specific)
-**What:** Swarm bots (Friday/Alfred) post via Discord channel webhooks with custom name/avatar.
-**When:** Any IPC message with a `sender` field targeting a `dc:` JID.
-**Why:** Discord webhooks natively support custom display names and avatars per message, cleaner than Telegram's bot-rename approach.
+```json
+{
+  "version": 1,
+  "updated": "2026-03-28T12:00:00Z",
+  "nodes": {
+    "Areas/Projects/YourWave/YourWave.md": {
+      "title": "YourWave",
+      "type": "project",
+      "level": "L10"
+    }
+  },
+  "edges": [
+    {
+      "from": "Areas/Projects/YourWave/yw.platform-spec.md",
+      "to": "Areas/Projects/YourWave/YourWave.md",
+      "type": "BUILT_FROM",
+      "created": "2026-03-28"
+    },
+    {
+      "from": "Areas/Projects/NightShift/nightshift.architecture.md",
+      "to": "Areas/Projects/NightShift/NightShift.md",
+      "type": "REFERENCES",
+      "created": "2026-03-28"
+    }
+  ]
+}
+```
+
+**Edge types:**
+| Type | Meaning | Example |
+|------|---------|---------|
+| BUILT_FROM | Implementation derived from spec | platform-spec.md -> YourWave.md |
+| REFERENCES | Cites or depends on | architecture.md -> NightShift.md |
+| BLOCKS | Blocked by / prerequisite | task -> blocker |
+| CROSS_LINK | Related across projects | yw.content-factory.md -> ContentFactory.md |
+| SUPERSEDES | Newer version of | v2-spec -> v1-spec |
+
+**How agents use it:**
+- `cortex_search` returns matching entries + their edges (1-hop neighbors)
+- Agents see not just the matching document but what it connects to
+- Reconciler builds new CROSS_LINK edges by discovering shared tags/topics
+
+### 5. Cortex Schema -- YAML Frontmatter Standard
+
+**Knowledge Pyramid (L10-L50):**
+
+| Level | Name | Scope | TTL | Example |
+|-------|------|-------|-----|---------|
+| L10 | Index | Project hub, top-level map | Stable | YourWave.md |
+| L20 | Domain | Domain-specific knowledge | Months | yw.ecommerce.md |
+| L30 | Operational | How-to, architecture, specs | Weeks | nightshift.architecture.md |
+| L40 | Temporal | Session logs, daily notes | Days | 2026-03-28.md |
+| L50 | Ephemeral | Scratch, WIP, drafts | Hours | research scratchpad |
+
+**Standard frontmatter:**
+```yaml
+---
+type: project|decision|architecture|session-log|daily|research
+level: L10|L20|L30|L40|L50
+status: active|archived|draft
+created: 2026-03-28
+updated: 2026-03-28
+project: YourWave|NightShift|NanoClaw|ContentFactory
+tags: [embedding, vector-search, qdrant]
+---
+```
+
+**Reconciler validates:** All cortex/ files MUST have frontmatter. Missing frontmatter = orphan, flagged for review.
+
+### 6. Lore Protocol -- Git Trailer Knowledge Atoms
+
+**What it is:** Structured knowledge encoded in git commit trailers.
+
+Since the "Lore Protocol" as a named CLI tool could not be verified via web search (LOW confidence on the specific name/CLI), the architecture pattern is clear and implementable:
+
+**Pattern:** Git commit messages carry structured knowledge atoms:
+
+```
+feat(cortex): add Qdrant embedding pipeline
+
+Constraint: Must use text-embedding-3-small for cost (< $0.01/month)
+Rejected: Local Ollama embeddings -- quality gap for multilingual content
+Directive: All cortex files require YAML frontmatter with level field
+```
+
+**Implementation:**
+- Convention-only (no CLI tool needed initially)
+- Nightshift reconciler can parse `git log --format=%B` to extract Constraint/Rejected/Directive lines
+- These get indexed into Qdrant with type=`lore-atom` so agents can search decision history
+- Low priority -- can ship after core pipeline works
+
+**Confidence:** LOW on the specific "Lore Protocol" CLI existing. HIGH on the git trailer pattern being sound.
+
+### 7. Nightshift Reconciliation
+
+**Runs as:** Scheduled task via existing task-scheduler, nightly (e.g., 02:00)
+
+**Implementation:** Container skill at `container/skills/cortex-reconcile/SKILL.md`
+
+The agent (Alfred, as research bot) executes reconciliation as a scheduled task with a script phase:
+
+**4-step reconciliation pipeline:**
+
+1. **Staleness cascade** -- Check L40/L50 entries older than their TTL. Flag or archive.
+2. **CROSS_LINK discovery** -- For each entry, find semantically similar entries via Qdrant. If similarity > 0.85 and no existing edge, propose CROSS_LINK in cortex-graph.json.
+3. **Orphan cleanup** -- Find cortex/ files without frontmatter, or with broken references. Report to #agents.
+4. **Embedding integrity** -- Compare cortex/ file list against Qdrant point list. Re-embed missing, prune deleted.
+
+**Output:** Summary report to #agents via IPC (existing pattern from v2.0).
+
+### 8. Agent Integration -- Auto-Query at Task Start
+
+**How it works:**
+- Each group's CLAUDE.md already includes contextual instructions (Phase 8 channel templates)
+- Add to the global CLAUDE.md (mounted read-only at `/workspace/global/CLAUDE.md`):
+
+```markdown
+## Cortex Knowledge Layer
+
+Before starting any task, use `cortex_search` to find relevant context:
+1. Search for the project name mentioned in the task
+2. Search for the specific technical area
+3. Read the top 2-3 results with `cortex_read`
+
+This gives you the "why" behind decisions, not just the "what" of the code.
+```
+
+- The agent already loads global CLAUDE.md as `systemPrompt.append` (line 443 of agent-runner index.ts)
+- No code change needed for this step, just content change
+
+### 9. Knowledge Bootstrap
+
+**One-time process:** Populate L10 and L20 entries for existing projects.
+
+**Approach:** Scheduled task or manual run:
+1. Scan existing cortex/ files -- Add frontmatter where missing
+2. Scan `src/` -- Generate L20 architecture entries for key NanoClaw modules
+3. Scan `.planning/` -- Convert research files to L30 entries
+4. Run full embedding pipeline to index everything
+
+**Projects to bootstrap:**
+- NanoClaw (src/) -- orchestrator, channels, IPC, containers, scheduler
+- YourWave (YW_Core) -- platform spec, atlas, design system
+- Night Shift -- architecture, cron registry
+- Content Factory -- pipeline, atlas integration
+
+---
+
+## Data Flow
+
+### Ingest Flow (cortex/ file changed)
+
+```
+cortex/ file saved
+  |
+  v
+fs.watch in cortex-embedder.ts (host)
+  |
+  v
+Parse frontmatter + body
+  |
+  v
+Chunk (heading-aware, ~500 tokens)
+  |
+  v
+Hash each chunk (skip if unchanged)
+  |
+  v
+Call OpenAI embeddings API
+  |
+  v
+Upsert to Qdrant cortex-entries
+  |
+  v
+Update cortex-graph.json node metadata
+```
+
+### Query Flow (agent searches cortex)
+
+```
+Agent calls cortex_search("YourWave payment providers")
+  |
+  v
+cortex-mcp.ts: embed query via OpenAI API
+  |
+  v
+Qdrant search (top-k, optional filters)
+  |
+  v
+Return: [{path, title, level, score, snippet}]
+  |
+  v
+Agent calls cortex_read("Areas/Projects/YourWave/Research/payment-providers.md")
+  |
+  v
+Read from mounted /workspace/cortex/ (read-only)
+  |
+  v
+Agent has full context for decision-making
+```
+
+### Write Flow (agent creates cortex entry)
+
+```
+Agent calls cortex_write(path, content, frontmatter)
+  |
+  v
+cortex-mcp.ts: write IPC file to /workspace/ipc/messages/
+  |
+  v
+Host IPC watcher picks up (src/ipc.ts)
+  |
+  v
+Host writes file to cortex/ directory
+  |
+  v
+fs.watch triggers re-embed pipeline
+  |
+  v
+Entry available in Qdrant within ~5 seconds
+```
+
+---
+
+## Patterns to Follow
+
+### Pattern 1: Host-Side Service with Container-Side MCP
+**What:** Heavy services (Qdrant, embedding pipeline) run on host. Lightweight MCP tools run inside containers.
+**When:** Any stateful service that must persist across container lifecycles.
+**Why:** Containers are ephemeral. Qdrant must be always-on. Embedding pipeline must watch files continuously.
+
+### Pattern 2: IPC for Write Operations
+**What:** Container agents write IPC files. Host processes them and writes to the actual filesystem.
+**When:** Any write from container to host-managed resource.
+**Why:** Containers have read-only mounts of cortex/. Write path goes through IPC for authorization and validation. Same proven pattern as send_message, schedule_task.
+
+### Pattern 3: Deterministic IDs from File Paths
+**What:** Qdrant point IDs are UUIDs derived from `md5(filepath + chunk_index)`.
+**When:** Any content-addressable storage.
+**Why:** Re-embedding the same file produces the same IDs, making upsert idempotent. No need to track "what was previously embedded."
+
+### Pattern 4: Content Hashing for Skip Logic
+**What:** MD5 hash of chunk content stored in Qdrant payload. Skip re-embedding if hash unchanged.
+**When:** Incremental pipeline updates.
+**Why:** Embedding API calls cost money. Most file watches trigger for metadata changes, not content changes. Hash comparison is free.
+
+---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Slash Commands for Bot Interaction
-**What:** Using Discord slash commands (`/ping`, `/restart`) for bot control.
-**Why bad:** NanoClaw uses its own trigger pattern (`@Andy ...`). Slash commands create a parallel control system, fragment interaction patterns, and require OAuth2 scope management.
-**Instead:** Use the same `@mention` -> `TRIGGER_PATTERN` translation that Telegram uses. Discord `@BotName` mention translates to `@Andy` prefix.
+### Anti-Pattern 1: Embedding Inside Containers
+**What:** Running the embedding pipeline inside agent containers.
+**Why bad:** Containers are ephemeral and per-request. Embedding needs to be continuous. Multiple containers would race on Qdrant writes. Embedding costs would multiply.
+**Instead:** Single host-side embedder watches cortex/ and owns all Qdrant writes.
 
-### Anti-Pattern 2: One Group Per Server
-**What:** Mapping the entire Discord server to a single NanoClaw group.
-**Why bad:** Loses the channel-specific context that makes Discord valuable. Agent would not know if a message is about bugs or tasks.
-**Instead:** One NanoClaw group per Discord channel. Each channel gets its own JID, CLAUDE.md, and agent context.
+### Anti-Pattern 2: Full Graph Database for ~200 Files
+**What:** Using Neo4j, ArangoDB, or any graph DB for cortex-graph.
+**Why bad:** Massive operational overhead for a personal vault. The graph has <500 nodes and <2000 edges.
+**Instead:** JSON file (cortex-graph.json). Loaded into memory by MCP server. Updated by reconciler. Simple, no dependencies.
 
-### Anti-Pattern 3: Direct Database Access from Discord Module
-**What:** Discord channel code directly calling `createTask()`, `getTaskById()`, etc.
-**Why bad:** Breaks the IPC boundary. Channel modules should only handle message I/O. Task scheduling, group registration, and management flow through IPC.
-**Instead:** Channel delivers messages via `onMessage()` callback. Agent handles logic. Management commands flow through IPC files.
+### Anti-Pattern 3: Embedding Entire Documents as Single Vectors
+**What:** One embedding per file, regardless of size.
+**Why bad:** Long documents (>2000 tokens) produce diluted embeddings. Search quality degrades because the vector represents an average of many topics.
+**Instead:** Chunk at heading boundaries, ~500 tokens per chunk, with title context prepended.
 
-### Anti-Pattern 4: Hardcoded Channel IDs
-**What:** Storing Discord channel IDs in source code or `.env` as constants.
-**Why bad:** Channel IDs change when channels are recreated. The bot can create channels dynamically.
-**Instead:** Store channel mapping in `data/discord-channels.json` or SQLite. Agent discovers and updates via IPC. Server setup is a one-time bootstrap task.
+### Anti-Pattern 4: Synchronous Embedding in Request Path
+**What:** Embedding cortex_write content before returning to the agent.
+**Why bad:** Embedding API call takes 200-500ms. Agent is blocked waiting for MCP tool response.
+**Instead:** Write to IPC, return immediately. Host-side pipeline embeds asynchronously. Entry is searchable within ~5 seconds.
 
-### Anti-Pattern 5: Blocking Gateway Connection
-**What:** Waiting for Discord gateway to fully connect before starting other channels.
-**Why bad:** Discord reconnection can take seconds to minutes. Should not block Telegram.
-**Instead:** Connect channels in parallel (existing pattern). Discord posts a "connected" log when ready. Messages queue until connected.
+### Anti-Pattern 5: Agent Directly Writes to cortex/ Filesystem
+**What:** Mounting cortex/ as read-write in containers.
+**Why bad:** Multiple containers could write simultaneously. No validation. No re-embed trigger guaranteed. Breaks the IPC authorization model.
+**Instead:** cortex/ is always read-only in containers. Writes go through IPC -> host validates -> host writes -> fs.watch triggers re-embed.
 
-## Suggested Build Order
-
-Dependencies flow top-down. Each layer requires the one above it.
-
-```
-Phase 1: Foundation
-  DiscordChannel class (implements Channel interface)
-  Self-registration via registerChannel()
-  Basic connect/disconnect/sendMessage/ownsJid
-  JID format: dc:{guildId}:{channelId}
-  Enable in src/channels/index.ts
-
-Phase 2: Inbound Messages
-  messageCreate handler (text, attachments, replies)
-  @mention -> TRIGGER_PATTERN translation
-  onMessage() + onChatMetadata() callbacks
-  Group registration for Discord channels
-
-Phase 3: Outbound + Formatting
-  Discord markdown handling (embeds for notifications)
-  Message splitting (2000 char Discord limit vs 4096 Telegram)
-  sendMessageRaw/editMessage/deleteMessage for progress tracker
-  setTyping indicator
-
-Phase 4: Server Management
-  IPC handler for discord_manage commands
-  createChannel, deleteChannel, createCategory, setPermissions
-  Bootstrap script to set up initial server structure
-  Response files for agent feedback
-
-Phase 5: Webhook Routing
-  Configurable routing (webhook-routing.json)
-  Dual-send support (Telegram + Discord simultaneously)
-  GitHub Issues -> #bugs channel
-  Notion -> #yw-tasks channel
-  Progress tracker -> #progress channel
-
-Phase 6: Swarm Bot Identity
-  Discord webhook creation per channel per bot identity
-  IPC sender detection -> webhook routing
-  Friday/Alfred custom names and avatars
-
-Phase 7: Per-Channel Context
-  Channel-specific CLAUDE.md files
-  Cortex knowledge section references
-  Auto-registration of Discord channels as groups
-
-Phase 8: Migration Controls
-  Dual-send toggle per webhook type
-  Telegram notification disable (per type)
-  Status dashboard in #bot-control
-```
-
-**Phase ordering rationale:**
-- Phase 1-2 must come first: cannot do anything without basic connectivity and message handling.
-- Phase 3 before 4: outbound messaging is needed for server management feedback.
-- Phase 4 before 5: server channels must exist before webhooks can route to them.
-- Phase 5 before 6: notifications must work before adding identity layers.
-- Phase 7 can run in parallel with 5-6 but benefits from channels existing.
-- Phase 8 is last: requires everything working before migration makes sense.
+---
 
 ## Scalability Considerations
 
-| Concern | Current (1 server) | At 5 servers | Notes |
-|---------|-------------------|--------------|-------|
-| JID uniqueness | `dc:guildId:channelId` is globally unique | Same format scales | No changes needed |
-| Gateway connection | Single bot, single shard | Single shard up to 2500 guilds | discord.js handles auto-sharding if needed |
-| Rate limits | Discord: 50 requests/second global | Same limit shared | Use queue for burst notifications |
-| IPC volume | ~10 messages/day | ~50 messages/day | File polling at 1s interval is fine |
-| Webhook routing | Simple JSON config | Same config, more entries | No architectural changes |
+| Concern | Current (~200 files) | At 1K files | At 10K files |
+|---------|---------------------|-------------|--------------|
+| Qdrant memory | ~50MB | ~200MB | ~2GB (may need disk-backed) |
+| Embedding cost | $0.01/full index | $0.05/full index | $0.50/full index |
+| Search latency | <10ms | <20ms | <50ms |
+| fs.watch reliability | Fine | Fine | Need inotify limit increase |
+| cortex-graph.json | <100KB | ~500KB | ~5MB (consider SQLite) |
+| Bootstrap time | ~30s | ~3min | ~30min |
+
+At current scale (~200 files), all approaches are trivially fast. The architecture accommodates 10x growth without redesign. At 100x (10K files), cortex-graph.json might need to move to SQLite, but that is a future concern.
+
+---
+
+## Build Order (Dependency-Driven)
+
+```
+Phase 1: Cortex Schema + Qdrant Setup
+  - Define YAML frontmatter standard
+  - Deploy Qdrant Docker container (systemd service)
+  - No code dependencies, purely infrastructure
+
+Phase 2: Embedding Pipeline
+  - Depends on: Phase 1 (Qdrant running, schema defined)
+  - src/cortex-embedder.ts -- watch, chunk, embed, upsert
+  - Integration into src/index.ts startup
+
+Phase 3: Cortex MCP Tools
+  - Depends on: Phase 2 (embeddings in Qdrant to search)
+  - cortex_search, cortex_read, cortex_write in ipc-mcp-stdio.ts
+  - container-runner.ts mount changes
+  - IPC handler for cortex_write in src/ipc.ts
+
+Phase 4: cortex-graph.json + Graph Edges
+  - Depends on: Phase 2 (embedder populates node metadata)
+  - JSON schema, initial edge population
+  - cortex_search returns 1-hop neighbors
+
+Phase 5: Agent Integration + Bootstrap
+  - Depends on: Phase 3 (MCP tools available)
+  - CLAUDE.md auto-query instructions
+  - L10/L20 population for existing projects
+
+Phase 6: Nightshift Reconciliation
+  - Depends on: Phase 2-4 (all infrastructure in place)
+  - Staleness cascade, CROSS_LINK discovery, orphan cleanup
+  - Scheduled task wiring
+
+Phase 7: Lore Protocol
+  - Depends on: Phase 2 (embedding pipeline to index atoms)
+  - Git trailer convention
+  - Parser in reconciler
+  - Lowest priority, can defer
+```
+
+---
+
+## Environment Variables (New)
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `QDRANT_URL` | `http://localhost:6333` | Qdrant REST API endpoint |
+| `OPENAI_API_KEY` | (from .env) | For text-embedding-3-small |
+| `CORTEX_EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model name |
+| `CORTEX_COLLECTION` | `cortex-entries` | Qdrant collection name |
+| `CORTEX_CHUNK_SIZE` | `500` | Target tokens per chunk |
+| `CORTEX_WATCH_DEBOUNCE` | `2000` | ms to debounce file changes |
+
+---
 
 ## Sources
 
-- NanoClaw source code: `src/channels/telegram.ts`, `src/channels/registry.ts`, `src/types.ts`, `src/ipc.ts`, `src/router.ts`, `src/config.ts`, `src/github-issues-webhook.ts`, `src/progress-tracker.ts`
-- Discord.js documentation (HIGH confidence -- well-established library, stable v14 API)
-- Discord API documentation for webhooks, embeds, gateway intents
-- `.planning/PROJECT.md` project requirements and target server structure
+- [Qdrant Docker Hub](https://hub.docker.com/r/qdrant/qdrant) -- container deployment
+- [Qdrant Quickstart](https://qdrant.tech/documentation/quickstart/) -- REST API, collection setup
+- [@qdrant/js-client-rest npm](https://www.npmjs.com/package/@qdrant/js-client-rest) -- v1.17.0, TypeScript SDK
+- [Qdrant MCP Server (official, Python)](https://github.com/qdrant/mcp-server-qdrant) -- qdrant-store/qdrant-find pattern reference
+- [Embedding Models Comparison 2026](https://elephas.app/blog/best-embedding-models) -- model selection rationale
+- [Voyage 4 blog](https://blog.voyageai.com/2026/01/15/voyage-4/) -- considered but overkill for vault size
+- [Qdrant JS SDK](https://github.com/qdrant/qdrant-js) -- TypeScript client source
