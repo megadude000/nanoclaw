@@ -10,9 +10,9 @@ Transform #agents into a live operational dashboard and machine-searchable activ
 
 ### Agent Status Reporting
 
-- [ ] **ASTATUS-01**: Agent posts "took #N [title]" embed to #agents when picking up a task or GitHub issue
-- [ ] **ASTATUS-02**: Agent posts "closed #N, PR #M" embed to #agents when completing a task
-- [ ] **ASTATUS-03**: Agent posts progress update embed to #agents during long-running tasks
+- [x] **ASTATUS-01**: Agent posts "took #N [title]" embed to #agents when picking up a task or GitHub issue
+- [x] **ASTATUS-02**: Agent posts "closed #N, PR #M" embed to #agents when completing a task
+- [x] **ASTATUS-03**: Agent posts progress update embed to #agents during long-running tasks
 
 ### Blocker Reporting
 
@@ -37,7 +37,7 @@ Transform #agents into a live operational dashboard and machine-searchable activ
 
 ### Agent Memory / Searchability
 
-- [ ] **SEARCH-01**: All #agents messages include structured metadata as embed fields — agent name, task ID, message type (status/blocker/handoff/digest) — machine-parseable
+- [x] **SEARCH-01**: All #agents messages include structured metadata as embed fields — agent name, task ID, message type (status/blocker/handoff/digest) — machine-parseable
 - [ ] **SEARCH-02**: Agent can query #agents message history via IPC command — filter by type, task ID, agent name, with configurable limit
 - [ ] **SEARCH-03**: #agents serves as persistent chronological activity log — messages are never deleted
 
@@ -62,9 +62,9 @@ Transform #agents into a live operational dashboard and machine-searchable activ
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| ASTATUS-01 | Phase 10 | Pending |
-| ASTATUS-02 | Phase 10 | Pending |
-| ASTATUS-03 | Phase 10 | Pending |
+| ASTATUS-01 | Phase 10 | Complete |
+| ASTATUS-02 | Phase 10 | Complete |
+| ASTATUS-03 | Phase 10 | Complete |
 | BLOCK-01 | Phase 11 | Pending |
 | BLOCK-02 | Phase 11 | Pending |
 | BLOCK-03 | Phase 11 | Pending |
@@ -74,6 +74,6 @@ Transform #agents into a live operational dashboard and machine-searchable activ
 | HEALTH-01 | Phase 13 | Pending |
 | HEALTH-02 | Phase 13 | Pending |
 | HEALTH-03 | Phase 13 | Pending |
-| SEARCH-01 | Phase 9 | Pending |
+| SEARCH-01 | Phase 9 | Complete |
 | SEARCH-02 | Phase 14 | Pending |
 | SEARCH-03 | Phase 14 | Pending |
