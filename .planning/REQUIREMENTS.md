@@ -26,8 +26,8 @@ Transform #agents into a live operational dashboard and machine-searchable activ
 
 ### Morning Digest
 
-- [ ] **DIGEST-01**: Morning Digest routes to #agents channel instead of Telegram main
-- [ ] **DIGEST-02**: Morning Digest removed from Telegram main routing
+- [x] **DIGEST-01**: Morning Digest routes to #agents channel instead of Telegram main
+- [x] **DIGEST-02**: Morning Digest removed from Telegram main routing
 
 ### Health Monitoring (#logs)
 
@@ -69,8 +69,8 @@ Transform #agents into a live operational dashboard and machine-searchable activ
 | BLOCK-02 | Phase 11 | Complete |
 | BLOCK-03 | Phase 11 | Complete |
 | HAND-01 | Phase 11 | Complete |
-| DIGEST-01 | Phase 12 | Pending |
-| DIGEST-02 | Phase 12 | Pending |
+| DIGEST-01 | Phase 12 | Complete |
+| DIGEST-02 | Phase 12 | Complete |
 | HEALTH-01 | Phase 13 | Pending |
 | HEALTH-02 | Phase 13 | Pending |
 | HEALTH-03 | Phase 13 | Pending |

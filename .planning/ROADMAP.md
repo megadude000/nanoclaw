@@ -133,7 +133,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 12-01-PLAN.md — Schema migration, routing.json config, task-scheduler routing logic
+- [x] 12-01-PLAN.md — Schema migration, routing.json config, task-scheduler routing logic
 
 #### Phase 13: Health Monitoring
 **Goal**: Alfred monitors tunnel and service health and posts state changes to #logs
@@ -176,6 +176,6 @@ Note: Phase 12 depends only on Phase 6 (already complete) and can execute in par
 | 9. Agent Message Schema | v2.0 | 0/1 | Not started | - |
 | 10. Agent Status Reporting | v2.0 | 2/2 | Complete    | 2026-03-28 |
 | 11. Blocker & Handoff Reporting | v2.0 | 2/2 | Complete    | 2026-03-28 |
-| 12. Morning Digest Routing | v2.0 | 0/1 | Not started | - |
+| 12. Morning Digest Routing | v2.0 | 1/1 | Complete   | 2026-03-28 |
 | 13. Health Monitoring | v2.0 | 0/? | Not started | - |
 | 14. Agent History Search | v2.0 | 0/? | Not started | - |

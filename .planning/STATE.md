@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Agent Dashboard
 status: verifying
-stopped_at: Completed 11-02-PLAN.md (ipc-blocker-handoff-wire-up)
-last_updated: "2026-03-28T07:49:58.842Z"
+stopped_at: Completed 12-01-PLAN.md (morning-digest-routing)
+last_updated: "2026-03-28T08:19:35.871Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 4
+  total_plans: 6
+  completed_plans: 6
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Clear separation of automated notifications and project workstreams into dedicated Discord channels, keeping Telegram clean for personal conversation.
-**Current focus:** Phase 11 — blocker-handoff-reporting
+**Current focus:** Phase 12 — morning-digest-routing
 
 ## Current Position
 
-Phase: 12
-Plan: Not started
+Phase: 12 (morning-digest-routing) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 10-agent-status-reporting P02 | 7 | 2 tasks | 5 files |
 | Phase 11-blocker-handoff-reporting P01 | 2 | 1 tasks | 2 files |
 | Phase 11-blocker-handoff-reporting P02 | 5 | 2 tasks | 2 files |
+| Phase 12 P01 | 7 | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Recent decisions affecting current work:
 - [Phase 10-agent-status-reporting]: agent_status IPC handler has no authorization check — status reporting is non-privileged
 - [Phase 11-blocker-handoff-reporting]: blockerType maps to messageType via string concatenation 'blocker-${blockerType}' as AgentMessageType for dynamic AGENT_COLORS lookup
 - [Phase 11-blocker-handoff-reporting]: resource is required (not optional) in report_blocker — blockers must identify what is blocked
+- [Phase 12]: Used broad OR matching for routing_tag backfill to catch various prompt phrasings
+- [Phase 12]: resolveTargets results filtered to exclude task.chat_jid to prevent accidental double-send when fallback returns main group
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T07:47:50.672Z
-Stopped at: Completed 11-02-PLAN.md (ipc-blocker-handoff-wire-up)
+Last session: 2026-03-28T08:19:35.868Z
+Stopped at: Completed 12-01-PLAN.md (morning-digest-routing)
 Resume file: None
