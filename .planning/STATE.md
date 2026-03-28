@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Agent Dashboard
-status: verifying
-stopped_at: Completed 10-02-PLAN.md (agent-status-wiring)
-last_updated: "2026-03-28T07:29:57.129Z"
+status: executing
+stopped_at: Completed 11-01-PLAN.md (blocker-handoff-embed-builders)
+last_updated: "2026-03-28T07:45:08.032Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Clear separation of automated notifications and project workstreams into dedicated Discord channels, keeping Telegram clean for personal conversation.
-**Current focus:** Phase 10 — agent-status-reporting
+**Current focus:** Phase 11 — blocker-handoff-reporting
 
 ## Current Position
 
-Phase: 11
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 11 (blocker-handoff-reporting) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 09-agent-message-schema P01 | 2 | 2 tasks | 2 files |
 | Phase 10-agent-status-reporting P01 | 3 | 2 tasks | 4 files |
 | Phase 10-agent-status-reporting P02 | 7 | 2 tasks | 5 files |
+| Phase 11-blocker-handoff-reporting P01 | 2 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,7 @@ Recent decisions affecting current work:
 - [Phase 10-agent-status-reporting]: buildTookEmbed/buildClosedEmbed/buildProgressEmbed follow pattern: setColor+setTitle+setTimestamp+addFields+withAgentMeta(last)
 - [Phase 10-agent-status-reporting]: sendToAgents follows sendToLogs pattern — optional, failure-safe, wired from DISCORD_AGENTS_CHANNEL_ID at startup
 - [Phase 10-agent-status-reporting]: agent_status IPC handler has no authorization check — status reporting is non-privileged
+- [Phase 11-blocker-handoff-reporting]: blockerType maps to messageType via string concatenation 'blocker-${blockerType}' as AgentMessageType for dynamic AGENT_COLORS lookup
 
 ### Pending Todos
 
@@ -85,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T07:26:02.984Z
-Stopped at: Completed 10-02-PLAN.md (agent-status-wiring)
+Last session: 2026-03-28T07:45:08.028Z
+Stopped at: Completed 11-01-PLAN.md (blocker-handoff-embed-builders)
 Resume file: None

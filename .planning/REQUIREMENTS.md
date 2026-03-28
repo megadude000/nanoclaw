@@ -16,13 +16,13 @@ Transform #agents into a live operational dashboard and machine-searchable activ
 
 ### Blocker Reporting
 
-- [ ] **BLOCK-01**: Agent posts blocker embed to #agents when hitting a permission error (no access to repo/API/file)
-- [ ] **BLOCK-02**: Agent posts blocker embed to #agents when a service or tunnel is unavailable
-- [ ] **BLOCK-03**: Agent posts blocker embed to #agents when facing a conflict or ambiguity requiring human input
+- [x] **BLOCK-01**: Agent posts blocker embed to #agents when hitting a permission error (no access to repo/API/file)
+- [x] **BLOCK-02**: Agent posts blocker embed to #agents when a service or tunnel is unavailable
+- [x] **BLOCK-03**: Agent posts blocker embed to #agents when facing a conflict or ambiguity requiring human input
 
 ### Agent Handoffs
 
-- [ ] **HAND-01**: Agent posts structured handoff embed to #agents (what, to whom, why/context)
+- [x] **HAND-01**: Agent posts structured handoff embed to #agents (what, to whom, why/context)
 
 ### Morning Digest
 
@@ -65,10 +65,10 @@ Transform #agents into a live operational dashboard and machine-searchable activ
 | ASTATUS-01 | Phase 10 | Complete |
 | ASTATUS-02 | Phase 10 | Complete |
 | ASTATUS-03 | Phase 10 | Complete |
-| BLOCK-01 | Phase 11 | Pending |
-| BLOCK-02 | Phase 11 | Pending |
-| BLOCK-03 | Phase 11 | Pending |
-| HAND-01 | Phase 11 | Pending |
+| BLOCK-01 | Phase 11 | Complete |
+| BLOCK-02 | Phase 11 | Complete |
+| BLOCK-03 | Phase 11 | Complete |
+| HAND-01 | Phase 11 | Complete |
 | DIGEST-01 | Phase 12 | Pending |
 | DIGEST-02 | Phase 12 | Pending |
 | HEALTH-01 | Phase 13 | Pending |
