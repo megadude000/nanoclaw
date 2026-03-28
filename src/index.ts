@@ -81,6 +81,7 @@ import { BotStatusPanel } from './bot-status-panel.js';
 import { EmbedBuilder } from 'discord.js';
 import { loadSwarmIdentities } from './swarm-webhook-manager.js';
 import { resolveTargets } from './webhook-router.js';
+import { startHealthMonitor } from './health-monitor.js';
 
 // Re-export for backwards compatibility during refactor
 export { escapeXml, formatMessages } from './router.js';
@@ -94,6 +95,7 @@ let progressTracker: ProgressTracker;
 let botStatusPanel: BotStatusPanel | undefined;
 let sendToLogs: ((text: string) => Promise<void>) | undefined;
 let sendToAgents: ((embed: EmbedBuilder) => Promise<void>) | undefined;
+let stopHealthMonitor: (() => void) | undefined;
 
 const channels: Channel[] = [];
 const queue = new GroupQueue();
@@ -730,6 +732,7 @@ async function main(): Promise<void> {
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'Shutdown signal received');
+    stopHealthMonitor?.();
     proxyServer.close();
     webhookServer.close();
     await queue.shutdown(10000);
@@ -893,6 +896,18 @@ async function main(): Promise<void> {
         if (ch?.sendEmbed) await ch.sendEmbed(agentsJid, embed).catch(() => {});
       }
     : undefined;
+
+  // Wire health monitor to post embeds to #logs (Phase 13)
+  const sendHealthEmbed = dumpJid
+    ? async (embed: EmbedBuilder) => {
+        const ch = findChannel(channels, dumpJid);
+        if (ch?.sendEmbed) await ch.sendEmbed(dumpJid, embed).catch(() => {});
+      }
+    : undefined;
+
+  if (sendHealthEmbed) {
+    stopHealthMonitor = startHealthMonitor(sendHealthEmbed);
+  }
 
   // Log startup
   if (sendToLogs) {
