@@ -2,13 +2,13 @@
 
 ## Milestones
 
-- ✅ **v1.0 Discord Integration** - Phases 1-8 (shipped 2026-03-27)
+- ✅ **v1.0 Discord Integration** - Phases 1-8 (shipped 2014-03-27)
 - 🚧 **v2.0 Agent Dashboard** - Phases 9-14 (in progress)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0 Discord Integration (Phases 1-8) - SHIPPED 2026-03-27</summary>
+<summary>✅ v1.0 Discord Integration (Phases 1-8) - SHIPPED 2014-03-27</summary>
 
 ### Phase 1: Bot Foundation
 **Goal**: Discord bot connects and self-registers as a channel
@@ -150,36 +150,3 @@ Plans:
 Plans:
 - [x] 13-01-PLAN.md — Health monitor embeds, core polling loop, state tracking with tests
 - [x] 13-02-PLAN.md — Wire startHealthMonitor into index.ts startup and shutdown
-
-#### Phase 14: Agent History Search
-**Goal**: Agents can query #agents message history via IPC and the channel serves as a persistent activity log
-**Depends on**: Phase 10, Phase 11
-**Requirements**: SEARCH-02, SEARCH-03
-**Success Criteria** (what must be TRUE):
-  1. An agent can send an IPC command requesting #agents history filtered by message type, task ID, or agent name
-  2. The IPC command returns matching messages with their structured metadata fields
-  3. Messages in #agents are never deleted — the channel accumulates a complete chronological activity log
-**Plans**: TBD
-
-## Progress
-
-**Execution Order:**
-Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14
-Note: Phase 12 depends only on Phase 6 (already complete) and can execute in parallel with 10-11 if desired.
-
-| Phase | Milestone | Plans Complete | Status | Completed |
-|-------|-----------|----------------|--------|-----------|
-| 1. Bot Foundation | v1.0 | 2/2 | Complete | 2026-03-27 |
-| 2. Inbound Message Handling | v1.0 | 1/1 | Complete | 2026-03-27 |
-| 3. Outbound Formatting | v1.0 | 2/2 | Complete | 2026-03-27 |
-| 4. Group Registration | v1.0 | 2/2 | Complete | 2026-03-27 |
-| 5. Server Management | v1.0 | 2/2 | Complete | 2026-03-27 |
-| 6. Webhook Routing | v1.0 | 2/2 | Complete | 2026-03-27 |
-| 7. Swarm Bot Presence | v1.0 | 2/2 | Complete | 2026-03-27 |
-| 8. Channel Templates | v1.0 | 1/1 | Complete | 2026-03-27 |
-| 9. Agent Message Schema | v2.0 | 0/1 | Not started | - |
-| 10. Agent Status Reporting | v2.0 | 2/2 | Complete    | 2026-03-28 |
-| 11. Blocker & Handoff Reporting | v2.0 | 2/2 | Complete    | 2026-03-28 |
-| 12. Morning Digest Routing | v2.0 | 1/1 | Complete    | 2026-03-28 |
-| 13. Health Monitoring | v2.0 | 2/2 | Complete    | 2026-03-28 |
-| 14. Agent History Search | v2.0 | 0/? | Not started | - |
