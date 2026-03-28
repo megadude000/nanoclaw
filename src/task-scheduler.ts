@@ -2,7 +2,11 @@ import { ChildProcess } from 'child_process';
 import { CronExpressionParser } from 'cron-parser';
 import fs from 'fs';
 
+import { EmbedBuilder } from 'discord.js';
+
 import { ASSISTANT_NAME, SCHEDULER_POLL_INTERVAL, TIMEZONE } from './config.js';
+import { buildTookEmbed, buildClosedEmbed } from './agent-status-embeds.js';
+import { BotStatusPanel } from './bot-status-panel.js';
 import {
   ContainerOutput,
   runContainerAgent,
@@ -75,6 +79,8 @@ export interface SchedulerDependencies {
   ) => void;
   sendMessage: (jid: string, text: string) => Promise<void>;
   progressTracker?: ProgressTracker;
+  botStatusPanel?: BotStatusPanel;
+  sendToAgents?: (embed: EmbedBuilder) => Promise<void>;
 }
 
 async function runTask(
@@ -173,6 +179,14 @@ async function runTask(
 
   // Start progress tracking for this task
   deps.progressTracker?.onMessageSent(task.chat_jid, task.group_folder);
+  deps.botStatusPanel?.onGroupStarted(task.chat_jid, task.group_folder);
+
+  // ASTATUS-01: Report task picked up to #agents
+  deps.sendToAgents?.(buildTookEmbed({
+    title: task.prompt.slice(0, 80),
+    taskId: task.id,
+    agentName: ASSISTANT_NAME,
+  }));
 
   try {
     const output = await runContainerAgent(
@@ -186,6 +200,7 @@ async function runTask(
         isScheduledTask: true,
         assistantName: ASSISTANT_NAME,
         script: task.script || undefined,
+        model: task.model || group.containerConfig?.model,
       },
       (proc, containerName) =>
         deps.onProcess(task.chat_jid, proc, containerName, task.group_folder),
@@ -220,11 +235,23 @@ async function runTask(
       'Task completed',
     );
     deps.progressTracker?.onResponseReceived(task.chat_jid);
+    deps.botStatusPanel?.onGroupDone(task.chat_jid);
   } catch (err) {
     if (closeTimer) clearTimeout(closeTimer);
     error = err instanceof Error ? err.message : String(err);
     logger.error({ taskId: task.id, error }, 'Task failed');
     deps.progressTracker?.onContainerStopped(task.chat_jid, 1);
+    deps.botStatusPanel?.onGroupError(task.chat_jid);
+  }
+
+  // ASTATUS-02: Report task closed to #agents (success only)
+  if (!error) {
+    deps.sendToAgents?.(buildClosedEmbed({
+      title: task.prompt.slice(0, 80),
+      taskId: task.id,
+      agentName: ASSISTANT_NAME,
+      summary: result?.slice(0, 200) ?? undefined,
+    }));
   }
 
   const durationMs = Date.now() - startTime;

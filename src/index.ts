@@ -3,7 +3,7 @@ import path from 'path';
 
 import { OneCLI } from '@onecli-sh/sdk';
 
-import { readEnvFile } from './env.js';
+import { readEnvFile, writeEnvVar } from './env.js';
 
 import {
   ASSISTANT_NAME,
@@ -41,6 +41,7 @@ import {
   getAllRegisteredGroups,
   getAllSessions,
   getAllTasks,
+  createTask,
   getLatestUserMessageId,
   getMessagesSince,
   getNewMessages,
@@ -76,6 +77,9 @@ import { startSchedulerLoop } from './task-scheduler.js';
 import { Channel, NewMessage, RegisteredGroup } from './types.js';
 import { logger } from './logger.js';
 import { ProgressTracker } from './progress-tracker.js';
+import { BotStatusPanel } from './bot-status-panel.js';
+import { EmbedBuilder } from 'discord.js';
+import { loadSwarmIdentities } from './swarm-webhook-manager.js';
 import { resolveTargets } from './webhook-router.js';
 
 // Re-export for backwards compatibility during refactor
@@ -87,7 +91,9 @@ let registeredGroups: Record<string, RegisteredGroup> = {};
 let lastAgentTimestamp: Record<string, string> = {};
 let messageLoopRunning = false;
 let progressTracker: ProgressTracker;
+let botStatusPanel: BotStatusPanel | undefined;
 let sendToLogs: ((text: string) => Promise<void>) | undefined;
+let sendToAgents: ((embed: EmbedBuilder) => Promise<void>) | undefined;
 
 const channels: Channel[] = [];
 const queue = new GroupQueue();
@@ -274,6 +280,8 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
   };
 
   await channel.setTyping?.(chatJid, true);
+  progressTracker?.onMessageSent(chatJid, group.folder);
+  botStatusPanel?.onGroupStarted(chatJid, group.folder);
   let hadError = false;
   let outputSentToUser = false;
 
@@ -321,6 +329,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
 
       if (result.status === 'success') {
         progressTracker?.onResponseReceived(chatJid);
+        botStatusPanel?.onGroupDone(chatJid);
         queue.notifyIdle(chatJid);
       }
 
@@ -417,12 +426,14 @@ async function runAgent(
         assistantName: ASSISTANT_NAME,
         triggerMessageId,
         imageAttachments,
+        model: group.containerConfig?.model,
       },
       (proc, containerName) =>
         queue.registerProcess(chatJid, proc, containerName, group.folder),
       wrappedOnOutput,
       (cJid, exitCode) => {
         progressTracker?.onContainerStopped(cJid, exitCode);
+        if (exitCode !== 0) botStatusPanel?.onGroupError(cJid);
         sendToLogs?.(
           exitCode === 0
             ? `✅ Container exited — **${group.folder}** (code 0)`
@@ -577,6 +588,102 @@ function recoverPendingMessages(): void {
 function ensureContainerSystemRunning(): void {
   ensureContainerRuntimeRunning();
   cleanupOrphans();
+}
+
+/**
+ * Create the #nightshift Discord channel if it doesn't exist yet.
+ * Writes DISCORD_NIGHTSHIFT_CHANNEL_ID to .env and updates nightshift/config.json.
+ */
+async function provisionNightshiftChannel(channels: Channel[]): Promise<void> {
+  const envVars = readEnvFile(['DISCORD_NIGHTSHIFT_CHANNEL_ID']);
+  const existingId =
+    process.env.DISCORD_NIGHTSHIFT_CHANNEL_ID || envVars.DISCORD_NIGHTSHIFT_CHANNEL_ID;
+  if (existingId) return; // Already provisioned
+
+  const discord = channels.find((c) => c.name === 'discord') as any;
+  if (!discord?.provisionChannel) return; // Discord not connected
+
+  try {
+    const result = await discord.provisionChannel('nightshift', 'Night Shift');
+    if (!result) return;
+
+    const channelId = result.jid.replace(/^dc:/, '');
+    writeEnvVar('DISCORD_NIGHTSHIFT_CHANNEL_ID', channelId);
+    process.env.DISCORD_NIGHTSHIFT_CHANNEL_ID = channelId;
+
+    // Persist JID into nightshift/config.json for agents to read
+    const configPath = path.join(GROUPS_DIR, 'main', 'nightshift', 'config.json');
+    if (fs.existsSync(configPath)) {
+      const cfg = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      cfg.nightshift_channel_jid = result.jid;
+      fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2) + '\n');
+    }
+
+    logger.info(
+      { channelId, created: result.created },
+      result.created ? 'Created #nightshift Discord channel' : 'Found existing #nightshift channel',
+    );
+  } catch (err) {
+    logger.warn({ err }, 'Failed to provision #nightshift channel');
+  }
+}
+
+const GRUPPENFUHRER_TASK_ID = 'nanoclaw-gruppenfuhrer-v1';
+
+/**
+ * Register the ShiftLead watchdog cron task if it isn't already in the DB.
+ * Runs every 2 minutes; the script decides whether to wake the agent.
+ */
+function ensureGruppenfuehrerTask(): void {
+  try {
+    const existing = getAllTasks().find((t) => t.id === GRUPPENFUHRER_TASK_ID);
+    if (existing) return;
+
+    const mainGroupEntry = Object.entries(registeredGroups).find(([, g]) => g.isMain);
+    if (!mainGroupEntry) return;
+    const [mainJid] = mainGroupEntry;
+
+    // Determine nightshift channel JID from env or config
+    const envVars = readEnvFile(['DISCORD_NIGHTSHIFT_CHANNEL_ID']);
+    const nsChannelId =
+      process.env.DISCORD_NIGHTSHIFT_CHANNEL_ID || envVars.DISCORD_NIGHTSHIFT_CHANNEL_ID;
+    // Fall back to main group's own JID (not the trigger string)
+    const nsJid = nsChannelId ? `dc:${nsChannelId}` : mainJid;
+
+    const watchScriptPath = path.join(
+      GROUPS_DIR,
+      'main',
+      'nightshift',
+      'gruppenfuhrer-watch.sh',
+    );
+
+    createTask({
+      id: GRUPPENFUHRER_TASK_ID,
+      group_folder: 'main',
+      chat_jid: nsJid,
+      prompt: fs.existsSync(
+        path.join(GROUPS_DIR, 'main', 'nightshift', 'gruppenfuhrer-prompt.md'),
+      )
+        ? fs.readFileSync(
+            path.join(GROUPS_DIR, 'main', 'nightshift', 'gruppenfuhrer-prompt.md'),
+            'utf-8',
+          )
+        : 'Check on the Night Shift bots. If any are idle, wake them.',
+      script: fs.existsSync(watchScriptPath)
+        ? fs.readFileSync(watchScriptPath, 'utf-8')
+        : undefined,
+      schedule_type: 'cron',
+      schedule_value: '*/2 * * * *',
+      context_mode: 'isolated',
+      next_run: null,
+      status: 'active',
+      created_at: new Date().toISOString(),
+    });
+
+    logger.info({ taskId: GRUPPENFUHRER_TASK_ID, nsJid }, 'ShiftLead watchdog registered');
+  } catch (err) {
+    logger.warn({ err }, 'Failed to register ShiftLead task');
+  }
 }
 
 async function main(): Promise<void> {
@@ -763,6 +870,93 @@ async function main(): Promise<void> {
     await initBotPool(TELEGRAM_BOT_POOL);
   }
 
+  // Initialize progress tracker BEFORE starting subsystems so all components get a live reference.
+  // If a Discord logs channel is configured, dump progress there in addition to the source chat.
+  const logsEnv = readEnvFile(['DISCORD_LOGS_CHANNEL_ID']);
+  const logsChannelId = process.env.DISCORD_LOGS_CHANNEL_ID || logsEnv.DISCORD_LOGS_CHANNEL_ID || '';
+  const dumpJid = logsChannelId ? `dc:${logsChannelId}` : undefined;
+  // Helper to send lifecycle events to the logs channel
+  sendToLogs = dumpJid
+    ? async (text: string) => {
+        const ch = findChannel(channels, dumpJid);
+        if (ch) await ch.sendMessage(dumpJid, text).catch(() => {});
+      }
+    : undefined;
+
+  // Wire #agents channel for agent status reporting (Phase 10)
+  const agentsEnv = readEnvFile(['DISCORD_AGENTS_CHANNEL_ID']);
+  const agentsChannelId = process.env.DISCORD_AGENTS_CHANNEL_ID || agentsEnv.DISCORD_AGENTS_CHANNEL_ID || '';
+  const agentsJid = agentsChannelId ? `dc:${agentsChannelId}` : undefined;
+  sendToAgents = agentsJid
+    ? async (embed: EmbedBuilder) => {
+        const ch = findChannel(channels, agentsJid);
+        if (ch?.sendEmbed) await ch.sendEmbed(agentsJid, embed).catch(() => {});
+      }
+    : undefined;
+
+  // Log startup
+  if (sendToLogs) {
+    const channelNames = channels.map((c) => c.name).join(', ');
+    sendToLogs(`🟢 NanoClaw started — channels: ${channelNames}`);
+  }
+
+  progressTracker = new ProgressTracker({
+    sendMsg: async (jid, text) => {
+      const ch = findChannel(channels, jid) as any;
+      return ch?.sendMessageRaw?.(jid, text);
+    },
+    editMsg: async (jid, msgId, text) => {
+      const ch = findChannel(channels, jid) as any;
+      await ch?.editMessage?.(jid, msgId, text);
+    },
+    deleteMsg: async (jid, msgId) => {
+      const ch = findChannel(channels, jid) as any;
+      await ch?.deleteMessage?.(jid, msgId);
+    },
+    setTyping: async (jid, typing) => {
+      const ch = findChannel(channels, jid);
+      await ch?.setTyping?.(jid, typing);
+    },
+    dumpJid,
+  });
+
+  // Initialize bot status panel (optional — requires DISCORD_BOT_MANAGEMENT_CHANNEL_ID)
+  const botMgmtEnv = readEnvFile(['DISCORD_BOT_MANAGEMENT_CHANNEL_ID']);
+  const botMgmtChannelId =
+    process.env.DISCORD_BOT_MANAGEMENT_CHANNEL_ID || botMgmtEnv.DISCORD_BOT_MANAGEMENT_CHANNEL_ID || '';
+  if (botMgmtChannelId) {
+    const panelJid = `dc:${botMgmtChannelId}`;
+    const swarmNames = loadSwarmIdentities().map((i) => i.name);
+    const botNames = [ASSISTANT_NAME, ...swarmNames];
+    botStatusPanel = new BotStatusPanel({
+      channelJid: panelJid,
+      botNames,
+      defaultBot: ASSISTANT_NAME,
+      sendMsg: async (jid, text) => {
+        const ch = findChannel(channels, jid) as any;
+        return ch?.sendMessageRaw?.(jid, text);
+      },
+      editMsg: async (jid, msgId, text) => {
+        const ch = findChannel(channels, jid) as any;
+        await ch?.editMessage?.(jid, msgId, text);
+      },
+      getState: (key) => getRouterState(key),
+      setState: (key, value) => setRouterState(key, value),
+    });
+    // Wire ProgressTracker tool events to the panel
+    progressTracker.onToolUse = (chatJid, tool) => {
+      botStatusPanel?.onGroupTool(chatJid, tool);
+    };
+    await botStatusPanel.initialize();
+    logger.info({ panelJid, botNames }, 'BotStatusPanel initialized');
+  }
+
+  // Provision #nightshift Discord channel if not yet configured
+  await provisionNightshiftChannel(channels);
+
+  // Register the Gruppenführer watchdog if not already in DB
+  ensureGruppenfuehrerTask();
+
   // Start subsystems (independently of connection handler)
   startSchedulerLoop({
     registeredGroups: () => registeredGroups,
@@ -780,11 +974,15 @@ async function main(): Promise<void> {
       if (text) await channel.sendMessage(jid, text);
     },
     progressTracker,
+    botStatusPanel,
+    sendToAgents,
   });
   startIpcWatcher({
     sendMessage: (jid, text, sender) => {
       const channel = findChannel(channels, jid);
       if (!channel) throw new Error(`No channel for JID: ${jid}`);
+      // Inform bot status panel which bot is active on this channel
+      if (sender) botStatusPanel?.onBotSeen(sender, jid);
       return channel.sendMessage(jid, text, sender);
     },
     reactToMessage: async (jid, messageId, emoji) => {
@@ -829,47 +1027,10 @@ async function main(): Promise<void> {
         writeTasksSnapshot(group.folder, group.isMain === true, taskRows);
       }
     },
+    sendToAgents,
   });
   queue.setProcessMessagesFn(processGroupMessages);
   recoverPendingMessages();
-  // Initialize progress tracker
-  // If a Discord logs channel is configured, dump progress there instead of source chat
-  const logsEnv = readEnvFile(['DISCORD_LOGS_CHANNEL_ID']);
-  const logsChannelId = process.env.DISCORD_LOGS_CHANNEL_ID || logsEnv.DISCORD_LOGS_CHANNEL_ID || '';
-  const dumpJid = logsChannelId ? `dc:${logsChannelId}` : undefined;
-  // Helper to send lifecycle events to the logs channel
-  sendToLogs = dumpJid
-    ? async (text: string) => {
-        const ch = findChannel(channels, dumpJid);
-        if (ch) await ch.sendMessage(dumpJid, text).catch(() => {});
-      }
-    : undefined;
-
-  // Log startup
-  if (sendToLogs) {
-    const channelNames = channels.map((c) => c.name).join(', ');
-    sendToLogs(`🟢 NanoClaw started — channels: ${channelNames}`);
-  }
-
-  progressTracker = new ProgressTracker({
-    sendMsg: async (jid, text) => {
-      const ch = findChannel(channels, jid) as any;
-      return ch?.sendMessageRaw?.(jid, text);
-    },
-    editMsg: async (jid, msgId, text) => {
-      const ch = findChannel(channels, jid) as any;
-      await ch?.editMessage?.(jid, msgId, text);
-    },
-    deleteMsg: async (jid, msgId) => {
-      const ch = findChannel(channels, jid) as any;
-      await ch?.deleteMessage?.(jid, msgId);
-    },
-    setTyping: async (jid, typing) => {
-      const ch = findChannel(channels, jid);
-      await ch?.setTyping?.(jid, typing);
-    },
-    dumpJid,
-  });
   startMessageLoop().catch((err) => {
     logger.fatal({ err }, 'Message loop crashed unexpectedly');
     process.exit(1);
