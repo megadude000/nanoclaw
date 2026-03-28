@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Agent Dashboard
-status: executing
-stopped_at: Completed 10-01-PLAN.md (agent-status-embeds)
-last_updated: "2026-03-28T07:18:40.144Z"
+status: verifying
+stopped_at: Completed 10-02-PLAN.md (agent-status-wiring)
+last_updated: "2026-03-28T07:26:02.987Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 Phase: 10 (agent-status-reporting) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 09-agent-message-schema P01 | 2 | 2 tasks | 2 files |
 | Phase 10-agent-status-reporting P01 | 3 | 2 tasks | 4 files |
+| Phase 10-agent-status-reporting P02 | 7 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Recent decisions affecting current work:
 - [Phase 09-agent-message-schema]: summary field added to AgentMessageMeta to fix opaque 'Done in 38s' progress messages
 - [Phase 10-agent-status-reporting]: Used type-only import('discord.js').EmbedBuilder in Channel interface to avoid making discord.js a runtime dependency of types.ts
 - [Phase 10-agent-status-reporting]: buildTookEmbed/buildClosedEmbed/buildProgressEmbed follow pattern: setColor+setTitle+setTimestamp+addFields+withAgentMeta(last)
+- [Phase 10-agent-status-reporting]: sendToAgents follows sendToLogs pattern — optional, failure-safe, wired from DISCORD_AGENTS_CHANNEL_ID at startup
+- [Phase 10-agent-status-reporting]: agent_status IPC handler has no authorization check — status reporting is non-privileged
 
 ### Pending Todos
 
@@ -82,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T07:18:40.141Z
-Stopped at: Completed 10-01-PLAN.md (agent-status-embeds)
+Last session: 2026-03-28T07:26:02.984Z
+Stopped at: Completed 10-02-PLAN.md (agent-status-wiring)
 Resume file: None
