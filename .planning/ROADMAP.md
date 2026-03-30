@@ -142,7 +142,10 @@ Plans:
   1. A Cortex entry file with valid frontmatter passes schema validation (cortex_level, confidence, domain, scope, source_hash, embedding_model fields present and correctly typed)
   2. A Cortex entry file with missing or invalid fields fails validation with a clear error message identifying what is wrong
   3. Knowledge pyramid levels (L10-L50) are documented with definitions, examples, and staleness TTLs
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 14-01-PLAN.md — Zod schema + validation, gray-matter parser, knowledge pyramid docs
 
 ### Phase 15: Qdrant Infrastructure
 **Goal**: A persistent Qdrant vector database is running, survives host reboots and container rebuilds, and is ready to receive embeddings
@@ -236,7 +239,7 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 14. Cortex Schema Standard | v3.0 | 0/0 | Not started | - |
+| 14. Cortex Schema Standard | v3.0 | 0/1 | Planning | - |
 | 15. Qdrant Infrastructure | v3.0 | 0/0 | Not started | - |
 | 16. Embedding Pipeline | v3.0 | 0/0 | Not started | - |
 | 17. Search & MCP Tools | v3.0 | 0/0 | Not started | - |
