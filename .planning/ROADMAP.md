@@ -125,7 +125,7 @@ Plans:
 - [x] **Phase 14: Cortex Schema Standard** - Define YAML frontmatter spec and knowledge pyramid levels (completed 2026-03-30)
 - [x] **Phase 15: Qdrant Infrastructure** - Deploy persistent vector DB with systemd lifecycle management (completed 2026-03-30)
 - [x] **Phase 16: Embedding Pipeline** - Host-side service converts Cortex entries to vectors with deduplication (completed 2026-03-30)
-- [ ] **Phase 17: Search & MCP Tools** - Agents can search, read, and write Cortex entries from containers
+- [x] **Phase 17: Search & MCP Tools** - Agents can search, read, and write Cortex entries from containers (completed 2026-03-30)
 - [ ] **Phase 18: Knowledge Bootstrap** - Populate NanoClaw L10-L20 entries and wire agent auto-query
 - [ ] **Phase 19: Knowledge Graph** - Explicit relationship edges between Cortex entries with agent tooling
 - [ ] **Phase 20: Lore Protocol** - Git trailer knowledge atoms indexed into Cortex
@@ -189,7 +189,7 @@ Plans:
 
 Plans:
 - [x] 17-01-PLAN.md — Failing test scaffold for cortex_search, cortex_read, cortex_write (RED state, Wave 0)
-- [ ] 17-02-PLAN.md — cortex-mcp-tools.ts handler factories + ipc-mcp-stdio.ts tool registration + container deps
+- [x] 17-02-PLAN.md — cortex-mcp-tools.ts handler factories + ipc-mcp-stdio.ts tool registration + container deps
 - [x] 17-03-PLAN.md — Host-side: cortex_write IPC handler in ipc.ts, vault mount + env injection in container-runner.ts
 
 ### Phase 18: Knowledge Bootstrap
@@ -254,7 +254,7 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | 14. Cortex Schema Standard | v3.0 | 0/1 | Complete    | 2026-03-30 |
 | 15. Qdrant Infrastructure | v3.0 | 1/1 | Complete    | 2026-03-30 |
 | 16. Embedding Pipeline | v3.0 | 2/2 | Complete    | 2026-03-30 |
-| 17. Search & MCP Tools | v3.0 | 2/3 | In Progress|  |
+| 17. Search & MCP Tools | v3.0 | 3/3 | Complete   | 2026-03-30 |
 | 18. Knowledge Bootstrap | v3.0 | 0/0 | Not started | - |
 | 19. Knowledge Graph | v3.0 | 0/0 | Not started | - |
 | 20. Lore Protocol | v3.0 | 0/0 | Not started | - |
