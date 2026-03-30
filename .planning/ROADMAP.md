@@ -155,7 +155,10 @@ Plans:
   1. Qdrant container is running at localhost:6333 with the cortex-entries collection created (cosine distance, HNSW index, payload indexes on project/level/status)
   2. Qdrant auto-starts on system boot via systemd and restarts on failure
   3. Qdrant data survives container rebuild -- bind-mount volume at ./data/qdrant persists across docker rm/run cycles
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 15-01-PLAN.md — Qdrant Docker container, systemd unit, cortex-entries collection with payload indexes
 
 ### Phase 16: Embedding Pipeline
 **Goal**: Cortex entries are automatically converted to searchable vectors whenever content changes, with no redundant API calls for unchanged content
@@ -240,7 +243,7 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 14. Cortex Schema Standard | v3.0 | 0/1 | Complete    | 2026-03-30 |
-| 15. Qdrant Infrastructure | v3.0 | 0/0 | Not started | - |
+| 15. Qdrant Infrastructure | v3.0 | 0/1 | Not started | - |
 | 16. Embedding Pipeline | v3.0 | 0/0 | Not started | - |
 | 17. Search & MCP Tools | v3.0 | 0/0 | Not started | - |
 | 18. Knowledge Bootstrap | v3.0 | 0/0 | Not started | - |
