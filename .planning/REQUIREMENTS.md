@@ -10,8 +10,8 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 ### Schema & Infrastructure
 
 - [x] **SCHEMA-01**: Cortex YAML frontmatter standard defined with cortex_level (L10-L50), confidence, domain, scope fields
-- [ ] **SCHEMA-02**: Qdrant Docker container deployed with persistent volume and cortex-entries collection
-- [ ] **SCHEMA-03**: Qdrant auto-starts via systemd or docker-compose alongside NanoClaw
+- [x] **SCHEMA-02**: Qdrant Docker container deployed with persistent volume and cortex-entries collection
+- [x] **SCHEMA-03**: Qdrant auto-starts via systemd or docker-compose alongside NanoClaw
 
 ### Embedding Pipeline
 
@@ -88,8 +88,8 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | SCHEMA-01 | Phase 14 | Complete |
-| SCHEMA-02 | Phase 15 | Pending |
-| SCHEMA-03 | Phase 15 | Pending |
+| SCHEMA-02 | Phase 15 | Complete |
+| SCHEMA-03 | Phase 15 | Complete |
 | EMBED-01 | Phase 16 | Pending |
 | EMBED-02 | Phase 16 | Pending |
 | EMBED-03 | Phase 16 | Pending |

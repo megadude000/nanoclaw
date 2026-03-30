@@ -123,7 +123,7 @@ Plans:
 **Milestone Goal:** Agents can retrieve surgically scoped context before every task -- closing the "decision shadow" where agents see what code does but not why decisions were made.
 
 - [x] **Phase 14: Cortex Schema Standard** - Define YAML frontmatter spec and knowledge pyramid levels (completed 2026-03-30)
-- [ ] **Phase 15: Qdrant Infrastructure** - Deploy persistent vector DB with systemd lifecycle management
+- [x] **Phase 15: Qdrant Infrastructure** - Deploy persistent vector DB with systemd lifecycle management (completed 2026-03-30)
 - [ ] **Phase 16: Embedding Pipeline** - Host-side service converts Cortex entries to vectors with deduplication
 - [ ] **Phase 17: Search & MCP Tools** - Agents can search, read, and write Cortex entries from containers
 - [ ] **Phase 18: Knowledge Bootstrap** - Populate NanoClaw L10-L20 entries and wire agent auto-query
@@ -158,7 +158,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 15-01-PLAN.md — Qdrant Docker container, systemd unit, cortex-entries collection with payload indexes
+- [x] 15-01-PLAN.md — Qdrant Docker container, systemd unit, cortex-entries collection with payload indexes
 
 ### Phase 16: Embedding Pipeline
 **Goal**: Cortex entries are automatically converted to searchable vectors whenever content changes, with no redundant API calls for unchanged content
@@ -243,7 +243,7 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 14. Cortex Schema Standard | v3.0 | 0/1 | Complete    | 2026-03-30 |
-| 15. Qdrant Infrastructure | v3.0 | 0/1 | Not started | - |
+| 15. Qdrant Infrastructure | v3.0 | 1/1 | Complete   | 2026-03-30 |
 | 16. Embedding Pipeline | v3.0 | 0/0 | Not started | - |
 | 17. Search & MCP Tools | v3.0 | 0/0 | Not started | - |
 | 18. Knowledge Bootstrap | v3.0 | 0/0 | Not started | - |

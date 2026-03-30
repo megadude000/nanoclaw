@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Agent Cortex Intelligence
 status: verifying
-stopped_at: Completed 14-01-PLAN.md
-last_updated: "2026-03-30T17:52:46.407Z"
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-30T18:03:13.999Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 9
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Agents can retrieve surgically scoped context before every task -- closing the "decision shadow" where agents see what code does but not why decisions were made.
-**Current focus:** Phase 14 — Cortex Schema Standard
+**Current focus:** Phase 15 — Qdrant Infrastructure
 
 ## Current Position
 
-Phase: 15
-Plan: Not started
+Phase: 15 (Qdrant Infrastructure) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-03-30
 
@@ -49,6 +49,7 @@ Progress: [..........] 0%
 ## Accumulated Context
 
 | Phase 14 P01 | 15min | 3 tasks | 8 files |
+| Phase 15 P01 | 3min | 2 tasks | 3 files |
 
 ### Decisions
 
@@ -58,6 +59,8 @@ v3.0 decisions pending -- schema standard is first decision point.
 - [Phase 14]: Schema locked: cortex_level/confidence/domain/scope/source_hash/embedding_model field names and types final
 - [Phase 14]: Zod v4 passthrough() must be called after merge() to preserve unknown fields
 - [Phase 14]: Domain inference: project field > path inference > general fallback; existing domain never overwritten
+- [Phase 15]: Removed Requires=docker.service from qdrant.service -- Docker is system-level, not user-level
+- [Phase 15]: Vector size 1536 for OpenAI text-embedding-3-small, HNSW m=16 ef_construct=100 defaults
 
 ### Pending Todos
 
@@ -72,6 +75,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30T17:37:31.728Z
-Stopped at: Completed 14-01-PLAN.md
+Last session: 2026-03-30T18:03:13.995Z
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None
