@@ -111,6 +111,15 @@ None - all functionality fully implemented and wired.
 - Phase 17 (MCP tools) can now wire `cortex_search` and `cortex_write` knowing the embedding layer is stable
 - Batch re-embed script available for initial knowledge base population before Phase 17
 
+## Self-Check: PASSED
+
+- FOUND: src/cortex/watcher.ts
+- FOUND: src/cortex/watcher.test.ts
+- FOUND: scripts/cortex-reembed.ts
+- FOUND: .planning/phases/16-embedding-pipeline/16-02-SUMMARY.md
+- FOUND commit: f021542 (feat: debounced cortex watcher with self-trigger prevention)
+- FOUND commit: 5943a01 (feat: batch re-embed script + index.ts wiring)
+
 ---
 *Phase: 16-embedding-pipeline*
 *Completed: 2026-03-30*
