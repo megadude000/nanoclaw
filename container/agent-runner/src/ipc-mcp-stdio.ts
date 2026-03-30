@@ -10,6 +10,9 @@ import { z } from 'zod';
 import fs from 'fs';
 import path from 'path';
 import { CronExpressionParser } from 'cron-parser';
+import OpenAI from 'openai';
+import { QdrantClient } from '@qdrant/js-client-rest';
+import matter from 'gray-matter';
 
 const IPC_DIR = '/workspace/ipc';
 const MESSAGES_DIR = path.join(IPC_DIR, 'messages');
@@ -415,6 +418,192 @@ Use available_groups.json to find the JID for a group. The folder name must be c
     return {
       content: [{ type: 'text' as const, text: `Group "${args.name}" registered. It will start receiving messages immediately.` }],
     };
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Cortex MCP Tools — inlined logic (container cannot import from host src/)
+// ---------------------------------------------------------------------------
+
+/**
+ * Inlined CortexFieldsStrict Zod schema.
+ * Copy of src/cortex/schema.ts — do NOT import from host.
+ */
+const CortexFieldsStrict = z.object({
+  cortex_level: z.enum(['L10', 'L20', 'L30', 'L40', 'L50']),
+  confidence: z.enum(['low', 'medium', 'high']),
+  domain: z.string().min(1),
+  scope: z.string().min(1),
+});
+
+/** Returns true if query looks like an exact vault path (not natural language). */
+function isVaultPath(query: string): boolean {
+  return (
+    query.endsWith('.md') ||
+    query.startsWith('Areas/') ||
+    query.startsWith('Calendar/') ||
+    query.startsWith('System/')
+  );
+}
+
+/**
+ * Confidence firewall for L20+: check that L(N-10) entries with medium+
+ * confidence exist in the same domain before allowing a higher-level write.
+ * Returns true (blocked) if none exist. L10 is always allowed.
+ */
+async function checkConfidenceFirewall(
+  level: string,
+  domain: string,
+  qdrant: QdrantClient,
+): Promise<boolean> {
+  if (level === 'L10') return false;
+  const levelNum = parseInt(level.slice(1), 10);
+  const parentLevel = `L${levelNum - 10}`;
+  const result = await qdrant.scroll('cortex-entries', {
+    filter: {
+      must: [
+        { key: 'cortex_level', match: { value: parentLevel } },
+        { key: 'domain', match: { value: domain } },
+        { key: 'confidence', match: { any: ['medium', 'high'] } },
+      ],
+    },
+    limit: 1,
+    with_payload: false,
+  });
+  return result.points.length === 0;
+}
+
+// cortex_search — hybrid semantic/vault-path search
+server.tool(
+  'cortex_search',
+  'Search the Cortex knowledge base. For natural language queries, returns semantically ranked entries. For vault paths (ending in .md or starting with Areas/, Calendar/, System/), returns the entry directly.',
+  {
+    query: z.string().describe('Natural language query or exact vault path (e.g. "Areas/Projects/NanoClaw/ipc-design.md")'),
+    project: z.string().optional().describe('Filter by project name (e.g. "nanoclaw")'),
+    cortex_level: z.enum(['L10', 'L20', 'L30', 'L40', 'L50']).optional().describe('Filter by knowledge level'),
+    domain: z.string().optional().describe('Filter by domain (e.g. "architecture", "operations")'),
+    limit: z.number().optional().describe('Max results to return (1-20, default 5)'),
+  },
+  async (args) => {
+    const vaultRoot = '/workspace/cortex';
+
+    // Hybrid routing: exact vault path → direct file read
+    if (isVaultPath(args.query)) {
+      const resolved = path.join(vaultRoot, args.query);
+      if (!fs.existsSync(resolved)) {
+        return { content: [{ type: 'text' as const, text: `Not found: ${args.query}` }], isError: true };
+      }
+      const content = fs.readFileSync(resolved, 'utf-8');
+      return { content: [{ type: 'text' as const, text: content }] };
+    }
+
+    // Semantic search: embed query + search Qdrant
+    const qdrantUrl = process.env.QDRANT_URL || 'http://host.docker.internal:6333';
+    const qdrant = new QdrantClient({ url: qdrantUrl });
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+
+    const embedResponse = await openai.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: args.query,
+    });
+    const queryVector: number[] = embedResponse.data[0].embedding;
+
+    const mustConditions: Array<{ key: string; match: { value: string } }> = [];
+    if (args.project) mustConditions.push({ key: 'project', match: { value: args.project } });
+    if (args.cortex_level) mustConditions.push({ key: 'cortex_level', match: { value: args.cortex_level } });
+    if (args.domain) mustConditions.push({ key: 'domain', match: { value: args.domain } });
+
+    const limit = Math.min(args.limit ?? 5, 20);
+    const results = await qdrant.search('cortex-entries', {
+      vector: queryVector,
+      limit,
+      with_payload: true,
+      filter: mustConditions.length > 0 ? { must: mustConditions } : undefined,
+    });
+
+    const formatted = results.map((r) => ({
+      path: r.payload?.file_path,
+      score: r.score,
+      level: r.payload?.cortex_level,
+      domain: r.payload?.domain,
+      project: r.payload?.project,
+    }));
+
+    return { content: [{ type: 'text' as const, text: JSON.stringify(formatted, null, 2) }] };
+  },
+);
+
+// cortex_read — read a vault entry by path
+server.tool(
+  'cortex_read',
+  'Read a Cortex entry by its vault path. Returns full content including frontmatter.',
+  {
+    path: z.string().describe('Relative vault path, e.g. "Areas/Projects/NanoClaw/architecture.md"'),
+  },
+  async (args) => {
+    const vaultRoot = '/workspace/cortex';
+    const resolved = path.resolve(vaultRoot, args.path);
+
+    // Path traversal guard
+    if (!resolved.startsWith(vaultRoot + '/')) {
+      return { content: [{ type: 'text' as const, text: 'Error: path traversal not allowed' }], isError: true };
+    }
+    if (!fs.existsSync(resolved)) {
+      return { content: [{ type: 'text' as const, text: `Not found: ${args.path}` }], isError: true };
+    }
+
+    const content = fs.readFileSync(resolved, 'utf-8');
+    return { content: [{ type: 'text' as const, text: content }] };
+  },
+);
+
+// cortex_write — create or update a Cortex entry via IPC
+server.tool(
+  'cortex_write',
+  'Create or update a Cortex entry. Content must include valid YAML frontmatter with cortex_level (L10-L50), confidence (low/medium/high), domain, and scope fields.',
+  {
+    path: z.string().describe('Relative vault path, e.g. "Areas/Projects/NanoClaw/new-decision.md"'),
+    content: z.string().describe('Full markdown content with YAML frontmatter block'),
+  },
+  async (args) => {
+    // Parse and validate frontmatter before sending to host
+    const parsed = matter(args.content);
+    const validation = CortexFieldsStrict.safeParse(parsed.data);
+
+    if (!validation.success) {
+      const errors = validation.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
+      return {
+        content: [{ type: 'text' as const, text: `Validation failed: ${errors}` }],
+        isError: true,
+      };
+    }
+
+    const { cortex_level, domain } = validation.data;
+
+    // Confidence firewall for L20+
+    const levelNum = parseInt(cortex_level.slice(1), 10);
+    if (levelNum >= 20) {
+      const qdrantUrl = process.env.QDRANT_URL || 'http://host.docker.internal:6333';
+      const qdrant = new QdrantClient({ url: qdrantUrl });
+      const blocked = await checkConfidenceFirewall(cortex_level, domain, qdrant);
+      if (blocked) {
+        return {
+          content: [{ type: 'text' as const, text: `Firewall: L${levelNum - 10} entries for domain '${domain}' lack medium+ confidence` }],
+          isError: true,
+        };
+      }
+    }
+
+    // Write IPC file for host to process
+    writeIpcFile(MESSAGES_DIR, {
+      type: 'cortex_write',
+      path: args.path,
+      content: args.content,
+      groupFolder,
+      timestamp: new Date().toISOString(),
+    });
+
+    return { content: [{ type: 'text' as const, text: `Entry queued for write: ${args.path}` }] };
   },
 );
 

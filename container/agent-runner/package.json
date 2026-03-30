@@ -11,7 +11,10 @@
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.76",
     "@modelcontextprotocol/sdk": "^1.12.1",
+    "@qdrant/js-client-rest": "^1.17.0",
     "cron-parser": "^5.0.0",
+    "gray-matter": "^4.0.3",
+    "openai": "^6.33.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
