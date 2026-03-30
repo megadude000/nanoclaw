@@ -169,7 +169,11 @@ Plans:
   2. Running the batch re-embed command rebuilds the full collection from all Cortex entry files
   3. Unchanged entries (matching content hash) are skipped during both watch-triggered and batch re-embed operations
   4. Qdrant points contain full payload metadata (cortex_level, domain, project, source_hash, embedding_model)
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 16-01-PLAN.md — Install deps, Qdrant client singleton, shared embedEntry() function with tests
+- [ ] 16-02-PLAN.md — Debounced fs.watch watcher, batch re-embed script, wire into index.ts
 
 ### Phase 17: Search & MCP Tools
 **Goal**: Container agents can search, read, and write Cortex entries using MCP tools -- the primary agent interface to the knowledge layer
@@ -244,7 +248,7 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 |-------|-----------|----------------|--------|-----------|
 | 14. Cortex Schema Standard | v3.0 | 0/1 | Complete    | 2026-03-30 |
 | 15. Qdrant Infrastructure | v3.0 | 1/1 | Complete    | 2026-03-30 |
-| 16. Embedding Pipeline | v3.0 | 0/0 | Not started | - |
+| 16. Embedding Pipeline | v3.0 | 0/2 | Not started | - |
 | 17. Search & MCP Tools | v3.0 | 0/0 | Not started | - |
 | 18. Knowledge Bootstrap | v3.0 | 0/0 | Not started | - |
 | 19. Knowledge Graph | v3.0 | 0/0 | Not started | - |
