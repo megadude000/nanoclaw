@@ -1,0 +1,14 @@
+[Unit]
+Description=Qdrant Vector Database for NanoClaw Cortex
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/andrii-panasenko/nanoclaw
+ExecStart=/home/andrii-panasenko/nanoclaw/scripts/qdrant-setup.sh
+ExecStop=/usr/bin/docker stop nanoclaw-qdrant
+TimeoutStartSec=120
+
+[Install]
+WantedBy=default.target
