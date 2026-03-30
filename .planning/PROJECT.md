@@ -63,6 +63,7 @@ Clear separation of automated notifications and project workstreams into dedicat
 - Health monitoring: startHealthMonitor polling loop, buildDownEmbed/buildUpEmbed/buildHeartbeatEmbed, state persistence to data/health-state.json, startup spam suppression, systemctl --user for app services / system-level for cloudflared, wired to #logs via sendEmbed — Validated in Phase 13
 - Cortex YAML frontmatter standard: Zod schemas (strict + permissive), gray-matter parser, path-based default inference, source_hash computation, L10-L50 knowledge pyramid documented — Validated in Phase 14
 - Qdrant vector database: Docker container with persistent bind-mount (./data/qdrant/), systemd auto-start, cortex-entries collection with cosine distance + payload indexes — Validated in Phase 15
+- Embedding pipeline: embedEntry() with hash-skip dedup, debounced fs.watch watcher (10-min inactivity), batch cortex-reembed script with --force, watcher wired to main process startup/shutdown — Validated in Phase 16
 
 ### Active (Candidates for v3.0)
 
@@ -155,4 +156,4 @@ Andy HQ (server)
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-30 — Phase 15 complete: Qdrant infrastructure deployed with systemd, cortex-entries collection ready*
+*Last updated: 2026-03-30 — Phase 16 complete: Embedding pipeline live — Cortex entries auto-embed on change, batch re-embed available*
