@@ -185,7 +185,12 @@ Plans:
   3. Agent calls cortex_read with an entry ID/path and receives the full entry content including frontmatter
   4. Agent calls cortex_write with valid content and the entry is created/updated on disk with schema validation, then auto-embedded
   5. Search results are filterable by project, cortex_level, and domain; confidence firewall prevents L(N) writes when L(N-1) lacks medium+ confidence
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Failing test scaffold for cortex_search, cortex_read, cortex_write (RED state, Wave 0)
+- [ ] 17-02-PLAN.md — cortex-mcp-tools.ts handler factories + ipc-mcp-stdio.ts tool registration + container deps
+- [ ] 17-03-PLAN.md — Host-side: cortex_write IPC handler in ipc.ts, vault mount + env injection in container-runner.ts
 
 ### Phase 18: Knowledge Bootstrap
 **Goal**: Cortex contains useful NanoClaw knowledge and agents automatically query it at task start -- first real value delivery from the knowledge layer
@@ -249,7 +254,7 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | 14. Cortex Schema Standard | v3.0 | 0/1 | Complete    | 2026-03-30 |
 | 15. Qdrant Infrastructure | v3.0 | 1/1 | Complete    | 2026-03-30 |
 | 16. Embedding Pipeline | v3.0 | 2/2 | Complete    | 2026-03-30 |
-| 17. Search & MCP Tools | v3.0 | 0/0 | Not started | - |
+| 17. Search & MCP Tools | v3.0 | 0/3 | Not started | - |
 | 18. Knowledge Bootstrap | v3.0 | 0/0 | Not started | - |
 | 19. Knowledge Graph | v3.0 | 0/0 | Not started | - |
 | 20. Lore Protocol | v3.0 | 0/0 | Not started | - |
