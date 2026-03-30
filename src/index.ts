@@ -61,6 +61,7 @@ import {
   shouldDropMessage,
 } from './sender-allowlist.js';
 import { startSchedulerLoop } from './task-scheduler.js';
+import { startCortexWatcher, stopCortexWatcher } from './cortex/watcher.js';
 import { Channel, NewMessage, RegisteredGroup } from './types.js';
 import { logger } from './logger.js';
 
@@ -563,6 +564,7 @@ async function main(): Promise<void> {
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'Shutdown signal received');
+    stopCortexWatcher();
     await queue.shutdown(10000);
     for (const ch of channels) await ch.disconnect();
     process.exit(0);
@@ -725,6 +727,12 @@ async function main(): Promise<void> {
       }
     },
   });
+  // Start Cortex embedding watcher (best-effort, non-blocking)
+  const cortexDir = path.join(process.cwd(), 'cortex');
+  startCortexWatcher(cortexDir).catch((err) =>
+    logger.warn({ err }, 'Cortex watcher failed to start'),
+  );
+
   queue.setProcessMessagesFn(processGroupMessages);
   recoverPendingMessages();
   startMessageLoop().catch((err) => {
