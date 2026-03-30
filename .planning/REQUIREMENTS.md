@@ -32,7 +32,7 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 - [x] **MCP-02**: cortex_read tool available in container agents -- exact entry retrieval by ID or path
 - [x] **MCP-03**: cortex_write tool available in container agents -- create/update with schema validation + auto-embed
 - [ ] **MCP-04**: cortex_relate tool available in container agents -- declare graph edges between entries
-- [ ] **MCP-05**: All 4 tools added to existing ipc-mcp-stdio.ts (no new MCP server process)
+- [x] **MCP-05**: All 4 tools added to existing ipc-mcp-stdio.ts (no new MCP server process)
 
 ### Knowledge Graph
 
@@ -101,7 +101,7 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 | MCP-02 | Phase 17 | Complete |
 | MCP-03 | Phase 17 | Complete |
 | MCP-04 | Phase 19 | Pending |
-| MCP-05 | Phase 17 | Pending |
+| MCP-05 | Phase 17 | Complete |
 | GRAPH-01 | Phase 19 | Pending |
 | GRAPH-02 | Phase 19 | Pending |
 | POP-01 | Phase 18 | Pending |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Agent Cortex Intelligence
 status: executing
-stopped_at: Completed 17-01-PLAN.md
-last_updated: "2026-03-30T20:48:57.548Z"
+stopped_at: Completed 17-03-PLAN.md
+last_updated: "2026-03-30T20:53:10.068Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 9
   completed_phases: 3
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 17 (search-mcp-tools) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-03-30
 
@@ -53,6 +53,7 @@ Progress: [..........] 0%
 | Phase 16 P01 | 10 | 2 tasks | 6 files |
 | Phase 16-embedding-pipeline P02 | 3 | 2 tasks | 4 files |
 | Phase 17-search-mcp-tools P01 | 2min | 1 tasks | 1 files |
+| Phase 17-search-mcp-tools P03 | 126 | 2 tasks | 2 files |
 
 ### Decisions
 
@@ -72,6 +73,8 @@ v3.0 decisions pending -- schema standard is first decision point.
 - [Phase 16]: startCortexWatcher called with .catch() in index.ts -- failure never crashes main process (best-effort non-blocking)
 - [Phase 17-01]: Factory pattern for handlers: buildSearchHandler/buildReadHandler/buildWriteHandler take deps as constructor args — enables DI without full module mock
 - [Phase 17-01]: checkConfidenceFirewall(level, domain, qdrant) takes qdrant as 3rd param — same DI pattern as embedEntry() in embedder.ts
+- [Phase 17-03]: Used host.docker.internal literal for QDRANT_URL — no CONTAINER_HOST_GATEWAY constant in container-runtime.ts; hostGatewayArgs() handles --add-host mapping
+- [Phase 17-03]: Added readEnvFile import to container-runner.ts for OPENAI_API_KEY — plan's thirdPartyKeys block no longer exists; OneCLI handles other credentials
 
 ### Pending Todos
 
@@ -86,6 +89,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:48:57.544Z
-Stopped at: Completed 17-01-PLAN.md
+Last session: 2026-03-30T20:53:10.065Z
+Stopped at: Completed 17-03-PLAN.md
 Resume file: None
