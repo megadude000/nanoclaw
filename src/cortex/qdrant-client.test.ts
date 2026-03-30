@@ -13,7 +13,7 @@ import {
 const mockGetCollections = vi.fn();
 
 vi.mock('@qdrant/js-client-rest', () => ({
-  QdrantClient: vi.fn().mockImplementation(function () {
+  QdrantClient: vi.fn().mockImplementation(function (this: Record<string, unknown>) {
     this.getCollections = mockGetCollections;
   }),
 }));
