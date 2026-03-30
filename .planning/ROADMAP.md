@@ -122,7 +122,7 @@ Plans:
 
 **Milestone Goal:** Agents can retrieve surgically scoped context before every task -- closing the "decision shadow" where agents see what code does but not why decisions were made.
 
-- [ ] **Phase 14: Cortex Schema Standard** - Define YAML frontmatter spec and knowledge pyramid levels
+- [x] **Phase 14: Cortex Schema Standard** - Define YAML frontmatter spec and knowledge pyramid levels (completed 2026-03-30)
 - [ ] **Phase 15: Qdrant Infrastructure** - Deploy persistent vector DB with systemd lifecycle management
 - [ ] **Phase 16: Embedding Pipeline** - Host-side service converts Cortex entries to vectors with deduplication
 - [ ] **Phase 17: Search & MCP Tools** - Agents can search, read, and write Cortex entries from containers
@@ -239,7 +239,7 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 14. Cortex Schema Standard | v3.0 | 0/1 | Planned    |  |
+| 14. Cortex Schema Standard | v3.0 | 0/1 | Complete    | 2026-03-30 |
 | 15. Qdrant Infrastructure | v3.0 | 0/0 | Not started | - |
 | 16. Embedding Pipeline | v3.0 | 0/0 | Not started | - |
 | 17. Search & MCP Tools | v3.0 | 0/0 | Not started | - |
