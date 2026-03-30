@@ -61,6 +61,7 @@ Clear separation of automated notifications and project workstreams into dedicat
 - Blocker & handoff reporting: buildBlockerEmbed/buildHandoffEmbed, report_blocker/report_handoff MCP tools, IPC handlers on host — Validated in Phase 11
 - Morning Digest routing: routing_tag column on scheduled_tasks, resolveTargets() wiring in task-scheduler.ts, config/routing.json morning-digest entry, Telegram suppressed when routed — Validated in Phase 12
 - Health monitoring: startHealthMonitor polling loop, buildDownEmbed/buildUpEmbed/buildHeartbeatEmbed, state persistence to data/health-state.json, startup spam suppression, systemctl --user for app services / system-level for cloudflared, wired to #logs via sendEmbed — Validated in Phase 13
+- Cortex YAML frontmatter standard: Zod schemas (strict + permissive), gray-matter parser, path-based default inference, source_hash computation, L10-L50 knowledge pyramid documented — Validated in Phase 14
 
 ### Active (Candidates for v3.0)
 
@@ -153,4 +154,4 @@ Andy HQ (server)
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — v2.0 Agent Dashboard complete: #agents live operational dashboard, health monitoring, morning digest routing*
+*Last updated: 2026-03-30 — Phase 14 complete: Cortex schema standard locked with Zod validation, knowledge pyramid documented*
