@@ -239,7 +239,7 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 14. Cortex Schema Standard | v3.0 | 0/1 | Planning | - |
+| 14. Cortex Schema Standard | v3.0 | 0/1 | Planned    |  |
 | 15. Qdrant Infrastructure | v3.0 | 0/0 | Not started | - |
 | 16. Embedding Pipeline | v3.0 | 0/0 | Not started | - |
 | 17. Search & MCP Tools | v3.0 | 0/0 | Not started | - |

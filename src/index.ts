@@ -3,23 +3,17 @@ import path from 'path';
 
 import { OneCLI } from '@onecli-sh/sdk';
 
-import { readEnvFile, writeEnvVar } from './env.js';
-
 import {
   ASSISTANT_NAME,
-  CREDENTIAL_PROXY_PORT,
-  DATA_DIR,
   DEFAULT_TRIGGER,
   getTriggerPattern,
   GROUPS_DIR,
   IDLE_TIMEOUT,
-  NOTION_WEBHOOK_PORT,
+  MAX_MESSAGES_PER_PROMPT,
   ONECLI_URL,
   POLL_INTERVAL,
-  TELEGRAM_BOT_POOL,
   TIMEZONE,
 } from './config.js';
-import { startCredentialProxy } from './credential-proxy.js';
 import './channels/index.js';
 import {
   getChannelFactory,
@@ -34,18 +28,15 @@ import {
 import {
   cleanupOrphans,
   ensureContainerRuntimeRunning,
-  PROXY_BIND_HOST,
 } from './container-runtime.js';
 import {
   getAllChats,
   getAllRegisteredGroups,
   getAllSessions,
   getAllTasks,
-  createTask,
-  getLatestUserMessageId,
+  getLastBotMessageTimestamp,
   getMessagesSince,
   getNewMessages,
-  getRegisteredGroup,
   getRouterState,
   initDatabase,
   setRegisteredGroup,
@@ -57,7 +48,6 @@ import {
 import { GroupQueue } from './group-queue.js';
 import { resolveGroupFolderPath } from './group-folder.js';
 import { startIpcWatcher } from './ipc.js';
-import { parseImageReferences } from './image.js';
 import { findChannel, formatMessages, formatOutbound } from './router.js';
 import {
   restoreRemoteControl,
@@ -70,18 +60,9 @@ import {
   loadSenderAllowlist,
   shouldDropMessage,
 } from './sender-allowlist.js';
-// Telegram is an optional skill — dynamic import to avoid crash when not installed
-const initBotPool: ((tokens: string[]) => Promise<void>) | null = await import('./channels/telegram.js').then(m => m.initBotPool).catch(() => null);
-import { startWebhookServer } from './webhook-server.js';
 import { startSchedulerLoop } from './task-scheduler.js';
 import { Channel, NewMessage, RegisteredGroup } from './types.js';
 import { logger } from './logger.js';
-import { ProgressTracker } from './progress-tracker.js';
-import { BotStatusPanel } from './bot-status-panel.js';
-import { EmbedBuilder } from 'discord.js';
-import { loadSwarmIdentities } from './swarm-webhook-manager.js';
-import { resolveTargets } from './webhook-router.js';
-import { startHealthMonitor } from './health-monitor.js';
 
 // Re-export for backwards compatibility during refactor
 export { escapeXml, formatMessages } from './router.js';
@@ -91,11 +72,6 @@ let sessions: Record<string, string> = {};
 let registeredGroups: Record<string, RegisteredGroup> = {};
 let lastAgentTimestamp: Record<string, string> = {};
 let messageLoopRunning = false;
-let progressTracker: ProgressTracker;
-let botStatusPanel: BotStatusPanel | undefined;
-let sendToLogs: ((text: string) => Promise<void>) | undefined;
-let sendToAgents: ((embed: EmbedBuilder) => Promise<void>) | undefined;
-let stopHealthMonitor: (() => void) | undefined;
 
 const channels: Channel[] = [];
 const queue = new GroupQueue();
@@ -136,6 +112,27 @@ function loadState(): void {
     { groupCount: Object.keys(registeredGroups).length },
     'State loaded',
   );
+}
+
+/**
+ * Return the message cursor for a group, recovering from the last bot reply
+ * if lastAgentTimestamp is missing (new group, corrupted state, restart).
+ */
+function getOrRecoverCursor(chatJid: string): string {
+  const existing = lastAgentTimestamp[chatJid];
+  if (existing) return existing;
+
+  const botTs = getLastBotMessageTimestamp(chatJid, ASSISTANT_NAME);
+  if (botTs) {
+    logger.info(
+      { chatJid, recoveredFrom: botTs },
+      'Recovered message cursor from last bot reply',
+    );
+    lastAgentTimestamp[chatJid] = botTs;
+    saveState();
+    return botTs;
+  }
+  return '';
 }
 
 function saveState(): void {
@@ -231,11 +228,11 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
 
   const isMainGroup = group.isMain === true;
 
-  const sinceTimestamp = lastAgentTimestamp[chatJid] || '';
   const missedMessages = getMessagesSince(
     chatJid,
-    sinceTimestamp,
+    getOrRecoverCursor(chatJid),
     ASSISTANT_NAME,
+    MAX_MESSAGES_PER_PROMPT,
   );
 
   if (missedMessages.length === 0) return true;
@@ -253,7 +250,6 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
   }
 
   const prompt = formatMessages(missedMessages, TIMEZONE);
-  const imageAttachments = parseImageReferences(missedMessages);
 
   // Advance cursor so the piping path in startMessageLoop won't re-fetch
   // these messages. Save the old cursor so we can roll back on error.
@@ -282,64 +278,35 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
   };
 
   await channel.setTyping?.(chatJid, true);
-  progressTracker?.onMessageSent(chatJid, group.folder);
-  botStatusPanel?.onGroupStarted(chatJid, group.folder);
   let hadError = false;
   let outputSentToUser = false;
 
-  const triggerMessageId = missedMessages[missedMessages.length - 1]?.id;
+  const output = await runAgent(group, prompt, chatJid, async (result) => {
+    // Streaming output callback — called for each agent result
+    if (result.result) {
+      const raw =
+        typeof result.result === 'string'
+          ? result.result
+          : JSON.stringify(result.result);
+      // Strip <internal>...</internal> blocks — agent uses these for internal reasoning
+      const text = raw.replace(/<internal>[\s\S]*?<\/internal>/g, '').trim();
+      logger.info({ group: group.name }, `Agent output: ${raw.length} chars`);
+      if (text) {
+        await channel.sendMessage(chatJid, text);
+        outputSentToUser = true;
+      }
+      // Only reset idle timer on actual results, not session-update markers (result: null)
+      resetIdleTimer();
+    }
 
-  // Acknowledge immediately with a 👍 reaction before spinning up the container.
-  // Wait 400ms to allow nearly-simultaneous messages (e.g. photo sent right after text)
-  // to land in the DB, then react to the true latest message.
-  if (channel.reactToMessage) {
-    setTimeout(() => {
-      const latestId = getLatestUserMessageId(chatJid) ?? triggerMessageId;
-      if (latestId) {
-        channel.reactToMessage!(chatJid, latestId, '👍').catch(() => {
-          /* best effort */
-        });
-      }
-    }, 400);
-  }
-  const output = await runAgent(
-    group,
-    prompt,
-    chatJid,
-    triggerMessageId,
-    imageAttachments.length > 0 ? imageAttachments : undefined,
-    async (result) => {
-      // Streaming output callback — called for each agent result
-      if (result.result) {
-        const raw =
-          typeof result.result === 'string'
-            ? result.result
-            : JSON.stringify(result.result);
-        // Strip <internal>...</internal> blocks — agent uses these for internal reasoning
-        const text = raw.replace(/<internal>[\s\S]*?<\/internal>/g, '').trim();
-        logger.info(
-          { group: group.name },
-          `Agent output: ${raw.slice(0, 200)}`,
-        );
-        if (text) {
-          await channel.sendMessage(chatJid, text);
-          outputSentToUser = true;
-        }
-        // Only reset idle timer on actual results, not session-update markers (result: null)
-        resetIdleTimer();
-      }
+    if (result.status === 'success') {
+      queue.notifyIdle(chatJid);
+    }
 
-      if (result.status === 'success') {
-        progressTracker?.onResponseReceived(chatJid);
-        botStatusPanel?.onGroupDone(chatJid);
-        queue.notifyIdle(chatJid);
-      }
-
-      if (result.status === 'error') {
-        hadError = true;
-      }
-    },
-  );
+    if (result.status === 'error') {
+      hadError = true;
+    }
+  });
 
   await channel.setTyping?.(chatJid, false);
   if (idleTimer) clearTimeout(idleTimer);
@@ -371,8 +338,6 @@ async function runAgent(
   group: RegisteredGroup,
   prompt: string,
   chatJid: string,
-  triggerMessageId?: string,
-  imageAttachments?: Array<{ relativePath: string; mediaType: string }>,
   onOutput?: (output: ContainerOutput) => Promise<void>,
 ): Promise<'success' | 'error'> {
   const isMain = group.isMain === true;
@@ -416,7 +381,6 @@ async function runAgent(
     : undefined;
 
   try {
-    sendToLogs?.(`📦 Container starting — **${group.folder}** (${chatJid})`);
     const output = await runContainerAgent(
       group,
       {
@@ -426,22 +390,10 @@ async function runAgent(
         chatJid,
         isMain,
         assistantName: ASSISTANT_NAME,
-        triggerMessageId,
-        imageAttachments,
-        model: group.containerConfig?.model,
       },
       (proc, containerName) =>
         queue.registerProcess(chatJid, proc, containerName, group.folder),
       wrappedOnOutput,
-      (cJid, exitCode) => {
-        progressTracker?.onContainerStopped(cJid, exitCode);
-        if (exitCode !== 0) botStatusPanel?.onGroupError(cJid);
-        sendToLogs?.(
-          exitCode === 0
-            ? `✅ Container exited — **${group.folder}** (code 0)`
-            : `❌ Container exited — **${group.folder}** (code ${exitCode})`,
-        );
-      },
     );
 
     if (output.newSessionId) {
@@ -454,14 +406,12 @@ async function runAgent(
         { group: group.name, error: output.error },
         'Container agent error',
       );
-      sendToLogs?.(`⚠️ Agent error — **${group.folder}**: ${output.error?.slice(0, 200)}`);
       return 'error';
     }
 
     return 'success';
   } catch (err) {
     logger.error({ group: group.name, err }, 'Agent error');
-    sendToLogs?.(`⚠️ Agent crash — **${group.folder}**: ${String(err).slice(0, 200)}`);
     return 'error';
   }
 }
@@ -534,8 +484,9 @@ async function startMessageLoop(): Promise<void> {
           // context that accumulated between triggers is included.
           const allPending = getMessagesSince(
             chatJid,
-            lastAgentTimestamp[chatJid] || '',
+            getOrRecoverCursor(chatJid),
             ASSISTANT_NAME,
+            MAX_MESSAGES_PER_PROMPT,
           );
           const messagesToSend =
             allPending.length > 0 ? allPending : groupMessages;
@@ -555,7 +506,6 @@ async function startMessageLoop(): Promise<void> {
               ?.catch((err) =>
                 logger.warn({ chatJid, err }, 'Failed to set typing indicator'),
               );
-            progressTracker?.onMessageSent(chatJid, group.folder);
           } else {
             // No active container — enqueue for a new one
             queue.enqueueMessageCheck(chatJid);
@@ -575,8 +525,12 @@ async function startMessageLoop(): Promise<void> {
  */
 function recoverPendingMessages(): void {
   for (const [chatJid, group] of Object.entries(registeredGroups)) {
-    const sinceTimestamp = lastAgentTimestamp[chatJid] || '';
-    const pending = getMessagesSince(chatJid, sinceTimestamp, ASSISTANT_NAME);
+    const pending = getMessagesSince(
+      chatJid,
+      getOrRecoverCursor(chatJid),
+      ASSISTANT_NAME,
+      MAX_MESSAGES_PER_PROMPT,
+    );
     if (pending.length > 0) {
       logger.info(
         { group: group.name, pendingCount: pending.length },
@@ -590,102 +544,6 @@ function recoverPendingMessages(): void {
 function ensureContainerSystemRunning(): void {
   ensureContainerRuntimeRunning();
   cleanupOrphans();
-}
-
-/**
- * Create the #nightshift Discord channel if it doesn't exist yet.
- * Writes DISCORD_NIGHTSHIFT_CHANNEL_ID to .env and updates nightshift/config.json.
- */
-async function provisionNightshiftChannel(channels: Channel[]): Promise<void> {
-  const envVars = readEnvFile(['DISCORD_NIGHTSHIFT_CHANNEL_ID']);
-  const existingId =
-    process.env.DISCORD_NIGHTSHIFT_CHANNEL_ID || envVars.DISCORD_NIGHTSHIFT_CHANNEL_ID;
-  if (existingId) return; // Already provisioned
-
-  const discord = channels.find((c) => c.name === 'discord') as any;
-  if (!discord?.provisionChannel) return; // Discord not connected
-
-  try {
-    const result = await discord.provisionChannel('nightshift', 'Night Shift');
-    if (!result) return;
-
-    const channelId = result.jid.replace(/^dc:/, '');
-    writeEnvVar('DISCORD_NIGHTSHIFT_CHANNEL_ID', channelId);
-    process.env.DISCORD_NIGHTSHIFT_CHANNEL_ID = channelId;
-
-    // Persist JID into nightshift/config.json for agents to read
-    const configPath = path.join(GROUPS_DIR, 'main', 'nightshift', 'config.json');
-    if (fs.existsSync(configPath)) {
-      const cfg = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-      cfg.nightshift_channel_jid = result.jid;
-      fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2) + '\n');
-    }
-
-    logger.info(
-      { channelId, created: result.created },
-      result.created ? 'Created #nightshift Discord channel' : 'Found existing #nightshift channel',
-    );
-  } catch (err) {
-    logger.warn({ err }, 'Failed to provision #nightshift channel');
-  }
-}
-
-const GRUPPENFUHRER_TASK_ID = 'nanoclaw-gruppenfuhrer-v1';
-
-/**
- * Register the ShiftLead watchdog cron task if it isn't already in the DB.
- * Runs every 2 minutes; the script decides whether to wake the agent.
- */
-function ensureGruppenfuehrerTask(): void {
-  try {
-    const existing = getAllTasks().find((t) => t.id === GRUPPENFUHRER_TASK_ID);
-    if (existing) return;
-
-    const mainGroupEntry = Object.entries(registeredGroups).find(([, g]) => g.isMain);
-    if (!mainGroupEntry) return;
-    const [mainJid] = mainGroupEntry;
-
-    // Determine nightshift channel JID from env or config
-    const envVars = readEnvFile(['DISCORD_NIGHTSHIFT_CHANNEL_ID']);
-    const nsChannelId =
-      process.env.DISCORD_NIGHTSHIFT_CHANNEL_ID || envVars.DISCORD_NIGHTSHIFT_CHANNEL_ID;
-    // Fall back to main group's own JID (not the trigger string)
-    const nsJid = nsChannelId ? `dc:${nsChannelId}` : mainJid;
-
-    const watchScriptPath = path.join(
-      GROUPS_DIR,
-      'main',
-      'nightshift',
-      'gruppenfuhrer-watch.sh',
-    );
-
-    createTask({
-      id: GRUPPENFUHRER_TASK_ID,
-      group_folder: 'main',
-      chat_jid: nsJid,
-      prompt: fs.existsSync(
-        path.join(GROUPS_DIR, 'main', 'nightshift', 'gruppenfuhrer-prompt.md'),
-      )
-        ? fs.readFileSync(
-            path.join(GROUPS_DIR, 'main', 'nightshift', 'gruppenfuhrer-prompt.md'),
-            'utf-8',
-          )
-        : 'Check on the Night Shift bots. If any are idle, wake them.',
-      script: fs.existsSync(watchScriptPath)
-        ? fs.readFileSync(watchScriptPath, 'utf-8')
-        : undefined,
-      schedule_type: 'cron',
-      schedule_value: '*/2 * * * *',
-      context_mode: 'isolated',
-      next_run: null,
-      status: 'active',
-      created_at: new Date().toISOString(),
-    });
-
-    logger.info({ taskId: GRUPPENFUHRER_TASK_ID, nsJid }, 'ShiftLead watchdog registered');
-  } catch (err) {
-    logger.warn({ err }, 'Failed to register ShiftLead task');
-  }
 }
 
 async function main(): Promise<void> {
@@ -702,39 +560,9 @@ async function main(): Promise<void> {
 
   restoreRemoteControl();
 
-  // Start credential proxy (containers route API calls through this)
-  const proxyServer = await startCredentialProxy(
-    CREDENTIAL_PROXY_PORT,
-    PROXY_BIND_HOST,
-  );
-
-  // Start unified webhook server (ngrok forwards to this)
-  // Routes: POST /notion → Notion handler, POST /github → GitHub handler
-  const { readEnvFile } = await import('./env.js');
-  const webhookEnv = readEnvFile([
-    'NOTION_WEBHOOK_SECRET',
-    'GITHUB_WEBHOOK_SECRET',
-    'NOTION_API_KEY',
-    'GITHUB_TOKEN',
-    'GITHUB_REPO',
-  ]);
-  if (webhookEnv.NOTION_API_KEY)
-    process.env.NOTION_API_KEY = webhookEnv.NOTION_API_KEY;
-  const webhookServer = startWebhookServer({
-    port: NOTION_WEBHOOK_PORT,
-    notionSigningSecret: webhookEnv.NOTION_WEBHOOK_SECRET ?? '',
-    githubSigningSecret: webhookEnv.GITHUB_WEBHOOK_SECRET ?? '',
-    githubToken: webhookEnv.GITHUB_TOKEN ?? '',
-    githubRepo: webhookEnv.GITHUB_REPO ?? 'megadude000/YW_Core',
-    getRegisteredGroups: () => registeredGroups,
-  });
-
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'Shutdown signal received');
-    stopHealthMonitor?.();
-    proxyServer.close();
-    webhookServer.close();
     await queue.shutdown(10000);
     for (const ch of channels) await ch.disconnect();
     process.exit(0);
@@ -786,10 +614,6 @@ async function main(): Promise<void> {
 
   // Channel callbacks (shared by all channels)
   const channelOpts = {
-    onCriticalCommand: (chatJid: string, command: string) => {
-      logger.info({ chatJid, command }, 'Critical command from Telegram');
-      queue.closeStdin(chatJid);
-    },
     onMessage: (chatJid: string, msg: NewMessage) => {
       // Remote control commands — intercept before storage
       const trimmed = msg.content.trim();
@@ -826,7 +650,6 @@ async function main(): Promise<void> {
       isGroup?: boolean,
     ) => storeChatMetadata(chatJid, timestamp, name, channel, isGroup),
     registeredGroups: () => registeredGroups,
-    registerGroup,
   };
 
   // Create and connect all registered channels.
@@ -850,128 +673,6 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Send "ready" message if we just restarted
-  try {
-    const notifyPath = path.join(DATA_DIR, 'restart_notify.json');
-    if (fs.existsSync(notifyPath)) {
-      fs.unlinkSync(notifyPath);
-      // Notify all startup targets via routing config
-      const startupTargets = resolveTargets('startup', registeredGroups);
-      for (const target of startupTargets) {
-        const channel = findChannel(channels, target.jid);
-        if (channel) {
-          await channel.sendMessage(target.jid, '✅ Готовий!');
-        }
-      }
-    }
-  } catch {
-    /* best effort */
-  }
-
-  // Initialize Telegram bot pool for agent teams (if configured)
-  if (TELEGRAM_BOT_POOL.length > 0 && initBotPool) {
-    await initBotPool(TELEGRAM_BOT_POOL);
-  }
-
-  // Initialize progress tracker BEFORE starting subsystems so all components get a live reference.
-  // If a Discord logs channel is configured, dump progress there in addition to the source chat.
-  const logsEnv = readEnvFile(['DISCORD_LOGS_CHANNEL_ID']);
-  const logsChannelId = process.env.DISCORD_LOGS_CHANNEL_ID || logsEnv.DISCORD_LOGS_CHANNEL_ID || '';
-  const dumpJid = logsChannelId ? `dc:${logsChannelId}` : undefined;
-  // Helper to send lifecycle events to the logs channel
-  sendToLogs = dumpJid
-    ? async (text: string) => {
-        const ch = findChannel(channels, dumpJid);
-        if (ch) await ch.sendMessage(dumpJid, text).catch(() => {});
-      }
-    : undefined;
-
-  // Wire #agents channel for agent status reporting (Phase 10)
-  const agentsEnv = readEnvFile(['DISCORD_AGENTS_CHANNEL_ID']);
-  const agentsChannelId = process.env.DISCORD_AGENTS_CHANNEL_ID || agentsEnv.DISCORD_AGENTS_CHANNEL_ID || '';
-  const agentsJid = agentsChannelId ? `dc:${agentsChannelId}` : undefined;
-  sendToAgents = agentsJid
-    ? async (embed: EmbedBuilder) => {
-        const ch = findChannel(channels, agentsJid);
-        if (ch?.sendEmbed) await ch.sendEmbed(agentsJid, embed).catch(() => {});
-      }
-    : undefined;
-
-  // Wire health monitor to post embeds to #logs (Phase 13)
-  const sendHealthEmbed = dumpJid
-    ? async (embed: EmbedBuilder) => {
-        const ch = findChannel(channels, dumpJid);
-        if (ch?.sendEmbed) await ch.sendEmbed(dumpJid, embed).catch(() => {});
-      }
-    : undefined;
-
-  if (sendHealthEmbed) {
-    stopHealthMonitor = startHealthMonitor(sendHealthEmbed);
-  }
-
-  // Log startup
-  if (sendToLogs) {
-    const channelNames = channels.map((c) => c.name).join(', ');
-    sendToLogs(`🟢 NanoClaw started — channels: ${channelNames}`);
-  }
-
-  progressTracker = new ProgressTracker({
-    sendMsg: async (jid, text) => {
-      const ch = findChannel(channels, jid) as any;
-      return ch?.sendMessageRaw?.(jid, text);
-    },
-    editMsg: async (jid, msgId, text) => {
-      const ch = findChannel(channels, jid) as any;
-      await ch?.editMessage?.(jid, msgId, text);
-    },
-    deleteMsg: async (jid, msgId) => {
-      const ch = findChannel(channels, jid) as any;
-      await ch?.deleteMessage?.(jid, msgId);
-    },
-    setTyping: async (jid, typing) => {
-      const ch = findChannel(channels, jid);
-      await ch?.setTyping?.(jid, typing);
-    },
-    dumpJid,
-  });
-
-  // Initialize bot status panel (optional — requires DISCORD_BOT_MANAGEMENT_CHANNEL_ID)
-  const botMgmtEnv = readEnvFile(['DISCORD_BOT_MANAGEMENT_CHANNEL_ID']);
-  const botMgmtChannelId =
-    process.env.DISCORD_BOT_MANAGEMENT_CHANNEL_ID || botMgmtEnv.DISCORD_BOT_MANAGEMENT_CHANNEL_ID || '';
-  if (botMgmtChannelId) {
-    const panelJid = `dc:${botMgmtChannelId}`;
-    const swarmNames = loadSwarmIdentities().map((i) => i.name);
-    const botNames = [ASSISTANT_NAME, ...swarmNames];
-    botStatusPanel = new BotStatusPanel({
-      channelJid: panelJid,
-      botNames,
-      defaultBot: ASSISTANT_NAME,
-      sendMsg: async (jid, text) => {
-        const ch = findChannel(channels, jid) as any;
-        return ch?.sendMessageRaw?.(jid, text);
-      },
-      editMsg: async (jid, msgId, text) => {
-        const ch = findChannel(channels, jid) as any;
-        await ch?.editMessage?.(jid, msgId, text);
-      },
-      getState: (key) => getRouterState(key),
-      setState: (key, value) => setRouterState(key, value),
-    });
-    // Wire ProgressTracker tool events to the panel
-    progressTracker.onToolUse = (chatJid, tool) => {
-      botStatusPanel?.onGroupTool(chatJid, tool);
-    };
-    await botStatusPanel.initialize();
-    logger.info({ panelJid, botNames }, 'BotStatusPanel initialized');
-  }
-
-  // Provision #nightshift Discord channel if not yet configured
-  await provisionNightshiftChannel(channels);
-
-  // Register the Gruppenführer watchdog if not already in DB
-  ensureGruppenfuehrerTask();
-
   // Start subsystems (independently of connection handler)
   startSchedulerLoop({
     registeredGroups: () => registeredGroups,
@@ -988,31 +689,12 @@ async function main(): Promise<void> {
       const text = formatOutbound(rawText);
       if (text) await channel.sendMessage(jid, text);
     },
-    progressTracker,
-    botStatusPanel,
-    sendToAgents,
   });
   startIpcWatcher({
-    sendMessage: (jid, text, sender) => {
+    sendMessage: (jid, text) => {
       const channel = findChannel(channels, jid);
       if (!channel) throw new Error(`No channel for JID: ${jid}`);
-      // Inform bot status panel which bot is active on this channel
-      if (sender) botStatusPanel?.onBotSeen(sender, jid);
-      return channel.sendMessage(jid, text, sender);
-    },
-    reactToMessage: async (jid, messageId, emoji) => {
-      const channel = findChannel(channels, jid);
-      if (channel?.reactToMessage)
-        await channel.reactToMessage(jid, messageId, emoji);
-    },
-    sendWithButtons: async (jid, text, buttons, rowSize) => {
-      const channel = findChannel(channels, jid);
-      if (channel?.sendWithButtons)
-        await channel.sendWithButtons(jid, text, buttons, rowSize);
-    },
-    sendPhoto: async (jid: string, photoPath: string, caption?: string) => {
-      const channel = findChannel(channels, jid);
-      if (channel?.sendPhoto) await channel.sendPhoto(jid, photoPath, caption);
+      return channel.sendMessage(jid, text);
     },
     registeredGroups: () => registeredGroups,
     registerGroup,
@@ -1042,7 +724,6 @@ async function main(): Promise<void> {
         writeTasksSnapshot(group.folder, group.isMain === true, taskRows);
       }
     },
-    sendToAgents,
   });
   queue.setProcessMessagesFn(processGroupMessages);
   recoverPendingMessages();
