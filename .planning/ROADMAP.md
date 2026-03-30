@@ -124,7 +124,7 @@ Plans:
 
 - [x] **Phase 14: Cortex Schema Standard** - Define YAML frontmatter spec and knowledge pyramid levels (completed 2026-03-30)
 - [x] **Phase 15: Qdrant Infrastructure** - Deploy persistent vector DB with systemd lifecycle management (completed 2026-03-30)
-- [ ] **Phase 16: Embedding Pipeline** - Host-side service converts Cortex entries to vectors with deduplication
+- [x] **Phase 16: Embedding Pipeline** - Host-side service converts Cortex entries to vectors with deduplication (completed 2026-03-30)
 - [ ] **Phase 17: Search & MCP Tools** - Agents can search, read, and write Cortex entries from containers
 - [ ] **Phase 18: Knowledge Bootstrap** - Populate NanoClaw L10-L20 entries and wire agent auto-query
 - [ ] **Phase 19: Knowledge Graph** - Explicit relationship edges between Cortex entries with agent tooling
@@ -173,7 +173,7 @@ Plans:
 
 Plans:
 - [x] 16-01-PLAN.md — Install deps, Qdrant client singleton, shared embedEntry() function with tests
-- [ ] 16-02-PLAN.md — Debounced fs.watch watcher, batch re-embed script, wire into index.ts
+- [x] 16-02-PLAN.md — Debounced fs.watch watcher, batch re-embed script, wire into index.ts
 
 ### Phase 17: Search & MCP Tools
 **Goal**: Container agents can search, read, and write Cortex entries using MCP tools -- the primary agent interface to the knowledge layer
@@ -248,7 +248,7 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 |-------|-----------|----------------|--------|-----------|
 | 14. Cortex Schema Standard | v3.0 | 0/1 | Complete    | 2026-03-30 |
 | 15. Qdrant Infrastructure | v3.0 | 1/1 | Complete    | 2026-03-30 |
-| 16. Embedding Pipeline | v3.0 | 1/2 | In Progress|  |
+| 16. Embedding Pipeline | v3.0 | 2/2 | Complete   | 2026-03-30 |
 | 17. Search & MCP Tools | v3.0 | 0/0 | Not started | - |
 | 18. Knowledge Bootstrap | v3.0 | 0/0 | Not started | - |
 | 19. Knowledge Graph | v3.0 | 0/0 | Not started | - |
