@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Agent Cortex Intelligence
 status: executing
-stopped_at: Completed 16-02-PLAN.md
-last_updated: "2026-03-30T20:27:01.769Z"
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-03-30T20:48:57.548Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 9
   completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 7
+  completed_plans: 5
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Agents can retrieve surgically scoped context before every task -- closing the "decision shadow" where agents see what code does but not why decisions were made.
-**Current focus:** Phase 16 — embedding-pipeline
+**Current focus:** Phase 17 — search-mcp-tools
 
 ## Current Position
 
-Phase: 17
-Plan: Not started
+Phase: 17 (search-mcp-tools) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
 Last activity: 2026-03-30
 
@@ -52,6 +52,7 @@ Progress: [..........] 0%
 | Phase 15 P01 | 3min | 2 tasks | 3 files |
 | Phase 16 P01 | 10 | 2 tasks | 6 files |
 | Phase 16-embedding-pipeline P02 | 3 | 2 tasks | 4 files |
+| Phase 17-search-mcp-tools P01 | 2min | 1 tasks | 1 files |
 
 ### Decisions
 
@@ -69,6 +70,8 @@ v3.0 decisions pending -- schema standard is first decision point.
 - [Phase 16]: watcher.ts uses module-level state (not class) -- consistent with embedder.ts singleton pattern
 - [Phase 16]: cortex-reembed.ts uses node:fs/promises glob (Node 22 built-in) -- zero new dependencies
 - [Phase 16]: startCortexWatcher called with .catch() in index.ts -- failure never crashes main process (best-effort non-blocking)
+- [Phase 17-01]: Factory pattern for handlers: buildSearchHandler/buildReadHandler/buildWriteHandler take deps as constructor args — enables DI without full module mock
+- [Phase 17-01]: checkConfidenceFirewall(level, domain, qdrant) takes qdrant as 3rd param — same DI pattern as embedEntry() in embedder.ts
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:23:35.450Z
-Stopped at: Completed 16-02-PLAN.md
+Last session: 2026-03-30T20:48:57.544Z
+Stopped at: Completed 17-01-PLAN.md
 Resume file: None

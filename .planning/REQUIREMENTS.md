@@ -16,21 +16,21 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 ### Embedding Pipeline
 
 - [x] **EMBED-01**: Host-side embedding service converts Cortex entries to vectors using OpenAI text-embedding-3-small
-- [ ] **EMBED-02**: Entries auto-embed on cortex_write (agent-initiated writes trigger re-embedding)
-- [ ] **EMBED-03**: Batch re-embed command for full collection rebuild
+- [x] **EMBED-02**: Entries auto-embed on cortex_write (agent-initiated writes trigger re-embedding)
+- [x] **EMBED-03**: Batch re-embed command for full collection rebuild
 - [x] **EMBED-04**: Content-hash skip logic avoids re-embedding unchanged entries
 
 ### Search & Retrieval
 
-- [ ] **SEARCH-01**: Hybrid search routing -- exact (vault path/ID) vs semantic (Qdrant) based on query shape
-- [ ] **SEARCH-02**: Confidence firewall enforces L(N) population only when L(N-1) has medium+ confidence
-- [ ] **SEARCH-03**: Search results filterable by project, cortex_level, and domain
+- [x] **SEARCH-01**: Hybrid search routing -- exact (vault path/ID) vs semantic (Qdrant) based on query shape
+- [x] **SEARCH-02**: Confidence firewall enforces L(N) population only when L(N-1) has medium+ confidence
+- [x] **SEARCH-03**: Search results filterable by project, cortex_level, and domain
 
 ### MCP Tools
 
-- [ ] **MCP-01**: cortex_search tool available in container agents -- semantic search with filtering
-- [ ] **MCP-02**: cortex_read tool available in container agents -- exact entry retrieval by ID or path
-- [ ] **MCP-03**: cortex_write tool available in container agents -- create/update with schema validation + auto-embed
+- [x] **MCP-01**: cortex_search tool available in container agents -- semantic search with filtering
+- [x] **MCP-02**: cortex_read tool available in container agents -- exact entry retrieval by ID or path
+- [x] **MCP-03**: cortex_write tool available in container agents -- create/update with schema validation + auto-embed
 - [ ] **MCP-04**: cortex_relate tool available in container agents -- declare graph edges between entries
 - [ ] **MCP-05**: All 4 tools added to existing ipc-mcp-stdio.ts (no new MCP server process)
 
@@ -91,15 +91,15 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 | SCHEMA-02 | Phase 15 | Complete |
 | SCHEMA-03 | Phase 15 | Complete |
 | EMBED-01 | Phase 16 | Complete |
-| EMBED-02 | Phase 16 | Pending |
-| EMBED-03 | Phase 16 | Pending |
+| EMBED-02 | Phase 16 | Complete |
+| EMBED-03 | Phase 16 | Complete |
 | EMBED-04 | Phase 16 | Complete |
-| SEARCH-01 | Phase 17 | Pending |
-| SEARCH-02 | Phase 17 | Pending |
-| SEARCH-03 | Phase 17 | Pending |
-| MCP-01 | Phase 17 | Pending |
-| MCP-02 | Phase 17 | Pending |
-| MCP-03 | Phase 17 | Pending |
+| SEARCH-01 | Phase 17 | Complete |
+| SEARCH-02 | Phase 17 | Complete |
+| SEARCH-03 | Phase 17 | Complete |
+| MCP-01 | Phase 17 | Complete |
+| MCP-02 | Phase 17 | Complete |
+| MCP-03 | Phase 17 | Complete |
 | MCP-04 | Phase 19 | Pending |
 | MCP-05 | Phase 17 | Pending |
 | GRAPH-01 | Phase 19 | Pending |
