@@ -5,7 +5,13 @@ import { CronExpressionParser } from 'cron-parser';
 import { EmbedBuilder } from 'discord.js';
 
 import { DATA_DIR, IPC_POLL_INTERVAL, TIMEZONE } from './config.js';
-import { buildTookEmbed, buildClosedEmbed, buildProgressEmbed, buildBlockerEmbed, buildHandoffEmbed } from './agent-status-embeds.js';
+import {
+  buildTookEmbed,
+  buildClosedEmbed,
+  buildProgressEmbed,
+  buildBlockerEmbed,
+  buildHandoffEmbed,
+} from './agent-status-embeds.js';
 import { AvailableGroup } from './container-runner.js';
 import { createTask, deleteTask, getTaskById, updateTask } from './db.js';
 import { isValidGroupFolder } from './group-folder.js';
@@ -117,32 +123,82 @@ export function startIpcWatcher(deps: IpcDeps): void {
                     'Unauthorized IPC message attempt blocked',
                   );
                 }
+              } else if (data.type === 'cortex_write' && data.path && data.content) {
+                const vaultRoot = path.join(process.cwd(), 'cortex');
+                const targetPath = path.resolve(vaultRoot, data.path as string);
+                // Security: block path traversal — must stay within cortex/ vault
+                if (!targetPath.startsWith(vaultRoot + path.sep)) {
+                  logger.warn(
+                    { path: data.path, sourceGroup },
+                    'cortex_write path traversal blocked',
+                  );
+                } else {
+                  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+                  fs.writeFileSync(targetPath, data.content as string, 'utf-8');
+                  logger.info(
+                    { path: data.path, sourceGroup },
+                    'cortex_write: vault file written',
+                  );
+                  // fs.watch in src/cortex/watcher.ts picks up the change and triggers re-embedding
+                }
               } else if (data.type === 'restart' && isMain) {
                 logger.info({ sourceGroup }, 'Restart requested via IPC');
                 fs.unlinkSync(filePath);
                 // Notify the chat that triggered the restart
                 if (data.chatJid) {
-                  await deps.sendMessage(data.chatJid, '🔄 Restarting NanoClaw...');
+                  await deps.sendMessage(
+                    data.chatJid,
+                    '🔄 Restarting NanoClaw...',
+                  );
                 }
                 // Use exec to restart after a short delay so the message gets sent
                 const { exec } = await import('child_process');
                 exec('sleep 1 && systemctl --user restart nanoclaw');
                 return; // Stop processing — we're about to restart
-              } else if (data.type === 'agent_status' && data.messageType && data.title) {
+              } else if (
+                data.type === 'agent_status' &&
+                data.messageType &&
+                data.title
+              ) {
                 // ASTATUS-03: Agent-initiated status reporting — no authorization check needed
                 if (deps.sendToAgents) {
-                  const agentName = data.agentName || data.groupFolder || sourceGroup || 'Agent';
+                  const agentName =
+                    data.agentName ||
+                    data.groupFolder ||
+                    sourceGroup ||
+                    'Agent';
                   let embed: EmbedBuilder;
                   if (data.messageType === 'took') {
-                    embed = buildTookEmbed({ title: data.title, taskId: data.taskId || '-', agentName, description: data.description });
+                    embed = buildTookEmbed({
+                      title: data.title,
+                      taskId: data.taskId || '-',
+                      agentName,
+                      description: data.description,
+                    });
                   } else if (data.messageType === 'closed') {
-                    embed = buildClosedEmbed({ title: data.title, taskId: data.taskId || '-', agentName, prUrl: data.prUrl, summary: data.summary });
+                    embed = buildClosedEmbed({
+                      title: data.title,
+                      taskId: data.taskId || '-',
+                      agentName,
+                      prUrl: data.prUrl,
+                      summary: data.summary,
+                    });
                   } else {
-                    embed = buildProgressEmbed({ title: data.title, agentName, taskId: data.taskId, description: data.description || data.title, summary: data.summary });
+                    embed = buildProgressEmbed({
+                      title: data.title,
+                      agentName,
+                      taskId: data.taskId,
+                      description: data.description || data.title,
+                      summary: data.summary,
+                    });
                   }
                   await deps.sendToAgents(embed).catch(() => {});
                 }
-              } else if (data.type === 'agent_blocker' && data.blockerType && data.resource) {
+              } else if (
+                data.type === 'agent_blocker' &&
+                data.blockerType &&
+                data.resource
+              ) {
                 if (deps.sendToAgents) {
                   const agentName = data.agentName || sourceGroup || 'Agent';
                   const embed = buildBlockerEmbed({
@@ -154,7 +210,11 @@ export function startIpcWatcher(deps: IpcDeps): void {
                   });
                   await deps.sendToAgents(embed).catch(() => {});
                 }
-              } else if (data.type === 'agent_handoff' && data.toAgent && data.what) {
+              } else if (
+                data.type === 'agent_handoff' &&
+                data.toAgent &&
+                data.what
+              ) {
                 if (deps.sendToAgents) {
                   const agentName = data.agentName || sourceGroup || 'Agent';
                   const embed = buildHandoffEmbed({
@@ -518,9 +578,9 @@ export async function processTaskIpc(
           );
           break;
         }
-        // Defense in depth: agent cannot set isMain via IPC.                                                                                                                                    
-        // Preserve isMain from the existing registration so IPC config                                                                                                                          
-        // updates (e.g. adding additionalMounts) don't strip the flag.                                                                                                                          
+        // Defense in depth: agent cannot set isMain via IPC.
+        // Preserve isMain from the existing registration so IPC config
+        // updates (e.g. adding additionalMounts) don't strip the flag.
         const existingGroup = registeredGroups[data.jid];
         deps.registerGroup(data.jid, {
           name: data.name,

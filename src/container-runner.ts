@@ -138,6 +138,16 @@ function buildVolumeMounts(
     }
   }
 
+  // Cortex vault — read-only for all containers (Phase 17: cortex_read and cortex_search)
+  const cortexDir = path.join(projectRoot, 'cortex');
+  if (fs.existsSync(cortexDir)) {
+    mounts.push({
+      hostPath: cortexDir,
+      containerPath: '/workspace/cortex',
+      readonly: true,
+    });
+  }
+
   // Per-group Claude sessions directory (isolated from other groups)
   // Each group gets their own .claude/ to prevent cross-group session access
   const groupSessionsDir = path.join(
@@ -187,7 +197,9 @@ function buildVolumeMounts(
         const realSrc = fs.realpathSync(srcDir);
         const realDst = fs.existsSync(dstDir) ? fs.realpathSync(dstDir) : '';
         if (realSrc === realDst) continue;
-      } catch { /* dst doesn't exist yet, safe to copy */ }
+      } catch {
+        /* dst doesn't exist yet, safe to copy */
+      }
       fs.cpSync(srcDir, dstDir, { recursive: true });
     }
   }
@@ -341,9 +353,16 @@ function buildContainerArgs(
     }
   } else {
     // No proxy — pass real credentials directly (check .env since process.env may not have them)
-    const envCreds = readEnvFile(['CLAUDE_CODE_OAUTH_TOKEN', 'ANTHROPIC_API_KEY']);
-    const oauthToken = process.env.CLAUDE_CODE_OAUTH_TOKEN || envCreds.CLAUDE_CODE_OAUTH_TOKEN || '';
-    const apiKey = process.env.ANTHROPIC_API_KEY || envCreds.ANTHROPIC_API_KEY || '';
+    const envCreds = readEnvFile([
+      'CLAUDE_CODE_OAUTH_TOKEN',
+      'ANTHROPIC_API_KEY',
+    ]);
+    const oauthToken =
+      process.env.CLAUDE_CODE_OAUTH_TOKEN ||
+      envCreds.CLAUDE_CODE_OAUTH_TOKEN ||
+      '';
+    const apiKey =
+      process.env.ANTHROPIC_API_KEY || envCreds.ANTHROPIC_API_KEY || '';
     if (oauthToken) {
       args.push('-e', `CLAUDE_CODE_OAUTH_TOKEN=${oauthToken}`);
     } else if (apiKey) {
@@ -353,6 +372,14 @@ function buildContainerArgs(
 
   // Runtime-specific args for host gateway resolution
   args.push(...hostGatewayArgs());
+
+  // Phase 17: Cortex MCP tools — inject OpenAI key for query embedding and Qdrant endpoint
+  const cortexKeys = readEnvFile(['OPENAI_API_KEY']);
+  for (const [key, value] of Object.entries(cortexKeys)) {
+    args.push('-e', `${key}=${value}`);
+  }
+  // Qdrant is always at host.docker.internal:6333 for containers
+  args.push('-e', 'QDRANT_URL=http://host.docker.internal:6333');
 
   // Run as host user so bind-mounted files are accessible.
   // Skip when running as root (uid 0), as the container's node user (uid 1000),
