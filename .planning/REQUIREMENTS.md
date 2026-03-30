@@ -15,10 +15,10 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 
 ### Embedding Pipeline
 
-- [ ] **EMBED-01**: Host-side embedding service converts Cortex entries to vectors using OpenAI text-embedding-3-small
+- [x] **EMBED-01**: Host-side embedding service converts Cortex entries to vectors using OpenAI text-embedding-3-small
 - [ ] **EMBED-02**: Entries auto-embed on cortex_write (agent-initiated writes trigger re-embedding)
 - [ ] **EMBED-03**: Batch re-embed command for full collection rebuild
-- [ ] **EMBED-04**: Content-hash skip logic avoids re-embedding unchanged entries
+- [x] **EMBED-04**: Content-hash skip logic avoids re-embedding unchanged entries
 
 ### Search & Retrieval
 
@@ -90,10 +90,10 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 | SCHEMA-01 | Phase 14 | Complete |
 | SCHEMA-02 | Phase 15 | Complete |
 | SCHEMA-03 | Phase 15 | Complete |
-| EMBED-01 | Phase 16 | Pending |
+| EMBED-01 | Phase 16 | Complete |
 | EMBED-02 | Phase 16 | Pending |
 | EMBED-03 | Phase 16 | Pending |
-| EMBED-04 | Phase 16 | Pending |
+| EMBED-04 | Phase 16 | Complete |
 | SEARCH-01 | Phase 17 | Pending |
 | SEARCH-02 | Phase 17 | Pending |
 | SEARCH-03 | Phase 17 | Pending |

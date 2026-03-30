@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Agent Cortex Intelligence
-status: verifying
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-30T18:06:04.399Z"
+status: executing
+stopped_at: Completed 16-01-PLAN.md
+last_updated: "2026-03-30T20:14:41.323Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 9
   completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Agents can retrieve surgically scoped context before every task -- closing the "decision shadow" where agents see what code does but not why decisions were made.
-**Current focus:** Phase 15 — Qdrant Infrastructure
+**Current focus:** Phase 16 — Embedding Pipeline
 
 ## Current Position
 
-Phase: 16
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 16 (Embedding Pipeline) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-30
 
 Progress: [..........] 0%
@@ -50,6 +50,7 @@ Progress: [..........] 0%
 
 | Phase 14 P01 | 15min | 3 tasks | 8 files |
 | Phase 15 P01 | 3min | 2 tasks | 3 files |
+| Phase 16 P01 | 10 | 2 tasks | 6 files |
 
 ### Decisions
 
@@ -61,6 +62,9 @@ v3.0 decisions pending -- schema standard is first decision point.
 - [Phase 14]: Domain inference: project field > path inference > general fallback; existing domain never overwritten
 - [Phase 15]: Removed Requires=docker.service from qdrant.service -- Docker is system-level, not user-level
 - [Phase 15]: Vector size 1536 for OpenAI text-embedding-3-small, HNSW m=16 ef_construct=100 defaults
+- [Phase 16]: Dependency injection for openai/qdrant in embedEntry() enables unit testing without live services
+- [Phase 16]: deterministicId strips prefix before cortex/ — same vault file gets same Qdrant point ID regardless of absolute path prefix
+- [Phase 16]: vi.hoisted() required for gray-matter.stringify mock — vitest hoists vi.mock() factories before const declarations
 
 ### Pending Todos
 
@@ -75,6 +79,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30T18:03:13.995Z
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-03-30T20:14:41.319Z
+Stopped at: Completed 16-01-PLAN.md
 Resume file: None
