@@ -205,7 +205,7 @@ describe('buildSearchHandler — MCP-01/SEARCH-01: vault path query routes to di
   beforeEach(() => {
     vi.clearAllMocks();
     mockFsExistsSync.mockReturnValue(true);
-    mockFsReadFileSync.mockReturnValue('---\ncortex_level: L10\n---\narcitecture content');
+    mockFsReadFileSync.mockReturnValue('---\ncortex_level: L10\n---\narchitecture content');
   });
 
   it('does NOT call openai.embeddings.create for vault path query', async () => {
