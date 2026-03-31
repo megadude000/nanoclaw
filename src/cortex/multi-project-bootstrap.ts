@@ -46,6 +46,13 @@ export type ProjectSlug = 'yourwave' | 'contentfactory' | 'nightshift';
 /** Minimum body content length to embed (matches embedder.ts MIN_CONTENT_LENGTH). */
 export const MIN_CONTENT_LENGTH = 50;
 
+/**
+ * Maximum body character length before truncation.
+ * OpenAI text-embedding-3-small has 8192 token limit.
+ * ~4 chars/token => ~28,000 chars. Use 24,000 as safe limit with frontmatter overhead.
+ */
+export const MAX_CONTENT_LENGTH = 24_000;
+
 // ---------------------------------------------------------------------------
 // Project metadata
 // ---------------------------------------------------------------------------
@@ -134,10 +141,15 @@ export function generateProjectEntries(
   for (const doc of vaultDocs) {
     // Strip existing frontmatter — use body content only
     const parsed = matter(doc.content);
-    const body = parsed.content.trim();
+    let body = parsed.content.trim();
 
     // Skip too-short bodies
     if (body.length < MIN_CONTENT_LENGTH) continue;
+
+    // Truncate oversized bodies to stay within OpenAI 8192 token limit
+    if (body.length > MAX_CONTENT_LENGTH) {
+      body = body.slice(0, MAX_CONTENT_LENGTH) + '\n\n[truncated — source document exceeds embedding token limit]';
+    }
 
     const level = classifyLevel(doc.filename);
     const category = inferCategory(doc.filename);
