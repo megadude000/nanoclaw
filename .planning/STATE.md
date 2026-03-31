@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Agent Cortex Intelligence
-status: executing
-stopped_at: Completed 20-01-PLAN.md
-last_updated: "2026-03-31T10:10:10.663Z"
+status: verifying
+stopped_at: Completed 20-02-PLAN.md
+last_updated: "2026-03-31T10:15:33.287Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 9
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
   percent: 83
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 Phase: 20 (Lore Protocol) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-31
 
 Progress: [████████░░] 83%
@@ -59,6 +59,7 @@ Progress: [████████░░] 83%
 | Phase 18 P03 | 91s | 2 tasks | 0 files |
 | Phase 19 P02 | 4min | 2 tasks | 4 files |
 | Phase 20-lore-protocol P01 | 3min | 2 tasks | 2 files |
+| Phase 20-lore-protocol P02 | 3min | 2 tasks | 3 files |
 
 ### Decisions
 
@@ -90,6 +91,9 @@ v3.0 decisions pending -- schema standard is first decision point.
 - [Phase 19]: Related array only included when neighbors exist (empty arrays omitted for cleaner output)
 - [Phase 20-lore-protocol]: Native git parsing with execSync and %(trailers) format -- no external CLI dependency (D-03)
 - [Phase 20-lore-protocol]: Vault files: {7-char-hash}-{key-lowercase}.md naming, idempotent writes, lore_mined flag for confidence tracking
+- [Phase 20-lore-protocol]: Forward-only convention: agents add trailers to new commits, never rewrite existing (D-01)
+- [Phase 20-lore-protocol]: Mining capped at 40 entries when >50 candidates -- quality over quantity (Pitfall 4)
+- [Phase 20-lore-protocol]: Bullet-only mining: only '- ' prefixed lines are candidates to reduce false positives
 
 ### Pending Todos
 
@@ -104,6 +108,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31T10:10:10.659Z
-Stopped at: Completed 20-01-PLAN.md
+Last session: 2026-03-31T10:15:33.284Z
+Stopped at: Completed 20-02-PLAN.md
 Resume file: None

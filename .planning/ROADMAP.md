@@ -128,7 +128,7 @@ Plans:
 - [x] **Phase 17: Search & MCP Tools** - Agents can search, read, and write Cortex entries from containers (completed 2026-03-30)
 - [x] **Phase 18: Knowledge Bootstrap** - Populate NanoClaw L10-L20 entries and wire agent auto-query (completed 2026-03-31)
 - [x] **Phase 19: Knowledge Graph** - Explicit relationship edges between Cortex entries with agent tooling (completed 2026-03-31)
-- [ ] **Phase 20: Lore Protocol** - Git trailer knowledge atoms indexed into Cortex
+- [x] **Phase 20: Lore Protocol** - Git trailer knowledge atoms indexed into Cortex (completed 2026-03-31)
 - [ ] **Phase 21: Nightshift Reconciliation** - Nightly autonomous maintenance: staleness, discovery, cleanup
 - [ ] **Phase 22: Multi-Project Bootstrap** - Extend Cortex coverage to YourWave, ContentFactory, NightShift
 
@@ -233,7 +233,7 @@ Plans:
 
 Plans:
 - [x] 20-01-PLAN.md -- Lore parser module: git trailer extraction, vault file writing, embedding
-- [ ] 20-02-PLAN.md -- Convention documentation in CLAUDE.md, Night Shift mining script
+- [x] 20-02-PLAN.md -- Convention documentation in CLAUDE.md, Night Shift mining script
 
 ### Phase 21: Nightshift Reconciliation
 **Goal**: The knowledge layer maintains itself autonomously -- stale entries are flagged, new connections are discovered, and orphans are cleaned up without human intervention
@@ -248,7 +248,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 20-01-PLAN.md -- Lore parser module: git trailer extraction, vault file writing, embedding
+- [x] 20-01-PLAN.md -- Lore parser module: git trailer extraction, vault file writing, embedding
 - [ ] 20-02-PLAN.md -- Convention documentation in CLAUDE.md, Night Shift mining script
 
 ### Phase 22: Multi-Project Bootstrap
@@ -278,6 +278,6 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | 17. Search & MCP Tools | v3.0 | 3/3 | Complete    | 2026-03-30 |
 | 18. Knowledge Bootstrap | v3.0 | 3/3 | Complete    | 2026-03-31 |
 | 19. Knowledge Graph | v3.0 | 2/2 | Complete    | 2026-03-31 |
-| 20. Lore Protocol | v3.0 | 1/2 | In Progress|  |
+| 20. Lore Protocol | v3.0 | 2/2 | Complete   | 2026-03-31 |
 | 21. Nightshift Reconciliation | v3.0 | 0/0 | Not started | - |
 | 22. Multi-Project Bootstrap | v3.0 | 0/0 | Not started | - |
