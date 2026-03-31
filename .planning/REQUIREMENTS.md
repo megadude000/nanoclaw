@@ -41,9 +41,9 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 
 ### Knowledge Population
 
-- [x] **POP-01**: Bootstrap script extracts L10-L20 entries from NanoClaw codebase (~50-100 entries)
+- [ ] **POP-01**: Bootstrap script extracts L10-L20 entries from NanoClaw codebase (~50-100 entries)
 - [ ] **POP-02**: Bootstrap script extracts L10-L20 entries from YourWave, ContentFactory, NightShift
-- [ ] **POP-03**: Container CLAUDE.md instructs agents to auto-query Cortex at task start
+- [x] **POP-03**: Container CLAUDE.md instructs agents to auto-query Cortex at task start
 
 ### Decision Context (Lore Protocol)
 
@@ -104,9 +104,9 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 | MCP-05 | Phase 17 | Complete |
 | GRAPH-01 | Phase 19 | Pending |
 | GRAPH-02 | Phase 19 | Pending |
-| POP-01 | Phase 18 | Complete |
+| POP-01 | Phase 18 | Pending |
 | POP-02 | Phase 22 | Pending |
-| POP-03 | Phase 18 | Pending |
+| POP-03 | Phase 18 | Complete |
 | LORE-01 | Phase 20 | Pending |
 | LORE-02 | Phase 20 | Pending |
 | LORE-03 | Phase 20 | Pending |

@@ -113,3 +113,19 @@ If a user wants tasks running more than ~2x daily and a script can't reduce agen
 - Suggest restructuring with a script that checks the condition first
 - If the user needs an LLM to evaluate data, suggest using an API key with direct Anthropic API calls inside the script
 - Help the user find the minimum viable frequency
+
+## Cortex Knowledge Base
+
+Before starting any task, search the Cortex knowledge base for relevant context:
+
+1. Extract 2-3 key concepts from the task (e.g., "IPC", "container", "Discord channel")
+2. Call `cortex_search` with a natural language query combining those concepts
+3. If results are relevant (score > 0.7), call `cortex_read` on the top result paths
+4. Use the retrieved knowledge to inform your approach
+
+Example:
+- Task: "Fix the IPC message handler for cortex_write"
+- Query: `cortex_search("IPC cortex_write message handler")`
+- This returns entries about IPC contracts and the cortex write pipeline
+
+Skip the search only if the task is purely conversational with no technical component.
