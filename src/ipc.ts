@@ -4,6 +4,7 @@ import path from 'path';
 import { CronExpressionParser } from 'cron-parser';
 import { EmbedBuilder } from 'discord.js';
 
+import { loadGraph, addEdge, saveGraph } from './cortex/cortex-graph.js';
 import { DATA_DIR, IPC_POLL_INTERVAL, TIMEZONE } from './config.js';
 import {
   buildTookEmbed,
@@ -140,6 +141,27 @@ export function startIpcWatcher(deps: IpcDeps): void {
                     'cortex_write: vault file written',
                   );
                   // fs.watch in src/cortex/watcher.ts picks up the change and triggers re-embedding
+                }
+              } else if (data.type === 'cortex_relate' && data.source && data.target && data.edge_type) {
+                const graphPath = path.join(process.cwd(), 'cortex', 'cortex-graph.json');
+                const graph = loadGraph(graphPath);
+                const added = addEdge(graph, {
+                  source: data.source as string,
+                  target: data.target as string,
+                  type: data.edge_type as 'BUILT_FROM' | 'REFERENCES' | 'BLOCKS' | 'CROSS_LINK' | 'SUPERSEDES',
+                  created: new Date().toISOString(),
+                });
+                if (added) {
+                  saveGraph(graphPath, graph);
+                  logger.info(
+                    { source: data.source, target: data.target, type: data.edge_type },
+                    'cortex_relate: edge added',
+                  );
+                } else {
+                  logger.info(
+                    { source: data.source, target: data.target, type: data.edge_type },
+                    'cortex_relate: edge exists or self-edge',
+                  );
                 }
               } else if (data.type === 'restart' && isMain) {
                 logger.info({ sourceGroup }, 'Restart requested via IPC');
