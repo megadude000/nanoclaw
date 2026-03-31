@@ -279,5 +279,5 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | 18. Knowledge Bootstrap | v3.0 | 3/3 | Complete    | 2026-03-31 |
 | 19. Knowledge Graph | v3.0 | 2/2 | Complete    | 2026-03-31 |
 | 20. Lore Protocol | v3.0 | 2/2 | Complete    | 2026-03-31 |
-| 21. Nightshift Reconciliation | v3.0 | 2/2 | Complete   | 2026-03-31 |
+| 21. Nightshift Reconciliation | v3.0 | 2/2 | Complete    | 2026-03-31 |
 | 22. Multi-Project Bootstrap | v3.0 | 0/0 | Not started | - |
