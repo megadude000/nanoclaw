@@ -32,7 +32,7 @@
 - **Friday bug-fixer** — автономний бот для Immediate багів з BugReporter. Не захламлює мейн тред. Сповіщає про баг → досліджує → фіксить → додає evidence в Notion → апдейтить статус. Visual bugs: Playwright screenshot. `buildBugFixPrompt` в `notion-webhook.ts`. Notion links у всіх повідомленнях.
 - **YW_Core dev servers** — Persistent через systemd user services: `yw-dev.service` (Astro :4321) + `yw-storybook.service` (Storybook :6006). ExecStart: `bash -lc "source ~/.nvm/nvm.sh && cd ~/YW_Core && npm run dev"`. `loginctl enable-linger` — стартують без логіну. Status: active ✅
 - **cloudflared 405 bug** — Два сервіси: `cloudflared.service` (правильний, dev→:4321) + `cloudflared-tunnel.service` (orphan, dev→:3456). Cloudflare балансує між ними → ~70% запитів 405. FIX: `sudo systemctl stop/disable cloudflared-tunnel.service`. Потребує sudo на хості.
-- **Notion webhook HMAC** — Signing secret = Internal Integration Secret (`ntn_...`), НЕ verification token (`secret_...`). Зберігати в `.env` як `NOTION_WEBHOOK_SECRET`. BugReporter webhook secret: `REDACTED_NOTION_SECRET`.
+- **Notion webhook HMAC** — Signing secret = Internal Integration Secret (`ntn_...`), НЕ verification token (`secret_...`). Зберігати в `.env` як `NOTION_WEBHOOK_SECRET`. BugReporter webhook secret: зберігається в `~/nanoclaw/.env`.
 - **Cron tracking** — всі крони документовані в `NightShift/cron-registry.md`. При створенні/видаленні — оновлювати.
 - **Notion MCP** — `API-create-a-data-source` зламана. Використовувати прямий curl до api.notion.com
 - **Coffee Atlas Content System** — `src/lib/content.ts` (12 функцій, SSG build-time). Locale-aware filtering, category tree, related articles, breadcrumbs. 36 unit tests.

@@ -52,14 +52,14 @@ Pending: start Astro dev server, fix host_claude PATH, clean up test bug pages
 - Тест BugReporter через shortcut — баг "atlas not ancokred to the dropdown button" створився автоматично в Notion ✅
 - Notion webhook events приходять, але HMAC signature невалідний — оновив `NOTION_WEBHOOK_SECRET` в .env:
   - Спершу поставив `REDACTED_NOTION_TOKEN` (verification token — неправильний)
-  - Потім user дав `REDACTED_NOTION_SECRET` (Internal Integration Secret)
+  - Потім user дав Internal Integration Secret (зберігається в .env як NOTION_WEBHOOK_SECRET)
   - Ще не протестовано — потрібен рестарт NanoClaw
 
 ### Технічні зміни
 #### NOTION_WEBHOOK_SECRET
 - **Проблема:** 9 webhook events від Notion відхилялись — "invalid signature"
-- **Стара значення:** `REDACTED_NOTION_TOKEN` (генерований при першому сетапі)
-- **Нове:** `REDACTED_NOTION_SECRET` (Internal Integration Secret)
+- **Стара значення:** [redacted] (генерований при першому сетапі)
+- **Нове:** [redacted — Internal Integration Secret, зберігається в .env]
 - **Статус:** ⏳ потрібен рестарт NanoClaw для тесту
 
 ## Session 3 (16:30) — GSD Workflow Implementation
