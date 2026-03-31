@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Agent Cortex Intelligence
-status: verifying
-stopped_at: Completed 19-02-PLAN.md
-last_updated: "2026-03-31T08:21:49.739Z"
+status: executing
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-03-31T10:10:10.663Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 9
   completed_phases: 6
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 14
+  completed_plans: 13
   percent: 83
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Agents can retrieve surgically scoped context before every task -- closing the "decision shadow" where agents see what code does but not why decisions were made.
-**Current focus:** Phase 19 — Knowledge Graph
+**Current focus:** Phase 20 — Lore Protocol
 
 ## Current Position
 
-Phase: 20
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 20 (Lore Protocol) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-31
 
 Progress: [████████░░] 83%
@@ -58,6 +58,7 @@ Progress: [████████░░] 83%
 | Phase 18 P01 | 1 | 1 tasks | 1 files |
 | Phase 18 P03 | 91s | 2 tasks | 0 files |
 | Phase 19 P02 | 4min | 2 tasks | 4 files |
+| Phase 20-lore-protocol P01 | 3min | 2 tasks | 2 files |
 
 ### Decisions
 
@@ -87,6 +88,8 @@ v3.0 decisions pending -- schema standard is first decision point.
 - [Phase 19]: Inline graph loading in container (loadGraphIndex) since container cannot import host src/cortex/
 - [Phase 19]: Graph loaded once at MCP server startup, read-only stale during session (acceptable per Phase 19 design)
 - [Phase 19]: Related array only included when neighbors exist (empty arrays omitted for cleaner output)
+- [Phase 20-lore-protocol]: Native git parsing with execSync and %(trailers) format -- no external CLI dependency (D-03)
+- [Phase 20-lore-protocol]: Vault files: {7-char-hash}-{key-lowercase}.md naming, idempotent writes, lore_mined flag for confidence tracking
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31T08:18:35.350Z
-Stopped at: Completed 19-02-PLAN.md
+Last session: 2026-03-31T10:10:10.659Z
+Stopped at: Completed 20-01-PLAN.md
 Resume file: None

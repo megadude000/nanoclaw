@@ -48,8 +48,8 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 ### Decision Context (Lore Protocol)
 
 - [ ] **LORE-01**: Lore Protocol convention defined -- git trailer format (Constraint/Rejected/Directive atoms)
-- [ ] **LORE-02**: Native git parsing extracts lore atoms from commit trailers (~10 lines, no CLI dependency)
-- [ ] **LORE-03**: Lore atoms indexed into Cortex entries and searchable via cortex_search
+- [x] **LORE-02**: Native git parsing extracts lore atoms from commit trailers (~10 lines, no CLI dependency)
+- [x] **LORE-03**: Lore atoms indexed into Cortex entries and searchable via cortex_search
 
 ### Autonomous Maintenance (Nightshift)
 
@@ -108,8 +108,8 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 | POP-02 | Phase 22 | Pending |
 | POP-03 | Phase 18 | Complete |
 | LORE-01 | Phase 20 | Pending |
-| LORE-02 | Phase 20 | Pending |
-| LORE-03 | Phase 20 | Pending |
+| LORE-02 | Phase 20 | Complete |
+| LORE-03 | Phase 20 | Complete |
 | NIGHT-01 | Phase 21 | Pending |
 | NIGHT-02 | Phase 21 | Pending |
 | NIGHT-03 | Phase 21 | Pending |
