@@ -13,7 +13,8 @@
  * Requirements covered: NIGHT-02, NIGHT-03, NIGHT-04
  */
 
-import { globSync } from 'node:fs';
+import { globSync, readFileSync, writeFileSync } from 'node:fs';
+import matter from 'gray-matter';
 import type { QdrantClient } from '@qdrant/js-client-rest';
 import type OpenAI from 'openai';
 import { parseCortexEntry } from './parser.js';
@@ -57,6 +58,7 @@ export interface ReconciliationReport {
   staleEntries: StaleEntry[];
   newLinks: DiscoveredLink[];
   orphans: OrphanEntry[];
+  markedStale: number;
   runAt: string;
   durationMs: number;
   loreSummary?: MiningSummary;
@@ -313,6 +315,35 @@ export function findOrphans(
 }
 
 // ---------------------------------------------------------------------------
+// markStaleEntries
+// ---------------------------------------------------------------------------
+
+/**
+ * Write `stale: true` into the YAML frontmatter of each stale entry.
+ *
+ * Uses gray-matter stringify to preserve all existing frontmatter fields.
+ * Only touches files whose frontmatter does not already have stale: true.
+ * Returns the number of files actually written.
+ */
+export function markStaleEntries(staleEntries: StaleEntry[]): number {
+  let marked = 0;
+  for (const entry of staleEntries) {
+    try {
+      const raw = readFileSync(entry.filePath, 'utf-8');
+      const parsed = matter(raw);
+      if (parsed.data.stale === true) continue; // already marked
+      parsed.data.stale = true;
+      writeFileSync(entry.filePath, matter.stringify(parsed.content, parsed.data));
+      marked++;
+    } catch (err) {
+      logger.warn({ err, file: entry.filePath }, 'markStaleEntries: failed to write file');
+    }
+  }
+  logger.info({ marked }, 'markStaleEntries complete');
+  return marked;
+}
+
+// ---------------------------------------------------------------------------
 // runReconciliation
 // ---------------------------------------------------------------------------
 
@@ -330,8 +361,9 @@ export async function runReconciliation(
 ): Promise<ReconciliationReport> {
   const start = Date.now();
 
-  // Step 1: Staleness check
+  // Step 1: Staleness check + mark
   const staleEntries = checkStaleness(cortexDir, options?.stalenessTTLs);
+  const markedStale = markStaleEntries(staleEntries);
 
   // Step 2: Cross-link discovery (graceful Qdrant failure)
   let newLinks: DiscoveredLink[] = [];
@@ -362,7 +394,10 @@ export async function runReconciliation(
         options.openai,
         qdrant,
       );
-      logger.info({ ...loreSummary }, 'runReconciliation: lore mining complete');
+      logger.info(
+        { ...loreSummary },
+        'runReconciliation: lore mining complete',
+      );
     } catch (err) {
       logger.warn({ err }, 'runReconciliation: lore mining failed, skipping');
     }
@@ -372,6 +407,7 @@ export async function runReconciliation(
     staleEntries,
     newLinks,
     orphans,
+    markedStale,
     loreSummary,
     runAt: new Date().toISOString(),
     durationMs: Date.now() - start,

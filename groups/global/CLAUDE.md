@@ -116,16 +116,58 @@ If a user wants tasks running more than ~2x daily and a script can't reduce agen
 
 ## Cortex Knowledge Base
 
-Before starting any task, search the Cortex knowledge base for relevant context:
+Cortex is the persistent knowledge base for this project. Four rules keep it healthy:
 
-1. Extract 2-3 key concepts from the task (e.g., "IPC", "container", "Discord channel")
-2. Call `cortex_search` with a natural language query combining those concepts
-3. If results are relevant (score > 0.7), call `cortex_read` on the top result paths
-4. Use the retrieved knowledge to inform your approach
+### Search before starting
 
-Example:
-- Task: "Fix the IPC message handler for cortex_write"
-- Query: `cortex_search("IPC cortex_write message handler")`
-- This returns entries about IPC contracts and the cortex write pipeline
+Before any technical task:
+1. Extract 2-3 key concepts (e.g., "IPC", "container", "Discord channel")
+2. Call `cortex_search` with a natural language query
+3. If results score > 0.7 — call `cortex_read` on the top paths
+4. Let retrieved knowledge inform your approach
 
-Skip the search only if the task is purely conversational with no technical component.
+Skip only for purely conversational tasks with no technical component.
+
+### Write after completing work
+
+After any code task, architectural decision, or established pattern — write a Cortex entry:
+
+```
+cortex_write({
+  path: "cortex/Areas/Projects/{Project}/{topic}.md",
+  content: "# {Title}\n\n{What was built/decided and why}",
+  frontmatter: {
+    type: "reference",
+    cortex_level: "L20",
+    confidence: "high",
+    domain: "{project}",
+    scope: "{what this covers}"
+  }
+})
+```
+
+Use `L20` for behavior/pattern decisions, `L30` for system topology changes.
+
+### Connect related entries
+
+After writing, search for related entries and link them:
+
+```
+cortex_relate(newPath, relatedPath, "RELATES_TO")
+```
+
+Edge types: `IMPLEMENTS`, `EXTENDS`, `RELATES_TO`, `SUPERSEDES`.
+
+### Lore trailers in commits
+
+Every commit with a non-trivial decision MUST include trailers in the last paragraph:
+
+```
+Constraint: {what must be done} -- {why}
+Rejected: {alternative} -- {why rejected}
+Directive: {forward mandate} -- {what future agents must do}
+```
+
+One decision per line. These are automatically mined into Cortex on every Night Shift cycle.
+
+Full protocol: `cortex/System/cortex-protocol.md`

@@ -13,7 +13,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('node:fs', () => ({
   globSync: vi.fn(),
+  readFileSync: vi.fn(),
+  writeFileSync: vi.fn(),
 }));
+
+vi.mock('gray-matter', () => {
+  const mockMatter = vi.fn() as any;
+  mockMatter.stringify = vi.fn();
+  return { default: mockMatter };
+});
 
 vi.mock('./parser.js', () => ({
   parseCortexEntry: vi.fn(),
@@ -40,7 +48,8 @@ vi.mock('./lore-mining.js', () => ({
 // Imports (after mocks)
 // ---------------------------------------------------------------------------
 
-import { globSync } from 'node:fs';
+import { globSync, readFileSync, writeFileSync } from 'node:fs';
+import matter from 'gray-matter';
 import { parseCortexEntry } from './parser.js';
 import {
   loadGraph,
@@ -54,6 +63,7 @@ import {
   checkStaleness,
   discoverCrossLinks,
   findOrphans,
+  markStaleEntries,
   runReconciliation,
 } from './reconciler.js';
 import { mineLoreFromHistory } from './lore-mining.js';
@@ -61,6 +71,9 @@ import type { QdrantClient } from '@qdrant/js-client-rest';
 import type OpenAI from 'openai';
 
 const mockGlobSync = vi.mocked(globSync);
+const mockReadFileSync = vi.mocked(readFileSync);
+const mockWriteFileSync = vi.mocked(writeFileSync);
+const mockMatter = vi.mocked(matter) as any;
 const mockMineLoreFromHistory = vi.mocked(mineLoreFromHistory);
 const mockParseCortexEntry = vi.mocked(parseCortexEntry);
 const mockLoadGraph = vi.mocked(loadGraph);
@@ -174,6 +187,76 @@ describe('checkStaleness', () => {
     const result = checkStaleness('/cortex');
     // Within L10 TTL of 14 days
     expect(result).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// markStaleEntries
+// ---------------------------------------------------------------------------
+
+describe('markStaleEntries', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const makeStale = (filePath: string) => ({
+    filePath,
+    cortexLevel: 'L10',
+    daysSinceUpdate: 20,
+    ttlDays: 14,
+  });
+
+  it('returns 0 and writes nothing for empty input', () => {
+    const count = markStaleEntries([]);
+    expect(count).toBe(0);
+    expect(mockWriteFileSync).not.toHaveBeenCalled();
+  });
+
+  it('writes stale: true to frontmatter and returns 1', () => {
+    mockReadFileSync.mockReturnValue('---\ncortex_level: L10\n---\nbody' as any);
+    mockMatter.mockReturnValue({ data: { cortex_level: 'L10' }, content: 'body' });
+    mockMatter.stringify.mockReturnValue('---\ncortex_level: L10\nstale: true\n---\nbody');
+
+    const count = markStaleEntries([makeStale('/cortex/old.md')]);
+
+    expect(count).toBe(1);
+    expect(mockMatter).toHaveBeenCalledWith('---\ncortex_level: L10\n---\nbody');
+    expect(mockMatter.stringify).toHaveBeenCalledWith('body', { cortex_level: 'L10', stale: true });
+    expect(mockWriteFileSync).toHaveBeenCalledWith(
+      '/cortex/old.md',
+      '---\ncortex_level: L10\nstale: true\n---\nbody',
+    );
+  });
+
+  it('skips files already marked stale: true and returns 0', () => {
+    mockReadFileSync.mockReturnValue('---\nstale: true\n---\nbody' as any);
+    mockMatter.mockReturnValue({ data: { stale: true }, content: 'body' });
+
+    const count = markStaleEntries([makeStale('/cortex/already.md')]);
+
+    expect(count).toBe(0);
+    expect(mockWriteFileSync).not.toHaveBeenCalled();
+  });
+
+  it('logs warning and skips file when readFileSync throws', () => {
+    mockReadFileSync.mockImplementation(() => { throw new Error('ENOENT'); });
+
+    const count = markStaleEntries([makeStale('/cortex/missing.md')]);
+
+    expect(count).toBe(0);
+    expect(mockWriteFileSync).not.toHaveBeenCalled();
+  });
+
+  it('marks multiple files and returns correct count', () => {
+    mockReadFileSync.mockReturnValue('---\ncortex_level: L20\n---\nbody' as any);
+    mockMatter.mockImplementation(() => ({ data: { cortex_level: 'L20' }, content: 'body' }));
+    mockMatter.stringify.mockReturnValue('---\ncortex_level: L20\nstale: true\n---\nbody');
+
+    const count = markStaleEntries([
+      makeStale('/cortex/a.md'),
+      makeStale('/cortex/b.md'),
+    ]);
+
+    expect(count).toBe(2);
+    expect(mockWriteFileSync).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -380,7 +463,13 @@ describe('findOrphans', () => {
 // ---------------------------------------------------------------------------
 
 describe('runReconciliation', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // markStaleEntries deps: default to no-op
+    mockReadFileSync.mockReturnValue('---\ncortex_level: L10\n---\nbody' as any);
+    mockMatter.mockReturnValue({ data: { cortex_level: 'L10' }, content: 'body' });
+    mockMatter.stringify.mockReturnValue('---\nstale: true\n---\nbody');
+  });
 
   const fakeQdrant = {
     scroll: vi.fn(),
@@ -409,6 +498,7 @@ describe('runReconciliation', () => {
       fakeQdrant,
     );
     expect(report.staleEntries).toHaveLength(1);
+    expect(report.markedStale).toBe(1);
     expect(report.newLinks).toEqual([]);
     expect(report.orphans).toBeDefined();
     expect(report.runAt).toBeTruthy();
@@ -462,13 +552,22 @@ describe('runReconciliation — lore mining step', () => {
     mockLoadGraph.mockReturnValue(emptyGraph);
     mockBuildIndex.mockReturnValue(new Map());
     mockMineLoreFromHistory.mockResolvedValue(miningSummary);
+    // markStaleEntries deps: no stale entries so no file writes
+    mockReadFileSync.mockReturnValue('---\ncortex_level: L10\n---\nbody' as any);
+    mockMatter.mockReturnValue({ data: { cortex_level: 'L10' }, content: 'body' });
+    mockMatter.stringify.mockReturnValue('---\nstale: true\n---\nbody');
   });
 
   it('calls mineLoreFromHistory when openai and repoDir are provided', async () => {
-    const report = await runReconciliation('/cortex', '/graph.json', fakeQdrant, {
-      openai: fakeOpenAI,
-      repoDir: '/repo',
-    });
+    const report = await runReconciliation(
+      '/cortex',
+      '/graph.json',
+      fakeQdrant,
+      {
+        openai: fakeOpenAI,
+        repoDir: '/repo',
+      },
+    );
     expect(mockMineLoreFromHistory).toHaveBeenCalledWith(
       '/repo',
       '/cortex',
@@ -479,25 +578,39 @@ describe('runReconciliation — lore mining step', () => {
   });
 
   it('sets loreSummary undefined when options have no openai', async () => {
-    const report = await runReconciliation('/cortex', '/graph.json', fakeQdrant, {
-      repoDir: '/repo',
-    });
+    const report = await runReconciliation(
+      '/cortex',
+      '/graph.json',
+      fakeQdrant,
+      {
+        repoDir: '/repo',
+      },
+    );
     expect(mockMineLoreFromHistory).not.toHaveBeenCalled();
     expect(report.loreSummary).toBeUndefined();
   });
 
   it('handles mineLoreFromHistory failure gracefully — returns report with loreSummary undefined', async () => {
     mockMineLoreFromHistory.mockRejectedValue(new Error('git failure'));
-    const report = await runReconciliation('/cortex', '/graph.json', fakeQdrant, {
-      openai: fakeOpenAI,
-      repoDir: '/repo',
-    });
+    const report = await runReconciliation(
+      '/cortex',
+      '/graph.json',
+      fakeQdrant,
+      {
+        openai: fakeOpenAI,
+        repoDir: '/repo',
+      },
+    );
     expect(report.loreSummary).toBeUndefined();
     expect(report.staleEntries).toBeDefined();
   });
 
   it('does not call mineLoreFromHistory when no options provided (backward compat)', async () => {
-    const report = await runReconciliation('/cortex', '/graph.json', fakeQdrant);
+    const report = await runReconciliation(
+      '/cortex',
+      '/graph.json',
+      fakeQdrant,
+    );
     expect(mockMineLoreFromHistory).not.toHaveBeenCalled();
     expect(report.loreSummary).toBeUndefined();
   });
