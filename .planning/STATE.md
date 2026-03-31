@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Agent Cortex Intelligence
-status: verifying
-stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-03-31T10:18:45.416Z"
+status: executing
+stopped_at: Completed 21-01-PLAN.md
+last_updated: "2026-03-31T10:36:12.653Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 9
   completed_phases: 7
-  total_plans: 14
-  completed_plans: 14
+  total_plans: 16
+  completed_plans: 15
   percent: 83
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Agents can retrieve surgically scoped context before every task -- closing the "decision shadow" where agents see what code does but not why decisions were made.
-**Current focus:** Phase 20 — Lore Protocol
+**Current focus:** Phase 21 — Nightshift Reconciliation
 
 ## Current Position
 
-Phase: 21
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 21 (Nightshift Reconciliation) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-31
 
 Progress: [████████░░] 83%
@@ -60,6 +60,7 @@ Progress: [████████░░] 83%
 | Phase 19 P02 | 4min | 2 tasks | 4 files |
 | Phase 20-lore-protocol P01 | 3min | 2 tasks | 2 files |
 | Phase 20-lore-protocol P02 | 3min | 2 tasks | 3 files |
+| Phase 21-nightshift-reconciliation P01 | 3min | 1 tasks | 2 files |
 
 ### Decisions
 
@@ -94,6 +95,8 @@ v3.0 decisions pending -- schema standard is first decision point.
 - [Phase 20-lore-protocol]: Forward-only convention: agents add trailers to new commits, never rewrite existing (D-01)
 - [Phase 20-lore-protocol]: Mining capped at 40 entries when >50 candidates -- quality over quantity (Pitfall 4)
 - [Phase 20-lore-protocol]: Bullet-only mining: only '- ' prefixed lines are candidates to reduce false positives
+- [Phase 21]: Orphan detection requires ALL 3 conditions (no edges + bad frontmatter + short content) to avoid false positives
+- [Phase 21]: Graceful Qdrant failure: runReconciliation returns partial report with empty newLinks on connection error
 
 ### Pending Todos
 
@@ -108,6 +111,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31T10:15:33.284Z
-Stopped at: Completed 20-02-PLAN.md
+Last session: 2026-03-31T10:36:12.649Z
+Stopped at: Completed 21-01-PLAN.md
 Resume file: None
