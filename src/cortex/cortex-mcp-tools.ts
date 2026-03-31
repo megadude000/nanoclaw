@@ -15,6 +15,8 @@ import matter from 'gray-matter';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
+import type { GraphIndex } from './cortex-graph.js';
+import { getNeighbors } from './cortex-graph.js';
 
 // ---------------------------------------------------------------------------
 // Inlined Cortex validation schema
@@ -114,10 +116,12 @@ export function buildSearchHandler({
   qdrant,
   openai,
   vaultRoot,
+  graphIndex,
 }: {
   qdrant: QdrantClient;
   openai: OpenAI;
   vaultRoot: string;
+  graphIndex?: GraphIndex;
 }) {
   return async (args: {
     query: string;
@@ -156,13 +160,22 @@ export function buildSearchHandler({
       filter: mustConditions.length > 0 ? { must: mustConditions } : undefined,
     });
 
-    const formatted = results.map((r) => ({
-      path: r.payload?.file_path,
-      score: r.score,
-      level: r.payload?.cortex_level,
-      domain: r.payload?.domain,
-      project: r.payload?.project,
-    }));
+    const formatted = results.map((r) => {
+      const base: Record<string, unknown> = {
+        path: r.payload?.file_path,
+        score: r.score,
+        level: r.payload?.cortex_level,
+        domain: r.payload?.domain,
+        project: r.payload?.project,
+      };
+      if (graphIndex) {
+        const neighbors = getNeighbors(graphIndex, r.payload?.file_path as string);
+        if (neighbors.length > 0) {
+          base.related = neighbors;
+        }
+      }
+      return base;
+    });
 
     return { content: [{ type: 'text' as const, text: JSON.stringify(formatted, null, 2) }] };
   };
@@ -265,5 +278,31 @@ export function buildWriteHandler({
     return {
       content: [{ type: 'text' as const, text: `Entry queued for write: ${args.path}` }],
     };
+  };
+}
+
+// ---------------------------------------------------------------------------
+// buildRelateHandler — MCP-04
+// ---------------------------------------------------------------------------
+
+/**
+ * Factory for the cortex_relate handler.
+ *
+ * Declares a typed edge between two Cortex entries via IPC.
+ * Self-edges are rejected client-side before writing IPC.
+ */
+export function buildRelateHandler({ writeIpc }: { writeIpc: (data: object) => void }) {
+  return async (args: { source: string; target: string; edge_type: string }): Promise<McpResult> => {
+    if (args.source === args.target) {
+      return { content: [{ type: 'text' as const, text: 'Error: self-edges not allowed' }], isError: true };
+    }
+    writeIpc({
+      type: 'cortex_relate',
+      source: args.source,
+      target: args.target,
+      edge_type: args.edge_type,
+      timestamp: new Date().toISOString(),
+    });
+    return { content: [{ type: 'text' as const, text: `Edge declared: ${args.source} --${args.edge_type}--> ${args.target}` }] };
   };
 }
