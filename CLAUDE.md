@@ -71,6 +71,42 @@ systemctl --user stop nanoclaw
 systemctl --user restart nanoclaw
 ```
 
+## Lore Protocol
+
+Architectural decisions are captured in git commit trailers so agents can find them via cortex_search. Every commit that makes a non-trivial decision SHOULD include one or more lore trailers.
+
+### Trailer Keys
+
+- `Constraint:` -- A limitation or requirement that shaped the implementation (why we MUST do something)
+- `Rejected:` -- An alternative that was considered and explicitly rejected (why we chose NOT to do something)
+- `Directive:` -- A forward-looking mandate for future work (what MUST be done going forward)
+
+### Good Example
+
+```
+feat(16-01): create embedder.ts with embedEntry() and full unit test suite
+
+- DI pattern for OpenAI/Qdrant clients enables pure unit tests
+- Content-hash skip logic avoids re-embedding unchanged entries
+
+Constraint: DI injection for openai/qdrant in embedEntry() -- enables unit testing without live services
+Rejected: Chokidar for file watching -- native fs.watch sufficient, zero new dependencies
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+```
+
+### Bad Examples
+
+- **Trailer in commit body (not after blank line separator)** -- git treats it as body text, not a trailer. Trailers must be in the last paragraph, separated from the body by an empty line.
+- **Too vague:** `Constraint: use good patterns` -- must be specific enough to be actionable. Include WHAT and WHY.
+- **Multiple atoms crammed into one:** `Constraint: use DI and also factory pattern and also pino logger` -- one decision per trailer line.
+
+### Rules
+
+1. Trailers go in the LAST paragraph of the commit message, separated by a blank line from the body
+2. One decision per trailer line
+3. Be specific: include WHAT and WHY
+4. Forward-only: add trailers to new commits, never rewrite existing commits
+
 ## Troubleshooting
 
 **WhatsApp not connecting after upgrade:** WhatsApp is now a separate skill, not bundled in core. Run `/add-whatsapp` (or `npx tsx scripts/apply-skill.ts .claude/skills/add-whatsapp && npm run build`) to install it. Existing auth credentials and groups are preserved.
