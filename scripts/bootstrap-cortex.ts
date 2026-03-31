@@ -31,6 +31,7 @@ const VAULT_BASE = path.join(
 );
 const VAULT_SRC = path.join(VAULT_BASE, 'src');
 const DRY_RUN = process.argv.includes('--dry-run');
+const WRITE_ONLY = process.argv.includes('--write-only');
 
 const IPC_MCP_PATH = path.join(
   PROJECT_ROOT,
@@ -647,7 +648,19 @@ async function main() {
     process.exit(0);
   }
 
-  // Full run: check prerequisites
+  // Write all files to vault
+  for (const entry of allEntries) {
+    fs.mkdirSync(path.dirname(entry.vaultPath), { recursive: true });
+    fs.writeFileSync(entry.vaultPath, entry.content, 'utf-8');
+  }
+  console.log(`Wrote ${allEntries.length} entries to vault`);
+
+  if (WRITE_ONLY) {
+    console.log('Write-only mode. Files written, no embeddings created.');
+    process.exit(0);
+  }
+
+  // Full run: check prerequisites and embed
   let openai: ReturnType<typeof createOpenAIClient>;
   let qdrant: ReturnType<typeof createQdrantClient>;
   try {
@@ -667,17 +680,12 @@ async function main() {
     process.exit(1);
   }
 
-  // Write and embed all entries
+  // Embed all entries
   let embedded = 0;
   let skipped = 0;
   let errors = 0;
 
   for (const entry of allEntries) {
-    // Write file
-    fs.mkdirSync(path.dirname(entry.vaultPath), { recursive: true });
-    fs.writeFileSync(entry.vaultPath, entry.content, 'utf-8');
-
-    // Embed
     const result = await embedEntry(entry.vaultPath, openai, qdrant, {
       force: true,
     });
