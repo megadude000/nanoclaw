@@ -275,7 +275,7 @@ Plans:
   3. `cortex_search` returns lore-atom type entries after a Night Shift cycle that processes commits with Constraint/Rejected/Directive trailers
 **Plans**: 1 plan
 Plans:
-- [ ] 23-01-PLAN.md — Wire lore mining into reconciler production cycle
+- [x] 23-01-PLAN.md — Wire lore mining into reconciler production cycle
 
 ## Progress
 
@@ -294,4 +294,4 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | 20. Lore Protocol | v3.0 | 2/2 | Complete    | 2026-03-31 |
 | 21. Nightshift Reconciliation | v3.0 | 2/2 | Complete    | 2026-03-31 |
 | 22. Multi-Project Bootstrap | v3.0 | 2/2 | Complete    | 2026-03-31 |
-| 23. Lore Mining Production Wiring | v3.0 | 0/0 | Not started | - |
+| 23. Lore Mining Production Wiring | v3.0 | 1/1 | Complete   | 2026-03-31 |
