@@ -62,6 +62,7 @@ import {
 } from './sender-allowlist.js';
 import { startSchedulerLoop } from './task-scheduler.js';
 import { startCortexWatcher, stopCortexWatcher } from './cortex/watcher.js';
+import { ProgressTracker } from './progress-tracker.js';
 import { Channel, NewMessage, RegisteredGroup } from './types.js';
 import { logger } from './logger.js';
 
@@ -76,6 +77,8 @@ let messageLoopRunning = false;
 
 const channels: Channel[] = [];
 const queue = new GroupQueue();
+
+let progressTracker: ProgressTracker | null = null;
 
 const onecli = new OneCLI({ url: ONECLI_URL });
 
@@ -279,6 +282,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
   };
 
   await channel.setTyping?.(chatJid, true);
+  progressTracker?.onMessageSent(chatJid, group.folder);
   let hadError = false;
   let outputSentToUser = false;
 
@@ -301,6 +305,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
     }
 
     if (result.status === 'success') {
+      progressTracker?.onResponseReceived(chatJid);
       queue.notifyIdle(chatJid);
     }
 
@@ -311,6 +316,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
 
   await channel.setTyping?.(chatJid, false);
   if (idleTimer) clearTimeout(idleTimer);
+  progressTracker?.onContainerStopped(chatJid, output === 'error' ? 1 : 0);
 
   if (output === 'error' || hadError) {
     // If we already sent output to the user, don't roll back the cursor —
@@ -674,6 +680,23 @@ async function main(): Promise<void> {
     logger.fatal('No channels connected');
     process.exit(1);
   }
+
+  // Initialize progress tracker using the first channel that supports edit/delete
+  progressTracker = new ProgressTracker({
+    sendMsg: async (jid, text) => {
+      const ch = findChannel(channels, jid);
+      return ch?.sendMessageRaw?.(jid, text);
+    },
+    editMsg: async (jid, msgId, text) => {
+      const ch = findChannel(channels, jid);
+      await ch?.editMessage?.(jid, String(msgId), text);
+    },
+    deleteMsg: async (_jid, _msgId) => {},
+    setTyping: async (jid, typing) => {
+      const ch = findChannel(channels, jid);
+      await ch?.setTyping?.(jid, typing);
+    },
+  });
 
   // Start subsystems (independently of connection handler)
   startSchedulerLoop({
