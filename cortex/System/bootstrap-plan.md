@@ -35,7 +35,8 @@ and set `confidence: medium`. Empty entries are worse than partial ones.
 
 ### 1. NanoClaw Core Architecture
 
-**Status:** `pending`
+**Status:** `done`
+**Completed:** 2026-03-31
 **Domain:** `nanoclaw`
 **Hub entry:** `cortex/Areas/Projects/NanoClaw/NanoClaw.md`
 
@@ -66,7 +67,8 @@ and set `confidence: medium`. Empty entries are worse than partial ones.
 
 ### 2. NanoClaw Subsystems
 
-**Status:** `pending`
+**Status:** `done`
+**Completed:** 2026-03-31
 **Domain:** `nanoclaw`
 
 **What to read:**
@@ -89,7 +91,8 @@ and set `confidence: medium`. Empty entries are worse than partial ones.
 
 ### 3. Cortex Pipeline Architecture
 
-**Status:** `pending`
+**Status:** `done`
+**Completed:** 2026-03-31
 **Domain:** `nanoclaw`
 **Hub entry:** `cortex/Areas/Projects/NanoClaw/NanoClaw.md`
 
@@ -123,7 +126,8 @@ and set `confidence: medium`. Empty entries are worse than partial ones.
 
 ### 4. GSD Workflow
 
-**Status:** `pending`
+**Status:** `done`
+**Completed:** 2026-03-31
 **Domain:** `nanoclaw`
 
 **What to read:**
@@ -145,7 +149,8 @@ and set `confidence: medium`. Empty entries are worse than partial ones.
 
 ### 5. Night Shift System
 
-**Status:** `pending`
+**Status:** `done`
+**Completed:** 2026-03-31
 **Domain:** `nanoclaw`
 **Existing docs:** `cortex/Areas/Projects/NightShift/NightShift.md`, `nightshift.architecture.md`
 
@@ -171,7 +176,8 @@ Then create the missing L20 decision entries below.
 
 ### 6. YourWave Platform
 
-**Status:** `pending`
+**Status:** `done`
+**Completed:** 2026-03-31
 **Domain:** `yourwave`
 **Existing docs:** `cortex/Areas/Projects/YourWave/` — many L20 domain files
 
@@ -196,7 +202,8 @@ Then create the missing L20 decision entries below.
 
 ### 7. ContentFactory Pipeline
 
-**Status:** `pending`
+**Status:** `done`
+**Completed:** 2026-03-31
 **Domain:** `yourwave`
 **Existing docs:** `cortex/Areas/Projects/ContentFactory/cf.pipeline.md`, `cf.atlas.md`
 
@@ -217,13 +224,13 @@ If `cf.pipeline.md` is already a proper L20/L30 entry, this is just a frontmatte
 
 | System | Status | Entries | Completed |
 |--------|--------|---------|-----------|
-| NanoClaw Core Architecture | `pending` | 5 | — |
-| NanoClaw Subsystems | `pending` | 4 | — |
-| Cortex Pipeline | `pending` | 5 | — |
-| GSD Workflow | `pending` | 3 | — |
-| Night Shift | `pending` | 2 (+frontmatter check) | — |
-| YourWave Platform | `pending` | 1 (+frontmatter check) | — |
-| ContentFactory | `pending` | 1 (+frontmatter check) | — |
+| NanoClaw Core Architecture | `done` | 5 | 2026-03-31 |
+| NanoClaw Subsystems | `done` | 4 | 2026-03-31 |
+| Cortex Pipeline | `done` | 5 | 2026-03-31 |
+| GSD Workflow | `done` | 3 | 2026-03-31 |
+| Night Shift | `done` | 2 (+frontmatter check) | 2026-03-31 |
+| YourWave Platform | `done` | 1 (+frontmatter check) | 2026-03-31 |
+| ContentFactory | `done` | 1 (+frontmatter check) | 2026-03-31 |
 
 **Total entries to create: ~21** (+ frontmatter updates on existing docs)
 

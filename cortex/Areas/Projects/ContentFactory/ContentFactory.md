@@ -1,10 +1,14 @@
 ---
 type: project-hub
+cortex_level: L20
+confidence: high
+domain: yourwave
+scope: ContentFactory (Zavod) Claude-orchestrated content pipeline hub - approval flow, platforms, tech stack
 project: ContentFactory
 status: planning
 tags: [content, pipeline, automation, claude, dashboard, approval]
 created: 2026-03-17
-last_updated: 2026-03-17
+last_updated: 2026-03-31
 ---
 
 # Завод (Content Factory)

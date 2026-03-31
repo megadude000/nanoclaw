@@ -1,0 +1,276 @@
+{
+  "version": 1,
+  "generated": "2026-03-31T00:00:00.000Z",
+  "nodes": [
+    "Areas/Projects/NanoClaw/NanoClaw.md",
+    "Areas/Projects/NanoClaw/arch/message-flow.md",
+    "Areas/Projects/NanoClaw/arch/ipc-protocol.md",
+    "Areas/Projects/NanoClaw/arch/channel-registry.md",
+    "Areas/Projects/NanoClaw/arch/container-isolation.md",
+    "Areas/Projects/NanoClaw/arch/security-model.md",
+    "Areas/Projects/NanoClaw/arch/task-scheduler.md",
+    "Areas/Projects/NanoClaw/arch/webhook-routing.md",
+    "Areas/Projects/NanoClaw/arch/health-monitor.md",
+    "Areas/Projects/NanoClaw/arch/discord-server-manager.md",
+    "Areas/Projects/NanoClaw/cortex-subsystem/pipeline-architecture.md",
+    "Areas/Projects/NanoClaw/cortex-subsystem/mcp-tool-interface.md",
+    "Areas/Projects/NanoClaw/cortex-subsystem/knowledge-graph.md",
+    "Areas/Projects/NanoClaw/cortex-subsystem/reconciliation-pipeline.md",
+    "Areas/Projects/NanoClaw/cortex-subsystem/lore-mining.md",
+    "Areas/Projects/NanoClaw/gsd/gsd-overview.md",
+    "Areas/Projects/NanoClaw/gsd/phase-lifecycle.md",
+    "Areas/Projects/NanoClaw/gsd/lore-trailer-convention.md",
+    "Areas/Projects/NightShift/NightShift.md",
+    "Areas/Projects/NightShift/nightshift.architecture.md",
+    "Areas/Projects/NightShift/arch/orchestration-model.md",
+    "Areas/Projects/NightShift/arch/approval-tiers.md",
+    "Areas/Projects/YourWave/YourWave.md",
+    "Areas/Projects/YourWave/yw.platform-spec.md",
+    "Areas/Projects/YourWave/arch/platform-decisions.md",
+    "Areas/Projects/ContentFactory/ContentFactory.md",
+    "Areas/Projects/ContentFactory/cf.pipeline.md",
+    "Areas/Projects/ContentFactory/arch/pipeline-decisions.md"
+  ],
+  "edges": [
+    {
+      "source": "Areas/Projects/NanoClaw/arch/message-flow.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/ipc-protocol.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/channel-registry.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/container-isolation.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/security-model.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/ipc-protocol.md",
+      "target": "Areas/Projects/NanoClaw/arch/container-isolation.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/channel-registry.md",
+      "target": "Areas/Projects/NanoClaw/arch/message-flow.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/security-model.md",
+      "target": "Areas/Projects/NanoClaw/arch/container-isolation.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/security-model.md",
+      "target": "Areas/Projects/NanoClaw/arch/ipc-protocol.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/task-scheduler.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/webhook-routing.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/health-monitor.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/discord-server-manager.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/task-scheduler.md",
+      "target": "Areas/Projects/NanoClaw/arch/webhook-routing.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/cortex-subsystem/pipeline-architecture.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/cortex-subsystem/mcp-tool-interface.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/cortex-subsystem/knowledge-graph.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/cortex-subsystem/reconciliation-pipeline.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/cortex-subsystem/lore-mining.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/cortex-subsystem/mcp-tool-interface.md",
+      "target": "Areas/Projects/NanoClaw/cortex-subsystem/pipeline-architecture.md",
+      "edge_type": "BUILT_FROM",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/cortex-subsystem/knowledge-graph.md",
+      "target": "Areas/Projects/NanoClaw/cortex-subsystem/pipeline-architecture.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/cortex-subsystem/reconciliation-pipeline.md",
+      "target": "Areas/Projects/NanoClaw/cortex-subsystem/pipeline-architecture.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/cortex-subsystem/lore-mining.md",
+      "target": "Areas/Projects/NanoClaw/cortex-subsystem/reconciliation-pipeline.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/cortex-subsystem/reconciliation-pipeline.md",
+      "target": "Areas/Projects/NanoClaw/cortex-subsystem/knowledge-graph.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/gsd/gsd-overview.md",
+      "target": "Areas/Projects/NanoClaw/NanoClaw.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/gsd/phase-lifecycle.md",
+      "target": "Areas/Projects/NanoClaw/gsd/gsd-overview.md",
+      "edge_type": "BUILT_FROM",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/gsd/lore-trailer-convention.md",
+      "target": "Areas/Projects/NanoClaw/gsd/gsd-overview.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/gsd/lore-trailer-convention.md",
+      "target": "Areas/Projects/NanoClaw/cortex-subsystem/lore-mining.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NightShift/arch/orchestration-model.md",
+      "target": "Areas/Projects/NightShift/NightShift.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NightShift/arch/approval-tiers.md",
+      "target": "Areas/Projects/NightShift/NightShift.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NightShift/arch/orchestration-model.md",
+      "target": "Areas/Projects/NightShift/nightshift.architecture.md",
+      "edge_type": "BUILT_FROM",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NightShift/arch/approval-tiers.md",
+      "target": "Areas/Projects/NightShift/nightshift.architecture.md",
+      "edge_type": "BUILT_FROM",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NightShift/arch/orchestration-model.md",
+      "target": "Areas/Projects/NightShift/arch/approval-tiers.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/YourWave/arch/platform-decisions.md",
+      "target": "Areas/Projects/YourWave/YourWave.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/YourWave/arch/platform-decisions.md",
+      "target": "Areas/Projects/YourWave/yw.platform-spec.md",
+      "edge_type": "BUILT_FROM",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/ContentFactory/arch/pipeline-decisions.md",
+      "target": "Areas/Projects/ContentFactory/ContentFactory.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/ContentFactory/arch/pipeline-decisions.md",
+      "target": "Areas/Projects/ContentFactory/cf.pipeline.md",
+      "edge_type": "BUILT_FROM",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/ContentFactory/ContentFactory.md",
+      "target": "Areas/Projects/YourWave/YourWave.md",
+      "edge_type": "CROSS_LINK",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NightShift/NightShift.md",
+      "target": "Areas/Projects/NanoClaw/cortex-subsystem/reconciliation-pipeline.md",
+      "edge_type": "REFERENCES",
+      "created": "2026-03-31T00:00:00.000Z"
+    },
+    {
+      "source": "Areas/Projects/NanoClaw/arch/task-scheduler.md",
+      "target": "Areas/Projects/NightShift/NightShift.md",
+      "edge_type": "CROSS_LINK",
+      "created": "2026-03-31T00:00:00.000Z"
+    }
+  ]
+}

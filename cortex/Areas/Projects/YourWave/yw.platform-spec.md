@@ -1,9 +1,12 @@
 ---
 type: architecture-spec
+cortex_level: L30
+confidence: high
+domain: yourwave
+scope: YourWave platform v2 full architecture spec - stack, modules, security, domain model, phasing
 project: YourWave
-domain: platform-v2
 created: 2026-03-23
-updated: 2026-03-23
+updated: 2026-03-31
 status: draft
 tags: [platform, architecture, spec, ywproject-v2]
 ---

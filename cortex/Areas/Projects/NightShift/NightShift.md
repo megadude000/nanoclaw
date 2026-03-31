@@ -1,8 +1,13 @@
 ---
 type: project
+cortex_level: L20
+confidence: high
+domain: nanoclaw
+scope: Night Shift autonomous overnight work system hub
+project: NightShift
 status: active
 created: 2026-03-22
-updated: 2026-03-22
+updated: 2026-03-31
 tags: [automation, nightshift, jarvis]
 ---
 

@@ -1,8 +1,12 @@
 ---
 type: project
+cortex_level: L20
+confidence: high
+domain: yourwave
+scope: YourWave specialty coffee e-commerce platform hub - brand, stack, business model, decisions log
 project: YourWave
 status: active
-last_updated: 2026-03-26
+last_updated: 2026-03-31
 tags: [coffee, startup, prague, ecommerce]
 ---
 
