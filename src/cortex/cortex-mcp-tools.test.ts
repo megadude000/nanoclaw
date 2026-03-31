@@ -70,6 +70,7 @@ import {
   buildSearchHandler,
   buildReadHandler,
   buildWriteHandler,
+  buildRelateHandler,
   isVaultPath,
   checkConfidenceFirewall,
 } from './cortex-mcp-tools.js';
@@ -513,5 +514,130 @@ Content without confidence field.`;
     });
 
     expect(result.isError).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// MCP-04: buildRelateHandler
+// ---------------------------------------------------------------------------
+
+describe('buildRelateHandler -- MCP-04', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('calls writeIpc with { type: cortex_relate, source, target, edge_type } for valid args', async () => {
+    const handler = buildRelateHandler({ writeIpc: mockWriteIpcFn });
+
+    await handler({ source: 'Areas/Projects/A.md', target: 'Areas/Projects/B.md', edge_type: 'REFERENCES' });
+
+    expect(mockWriteIpcFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'cortex_relate',
+        source: 'Areas/Projects/A.md',
+        target: 'Areas/Projects/B.md',
+        edge_type: 'REFERENCES',
+      }),
+    );
+  });
+
+  it('returns isError true when source === target', async () => {
+    const handler = buildRelateHandler({ writeIpc: mockWriteIpcFn });
+
+    const result = await handler({ source: 'Areas/Projects/A.md', target: 'Areas/Projects/A.md', edge_type: 'REFERENCES' });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('self-edges not allowed');
+  });
+
+  it('does NOT call writeIpc when source === target', async () => {
+    const handler = buildRelateHandler({ writeIpc: mockWriteIpcFn });
+
+    await handler({ source: 'Areas/Projects/A.md', target: 'Areas/Projects/A.md', edge_type: 'REFERENCES' });
+
+    expect(mockWriteIpcFn).not.toHaveBeenCalled();
+  });
+
+  it('returns text containing "--REFERENCES-->" for valid REFERENCES edge', async () => {
+    const handler = buildRelateHandler({ writeIpc: mockWriteIpcFn });
+
+    const result = await handler({ source: 'Areas/Projects/A.md', target: 'Areas/Projects/B.md', edge_type: 'REFERENCES' });
+
+    expect(result.content[0].text).toContain('--REFERENCES-->');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GRAPH-02: buildSearchHandler -- graph-augmented results
+// ---------------------------------------------------------------------------
+
+describe('buildSearchHandler -- GRAPH-02: graph-augmented results', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockQdrantSearch.mockResolvedValue([
+      {
+        id: 'abc123',
+        score: 0.92,
+        payload: { file_path: 'Areas/Projects/NanoClaw/ipc.md', cortex_level: 'L20', domain: 'nanoclaw', project: 'nanoclaw' },
+      },
+    ]);
+  });
+
+  it('semantic results include related array when graphIndex provided', async () => {
+    const graphIndex = new Map([
+      ['Areas/Projects/NanoClaw/ipc.md', [
+        { path: 'Areas/Projects/NanoClaw/architecture.md', type: 'REFERENCES', direction: 'outgoing' as const },
+      ]],
+    ]);
+
+    const handler = buildSearchHandler({
+      qdrant: makeMockQdrant() as never,
+      openai: makeMockOpenAI() as never,
+      vaultRoot: VAULT_ROOT,
+      graphIndex,
+    });
+
+    const result = await handler({ query: 'how does the IPC watcher work' });
+    const parsed = JSON.parse(result.content[0].text);
+
+    expect(parsed[0].related).toEqual([
+      { path: 'Areas/Projects/NanoClaw/architecture.md', type: 'REFERENCES', direction: 'outgoing' },
+    ]);
+  });
+
+  it('results have no related key when graphIndex is undefined', async () => {
+    const handler = buildSearchHandler({
+      qdrant: makeMockQdrant() as never,
+      openai: makeMockOpenAI() as never,
+      vaultRoot: VAULT_ROOT,
+    });
+
+    const result = await handler({ query: 'how does the IPC watcher work' });
+    const parsed = JSON.parse(result.content[0].text);
+
+    expect(parsed[0]).not.toHaveProperty('related');
+  });
+
+  it('vault path query returns file content without related field', async () => {
+    mockFsReadFileSync.mockReturnValue('---\ncortex_level: L10\n---\narchitecture content');
+
+    const graphIndex = new Map([
+      ['Areas/Projects/NanoClaw/architecture.md', [
+        { path: 'Areas/Projects/NanoClaw/ipc.md', type: 'BUILT_FROM', direction: 'incoming' as const },
+      ]],
+    ]);
+
+    const handler = buildSearchHandler({
+      qdrant: makeMockQdrant() as never,
+      openai: makeMockOpenAI() as never,
+      vaultRoot: VAULT_ROOT,
+      graphIndex,
+    });
+
+    const result = await handler({ query: 'Areas/Projects/NanoClaw/architecture.md' });
+
+    // Vault path returns raw content, not JSON with related
+    expect(result.content[0].text).toContain('architecture content');
+    expect(result.content[0].text).not.toContain('related');
   });
 });
