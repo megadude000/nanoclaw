@@ -118,6 +118,7 @@ export function buildServiceConfigs(): ServiceConfig[] {
   const envValues = readEnvFile([
     'HEALTH_MONITOR_SERVICES',
     'CLOUDFLARE_TUNNEL_NAME',
+    'QDRANT_CONTAINER_NAME',
   ]);
 
   const servicesEnv =
@@ -143,6 +144,19 @@ export function buildServiceConfigs(): ServiceConfig[] {
     configs.push({
       name: 'cloudflared',
       command: 'systemctl is-active cloudflared',
+    });
+  }
+
+  // Cortex (Qdrant): check via docker inspect
+  const qdrantContainer =
+    process.env.QDRANT_CONTAINER_NAME ??
+    envValues.QDRANT_CONTAINER_NAME ??
+    'nanoclaw-qdrant';
+
+  if (qdrantContainer) {
+    configs.push({
+      name: 'cortex',
+      command: `docker inspect --format='{{if .State.Running}}active{{end}}' ${qdrantContainer}`,
     });
   }
 

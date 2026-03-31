@@ -92,6 +92,7 @@ describe('health-monitor', () => {
     delete process.env.HEALTH_MONITOR_SERVICES;
     delete process.env.CLOUDFLARE_TUNNEL_NAME;
     delete process.env.HEALTH_CHECK_INTERVAL_MS;
+    delete process.env.QDRANT_CONTAINER_NAME;
   });
 
   afterEach(() => {
@@ -141,6 +142,32 @@ describe('health-monitor', () => {
       const configs = buildServiceConfigs();
       const cloudflared = configs.find((c) => c.name === 'cloudflared');
       expect(cloudflared).toBeUndefined();
+    });
+
+    it('always includes cortex service using default container name', async () => {
+      const { buildServiceConfigs } = await import('./health-monitor.js');
+      const configs = buildServiceConfigs();
+      const cortex = configs.find((c) => c.name === 'cortex');
+      expect(cortex).toBeDefined();
+      expect(cortex?.command).toContain('docker inspect');
+      expect(cortex?.command).toContain('nanoclaw-qdrant');
+    });
+
+    it('uses QDRANT_CONTAINER_NAME env var for cortex check', async () => {
+      process.env.QDRANT_CONTAINER_NAME = 'my-qdrant';
+      const { buildServiceConfigs } = await import('./health-monitor.js');
+      const configs = buildServiceConfigs();
+      const cortex = configs.find((c) => c.name === 'cortex');
+      expect(cortex).toBeDefined();
+      expect(cortex?.command).toContain('my-qdrant');
+    });
+
+    it('skips cortex when QDRANT_CONTAINER_NAME is empty string', async () => {
+      process.env.QDRANT_CONTAINER_NAME = '';
+      const { buildServiceConfigs } = await import('./health-monitor.js');
+      const configs = buildServiceConfigs();
+      const cortex = configs.find((c) => c.name === 'cortex');
+      expect(cortex).toBeUndefined();
     });
   });
 
