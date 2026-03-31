@@ -333,10 +333,16 @@ export function markStaleEntries(staleEntries: StaleEntry[]): number {
       const parsed = matter(raw);
       if (parsed.data.stale === true) continue; // already marked
       parsed.data.stale = true;
-      writeFileSync(entry.filePath, matter.stringify(parsed.content, parsed.data));
+      writeFileSync(
+        entry.filePath,
+        matter.stringify(parsed.content, parsed.data),
+      );
       marked++;
     } catch (err) {
-      logger.warn({ err, file: entry.filePath }, 'markStaleEntries: failed to write file');
+      logger.warn(
+        { err, file: entry.filePath },
+        'markStaleEntries: failed to write file',
+      );
     }
   }
   logger.info({ marked }, 'markStaleEntries complete');

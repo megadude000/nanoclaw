@@ -146,10 +146,15 @@ export function buildSearchHandler({
 
     // Build filter from optional params
     const mustConditions: Array<{ key: string; match: { value: string } }> = [];
-    if (args.project) mustConditions.push({ key: 'project', match: { value: args.project } });
+    if (args.project)
+      mustConditions.push({ key: 'project', match: { value: args.project } });
     if (args.cortex_level)
-      mustConditions.push({ key: 'cortex_level', match: { value: args.cortex_level } });
-    if (args.domain) mustConditions.push({ key: 'domain', match: { value: args.domain } });
+      mustConditions.push({
+        key: 'cortex_level',
+        match: { value: args.cortex_level },
+      });
+    if (args.domain)
+      mustConditions.push({ key: 'domain', match: { value: args.domain } });
 
     const limit = Math.min(args.limit ?? 5, 20);
 
@@ -169,7 +174,10 @@ export function buildSearchHandler({
         project: r.payload?.project,
       };
       if (graphIndex) {
-        const neighbors = getNeighbors(graphIndex, r.payload?.file_path as string);
+        const neighbors = getNeighbors(
+          graphIndex,
+          r.payload?.file_path as string,
+        );
         if (neighbors.length > 0) {
           base.related = neighbors;
         }
@@ -177,7 +185,11 @@ export function buildSearchHandler({
       return base;
     });
 
-    return { content: [{ type: 'text' as const, text: JSON.stringify(formatted, null, 2) }] };
+    return {
+      content: [
+        { type: 'text' as const, text: JSON.stringify(formatted, null, 2) },
+      ],
+    };
   };
 }
 
@@ -198,7 +210,9 @@ export function buildReadHandler({ vaultRoot }: { vaultRoot: string }) {
     // Path traversal guard (Pitfall 3)
     if (!resolved.startsWith(vaultRoot + '/')) {
       return {
-        content: [{ type: 'text' as const, text: 'Error: path traversal not allowed' }],
+        content: [
+          { type: 'text' as const, text: 'Error: path traversal not allowed' },
+        ],
         isError: true,
       };
     }
@@ -235,15 +249,22 @@ export function buildWriteHandler({
   writeIpc: (data: object) => void;
   vaultRoot: string;
 }) {
-  return async (args: { path: string; content: string }): Promise<McpResult> => {
+  return async (args: {
+    path: string;
+    content: string;
+  }): Promise<McpResult> => {
     // Parse and validate frontmatter
     const parsed = matter(args.content);
     const validation = CortexFieldsStrict.safeParse(parsed.data);
 
     if (!validation.success) {
-      const errors = validation.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
+      const errors = validation.error.issues
+        .map((i) => `${i.path.join('.')}: ${i.message}`)
+        .join(', ');
       return {
-        content: [{ type: 'text' as const, text: `Validation failed: ${errors}` }],
+        content: [
+          { type: 'text' as const, text: `Validation failed: ${errors}` },
+        ],
         isError: true,
       };
     }
@@ -253,7 +274,11 @@ export function buildWriteHandler({
     // Confidence firewall for L20+ (SEARCH-02)
     const levelNum = parseInt(cortex_level.slice(1), 10);
     if (levelNum >= 20) {
-      const blocked = await checkConfidenceFirewall(cortex_level, domain, qdrant);
+      const blocked = await checkConfidenceFirewall(
+        cortex_level,
+        domain,
+        qdrant,
+      );
       if (blocked) {
         return {
           content: [
@@ -276,7 +301,9 @@ export function buildWriteHandler({
     });
 
     return {
-      content: [{ type: 'text' as const, text: `Entry queued for write: ${args.path}` }],
+      content: [
+        { type: 'text' as const, text: `Entry queued for write: ${args.path}` },
+      ],
     };
   };
 }
@@ -291,10 +318,23 @@ export function buildWriteHandler({
  * Declares a typed edge between two Cortex entries via IPC.
  * Self-edges are rejected client-side before writing IPC.
  */
-export function buildRelateHandler({ writeIpc }: { writeIpc: (data: object) => void }) {
-  return async (args: { source: string; target: string; edge_type: string }): Promise<McpResult> => {
+export function buildRelateHandler({
+  writeIpc,
+}: {
+  writeIpc: (data: object) => void;
+}) {
+  return async (args: {
+    source: string;
+    target: string;
+    edge_type: string;
+  }): Promise<McpResult> => {
     if (args.source === args.target) {
-      return { content: [{ type: 'text' as const, text: 'Error: self-edges not allowed' }], isError: true };
+      return {
+        content: [
+          { type: 'text' as const, text: 'Error: self-edges not allowed' },
+        ],
+        isError: true,
+      };
     }
     writeIpc({
       type: 'cortex_relate',
@@ -303,6 +343,13 @@ export function buildRelateHandler({ writeIpc }: { writeIpc: (data: object) => v
       edge_type: args.edge_type,
       timestamp: new Date().toISOString(),
     });
-    return { content: [{ type: 'text' as const, text: `Edge declared: ${args.source} --${args.edge_type}--> ${args.target}` }] };
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Edge declared: ${args.source} --${args.edge_type}--> ${args.target}`,
+        },
+      ],
+    };
   };
 }

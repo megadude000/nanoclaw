@@ -64,7 +64,8 @@ const DECISION_REGEX = new RegExp(
 // ---------------------------------------------------------------------------
 
 /** Patterns that indicate a Rejected decision. */
-const REJECTED_PATTERNS = /\b(not using|instead of|rather than|won't|rejected)\b/i;
+const REJECTED_PATTERNS =
+  /\b(not using|instead of|rather than|won't|rejected)\b/i;
 
 /** Patterns that indicate a Directive (forward-looking mandate). */
 const DIRECTIVE_PATTERNS = /\b(going forward|from now on|mandate|directive)\b/i;
@@ -124,13 +125,10 @@ export async function mineLoreFromHistory(
   qdrant: QdrantClient,
 ): Promise<MiningSummary> {
   // 1. Run git log with full body, no merges
-  const raw = execSync(
-    `git log --format='${GIT_FORMAT}' --all --no-merges`,
-    {
-      cwd: repoDir,
-      maxBuffer: 10 * 1024 * 1024, // 10MB buffer
-    },
-  );
+  const raw = execSync(`git log --format='${GIT_FORMAT}' --all --no-merges`, {
+    cwd: repoDir,
+    maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+  });
 
   const output = raw.toString('utf-8');
   if (!output.trim()) {
@@ -151,7 +149,10 @@ export async function mineLoreFromHistory(
     if (parts.length < 4) continue;
 
     const [hash, subject, date, ...bodyParts] = parts;
-    const body = bodyParts.join('\x00').replace(/\x00+$/, '').trim();
+    const body = bodyParts
+      .join('\x00')
+      .replace(/\x00+$/, '')
+      .trim();
 
     totalCommits++;
 

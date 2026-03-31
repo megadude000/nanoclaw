@@ -15,25 +15,35 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Hoisted mock vars (must be declared with vi.hoisted before vi.mock calls)
 // ---------------------------------------------------------------------------
 
-const { mockQdrantSearch, mockQdrantScroll, mockEmbeddingsCreate, mockFsExistsSync, mockFsReadFileSync, mockWriteIpcFn } =
-  vi.hoisted(() => {
-    const mockQdrantSearch = vi.fn();
-    const mockQdrantScroll = vi.fn();
-    const mockEmbeddingsCreate = vi.fn().mockResolvedValue({
-      data: [{ embedding: new Array(1536).fill(0.1) }],
-    });
-    const mockFsExistsSync = vi.fn().mockReturnValue(true);
-    const mockFsReadFileSync = vi.fn().mockReturnValue('---\ncortex_level: L10\nconfidence: medium\ndomain: nanoclaw\nscope: architecture\n---\ntest content');
-    const mockWriteIpcFn = vi.fn();
-    return {
-      mockQdrantSearch,
-      mockQdrantScroll,
-      mockEmbeddingsCreate,
-      mockFsExistsSync,
-      mockFsReadFileSync,
-      mockWriteIpcFn,
-    };
+const {
+  mockQdrantSearch,
+  mockQdrantScroll,
+  mockEmbeddingsCreate,
+  mockFsExistsSync,
+  mockFsReadFileSync,
+  mockWriteIpcFn,
+} = vi.hoisted(() => {
+  const mockQdrantSearch = vi.fn();
+  const mockQdrantScroll = vi.fn();
+  const mockEmbeddingsCreate = vi.fn().mockResolvedValue({
+    data: [{ embedding: new Array(1536).fill(0.1) }],
   });
+  const mockFsExistsSync = vi.fn().mockReturnValue(true);
+  const mockFsReadFileSync = vi
+    .fn()
+    .mockReturnValue(
+      '---\ncortex_level: L10\nconfidence: medium\ndomain: nanoclaw\nscope: architecture\n---\ntest content',
+    );
+  const mockWriteIpcFn = vi.fn();
+  return {
+    mockQdrantSearch,
+    mockQdrantScroll,
+    mockEmbeddingsCreate,
+    mockFsExistsSync,
+    mockFsReadFileSync,
+    mockWriteIpcFn,
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -137,7 +147,12 @@ describe('buildSearchHandler — MCP-01/SEARCH-01: semantic query routes to Qdra
       {
         id: 'abc123',
         score: 0.92,
-        payload: { file_path: 'Areas/Projects/NanoClaw/ipc.md', cortex_level: 'L20', domain: 'nanoclaw', project: 'nanoclaw' },
+        payload: {
+          file_path: 'Areas/Projects/NanoClaw/ipc.md',
+          cortex_level: 'L20',
+          domain: 'nanoclaw',
+          project: 'nanoclaw',
+        },
       },
     ]);
   });
@@ -194,7 +209,10 @@ describe('buildSearchHandler — MCP-01/SEARCH-01: semantic query routes to Qdra
       }),
     );
     const parsed = JSON.parse(result.content[0].text);
-    expect(parsed[0]).toMatchObject({ path: expect.any(String), score: expect.any(Number) });
+    expect(parsed[0]).toMatchObject({
+      path: expect.any(String),
+      score: expect.any(Number),
+    });
   });
 });
 
@@ -206,7 +224,9 @@ describe('buildSearchHandler — MCP-01/SEARCH-01: vault path query routes to di
   beforeEach(() => {
     vi.clearAllMocks();
     mockFsExistsSync.mockReturnValue(true);
-    mockFsReadFileSync.mockReturnValue('---\ncortex_level: L10\n---\narchitecture content');
+    mockFsReadFileSync.mockReturnValue(
+      '---\ncortex_level: L10\n---\narchitecture content',
+    );
   });
 
   it('does NOT call openai.embeddings.create for vault path query', async () => {
@@ -243,7 +263,9 @@ describe('buildSearchHandler — MCP-01/SEARCH-01: vault path query routes to di
       vaultRoot: VAULT_ROOT,
     });
 
-    const result = await handler({ query: 'Areas/Projects/NanoClaw/architecture.md' });
+    const result = await handler({
+      query: 'Areas/Projects/NanoClaw/architecture.md',
+    });
 
     expect(result.content[0].text).toContain('architecture content');
   });
@@ -266,7 +288,11 @@ describe('buildSearchHandler — SEARCH-03: filter params build correct Qdrant f
       vaultRoot: VAULT_ROOT,
     });
 
-    await handler({ query: 'ipc design', project: 'nanoclaw', cortex_level: 'L10' });
+    await handler({
+      query: 'ipc design',
+      project: 'nanoclaw',
+      cortex_level: 'L10',
+    });
 
     expect(mockQdrantSearch).toHaveBeenCalledWith(
       'cortex-entries',
@@ -307,7 +333,9 @@ describe('buildReadHandler — MCP-02: valid path returns file content', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFsExistsSync.mockReturnValue(true);
-    mockFsReadFileSync.mockReturnValue('---\ncortex_level: L20\n---\ndecisions content');
+    mockFsReadFileSync.mockReturnValue(
+      '---\ncortex_level: L20\n---\ndecisions content',
+    );
   });
 
   it('calls fs.readFileSync with the correct resolved path', async () => {
@@ -324,10 +352,17 @@ describe('buildReadHandler — MCP-02: valid path returns file content', () => {
   it('returns { content: [{ type: "text", text: <file content> }] }', async () => {
     const handler = buildReadHandler({ vaultRoot: VAULT_ROOT });
 
-    const result = await handler({ path: 'Areas/Projects/NanoClaw/decisions.md' });
+    const result = await handler({
+      path: 'Areas/Projects/NanoClaw/decisions.md',
+    });
 
     expect(result).toEqual({
-      content: [{ type: 'text', text: '---\ncortex_level: L20\n---\ndecisions content' }],
+      content: [
+        {
+          type: 'text',
+          text: '---\ncortex_level: L20\n---\ndecisions content',
+        },
+      ],
     });
   });
 });
@@ -370,7 +405,11 @@ describe('checkConfidenceFirewall — SEARCH-02', () => {
   it('returns true (blocked) when qdrant.scroll returns empty points for L20', async () => {
     mockQdrantScroll.mockResolvedValue({ points: [] });
 
-    const blocked = await checkConfidenceFirewall('L20', 'nanoclaw', makeMockQdrant() as never);
+    const blocked = await checkConfidenceFirewall(
+      'L20',
+      'nanoclaw',
+      makeMockQdrant() as never,
+    );
 
     expect(blocked).toBe(true);
   });
@@ -378,7 +417,11 @@ describe('checkConfidenceFirewall — SEARCH-02', () => {
   it('returns false (allowed) when qdrant.scroll returns L10 medium+ points for L20', async () => {
     mockQdrantScroll.mockResolvedValue({ points: [{ id: 'abc' }] });
 
-    const blocked = await checkConfidenceFirewall('L20', 'nanoclaw', makeMockQdrant() as never);
+    const blocked = await checkConfidenceFirewall(
+      'L20',
+      'nanoclaw',
+      makeMockQdrant() as never,
+    );
 
     expect(blocked).toBe(false);
   });
@@ -405,7 +448,11 @@ describe('checkConfidenceFirewall — SEARCH-02', () => {
   });
 
   it('returns false (allowed) for L10 without calling qdrant.scroll', async () => {
-    const blocked = await checkConfidenceFirewall('L10', 'any', makeMockQdrant() as never);
+    const blocked = await checkConfidenceFirewall(
+      'L10',
+      'any',
+      makeMockQdrant() as never,
+    );
 
     expect(blocked).toBe(false);
     expect(mockQdrantScroll).not.toHaveBeenCalled();
@@ -454,7 +501,10 @@ This is the body content of the Cortex test entry.`;
       vaultRoot: VAULT_ROOT,
     });
 
-    const result = await handler({ path: 'Areas/test.md', content: VALID_CONTENT });
+    const result = await handler({
+      path: 'Areas/test.md',
+      content: VALID_CONTENT,
+    });
 
     expect(result.isError).not.toBe(true);
     expect(result.content[0].text).toContain('Areas/test.md');
@@ -484,7 +534,10 @@ Content without confidence field.`;
       vaultRoot: VAULT_ROOT,
     });
 
-    const result = await handler({ path: 'Areas/test.md', content: MISSING_CONFIDENCE });
+    const result = await handler({
+      path: 'Areas/test.md',
+      content: MISSING_CONFIDENCE,
+    });
 
     expect(result.isError).toBe(true);
   });
@@ -529,7 +582,11 @@ describe('buildRelateHandler -- MCP-04', () => {
   it('calls writeIpc with { type: cortex_relate, source, target, edge_type } for valid args', async () => {
     const handler = buildRelateHandler({ writeIpc: mockWriteIpcFn });
 
-    await handler({ source: 'Areas/Projects/A.md', target: 'Areas/Projects/B.md', edge_type: 'REFERENCES' });
+    await handler({
+      source: 'Areas/Projects/A.md',
+      target: 'Areas/Projects/B.md',
+      edge_type: 'REFERENCES',
+    });
 
     expect(mockWriteIpcFn).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -544,7 +601,11 @@ describe('buildRelateHandler -- MCP-04', () => {
   it('returns isError true when source === target', async () => {
     const handler = buildRelateHandler({ writeIpc: mockWriteIpcFn });
 
-    const result = await handler({ source: 'Areas/Projects/A.md', target: 'Areas/Projects/A.md', edge_type: 'REFERENCES' });
+    const result = await handler({
+      source: 'Areas/Projects/A.md',
+      target: 'Areas/Projects/A.md',
+      edge_type: 'REFERENCES',
+    });
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('self-edges not allowed');
@@ -553,7 +614,11 @@ describe('buildRelateHandler -- MCP-04', () => {
   it('does NOT call writeIpc when source === target', async () => {
     const handler = buildRelateHandler({ writeIpc: mockWriteIpcFn });
 
-    await handler({ source: 'Areas/Projects/A.md', target: 'Areas/Projects/A.md', edge_type: 'REFERENCES' });
+    await handler({
+      source: 'Areas/Projects/A.md',
+      target: 'Areas/Projects/A.md',
+      edge_type: 'REFERENCES',
+    });
 
     expect(mockWriteIpcFn).not.toHaveBeenCalled();
   });
@@ -561,7 +626,11 @@ describe('buildRelateHandler -- MCP-04', () => {
   it('returns text containing "--REFERENCES-->" for valid REFERENCES edge', async () => {
     const handler = buildRelateHandler({ writeIpc: mockWriteIpcFn });
 
-    const result = await handler({ source: 'Areas/Projects/A.md', target: 'Areas/Projects/B.md', edge_type: 'REFERENCES' });
+    const result = await handler({
+      source: 'Areas/Projects/A.md',
+      target: 'Areas/Projects/B.md',
+      edge_type: 'REFERENCES',
+    });
 
     expect(result.content[0].text).toContain('--REFERENCES-->');
   });
@@ -578,16 +647,28 @@ describe('buildSearchHandler -- GRAPH-02: graph-augmented results', () => {
       {
         id: 'abc123',
         score: 0.92,
-        payload: { file_path: 'Areas/Projects/NanoClaw/ipc.md', cortex_level: 'L20', domain: 'nanoclaw', project: 'nanoclaw' },
+        payload: {
+          file_path: 'Areas/Projects/NanoClaw/ipc.md',
+          cortex_level: 'L20',
+          domain: 'nanoclaw',
+          project: 'nanoclaw',
+        },
       },
     ]);
   });
 
   it('semantic results include related array when graphIndex provided', async () => {
     const graphIndex = new Map([
-      ['Areas/Projects/NanoClaw/ipc.md', [
-        { path: 'Areas/Projects/NanoClaw/architecture.md', type: 'REFERENCES', direction: 'outgoing' as const },
-      ]],
+      [
+        'Areas/Projects/NanoClaw/ipc.md',
+        [
+          {
+            path: 'Areas/Projects/NanoClaw/architecture.md',
+            type: 'REFERENCES',
+            direction: 'outgoing' as const,
+          },
+        ],
+      ],
     ]);
 
     const handler = buildSearchHandler({
@@ -601,7 +682,11 @@ describe('buildSearchHandler -- GRAPH-02: graph-augmented results', () => {
     const parsed = JSON.parse(result.content[0].text);
 
     expect(parsed[0].related).toEqual([
-      { path: 'Areas/Projects/NanoClaw/architecture.md', type: 'REFERENCES', direction: 'outgoing' },
+      {
+        path: 'Areas/Projects/NanoClaw/architecture.md',
+        type: 'REFERENCES',
+        direction: 'outgoing',
+      },
     ]);
   });
 
@@ -619,12 +704,21 @@ describe('buildSearchHandler -- GRAPH-02: graph-augmented results', () => {
   });
 
   it('vault path query returns file content without related field', async () => {
-    mockFsReadFileSync.mockReturnValue('---\ncortex_level: L10\n---\narchitecture content');
+    mockFsReadFileSync.mockReturnValue(
+      '---\ncortex_level: L10\n---\narchitecture content',
+    );
 
     const graphIndex = new Map([
-      ['Areas/Projects/NanoClaw/architecture.md', [
-        { path: 'Areas/Projects/NanoClaw/ipc.md', type: 'BUILT_FROM', direction: 'incoming' as const },
-      ]],
+      [
+        'Areas/Projects/NanoClaw/architecture.md',
+        [
+          {
+            path: 'Areas/Projects/NanoClaw/ipc.md',
+            type: 'BUILT_FROM',
+            direction: 'incoming' as const,
+          },
+        ],
+      ],
     ]);
 
     const handler = buildSearchHandler({
@@ -634,7 +728,9 @@ describe('buildSearchHandler -- GRAPH-02: graph-augmented results', () => {
       graphIndex,
     });
 
-    const result = await handler({ query: 'Areas/Projects/NanoClaw/architecture.md' });
+    const result = await handler({
+      query: 'Areas/Projects/NanoClaw/architecture.md',
+    });
 
     // Vault path returns raw content, not JSON with related
     expect(result.content[0].text).toContain('architecture content');

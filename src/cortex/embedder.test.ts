@@ -15,7 +15,8 @@ const { mockMatterFn, mockMatterStringify } = vi.hoisted(() => {
   const mockMatterStringify = vi.fn();
   const mockMatterFn = vi.fn();
   // Attach stringify as a static method on the mock function
-  (mockMatterFn as unknown as Record<string, unknown>).stringify = mockMatterStringify;
+  (mockMatterFn as unknown as Record<string, unknown>).stringify =
+    mockMatterStringify;
   return { mockMatterFn, mockMatterStringify };
 });
 
@@ -36,7 +37,10 @@ vi.mock('../env.js', () => ({
 }));
 
 vi.mock('openai', () => ({
-  default: vi.fn().mockImplementation(function (this: Record<string, unknown>, opts: { apiKey: string }) {
+  default: vi.fn().mockImplementation(function (
+    this: Record<string, unknown>,
+    opts: { apiKey: string },
+  ) {
     this.apiKey = opts.apiKey;
     this.embeddings = {
       create: vi.fn().mockResolvedValue({
@@ -73,7 +77,11 @@ import { readFileSync, writeFileSync } from 'node:fs';
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeMockEntry(overrides?: { frontmatter?: Record<string, unknown>; content?: string; validation?: Record<string, unknown> }) {
+function makeMockEntry(overrides?: {
+  frontmatter?: Record<string, unknown>;
+  content?: string;
+  validation?: Record<string, unknown>;
+}) {
   const base = {
     filePath: '/home/user/cortex/Areas/Projects/NanoClaw/arch.md',
     frontmatter: {
@@ -85,7 +93,8 @@ function makeMockEntry(overrides?: { frontmatter?: Record<string, unknown>; cont
       status: 'active',
       ...(overrides?.frontmatter ?? {}),
     },
-    content: 'This is the body content of the Cortex entry for testing purposes.',
+    content:
+      'This is the body content of the Cortex entry for testing purposes.',
     sourceHash: 'abc123deadbeef',
     validation: {
       valid: true,
@@ -127,8 +136,12 @@ function makeMockOpenAI() {
 
 describe('deterministicId', () => {
   it('produces a UUID-formatted string', () => {
-    const id = deterministicId('/home/user/cortex/Areas/Projects/NanoClaw/arch.md');
-    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    const id = deterministicId(
+      '/home/user/cortex/Areas/Projects/NanoClaw/arch.md',
+    );
+    expect(id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
   });
 
   it('produces the same ID for the same path (stable)', () => {
@@ -137,8 +150,12 @@ describe('deterministicId', () => {
   });
 
   it('strips prefix before cortex/ so relative path drives the ID', () => {
-    const id1 = deterministicId('/home/user/cortex/Areas/Projects/NanoClaw/arch.md');
-    const id2 = deterministicId('/different/prefix/cortex/Areas/Projects/NanoClaw/arch.md');
+    const id1 = deterministicId(
+      '/home/user/cortex/Areas/Projects/NanoClaw/arch.md',
+    );
+    const id2 = deterministicId(
+      '/different/prefix/cortex/Areas/Projects/NanoClaw/arch.md',
+    );
     expect(id1).toBe(id2);
   });
 
@@ -159,8 +176,13 @@ describe('updateFrontmatter', () => {
   });
 
   it('writes source_hash and embedding_model into frontmatter', () => {
-    vi.mocked(readFileSync).mockReturnValue('---\nkey: value\n---\nBody content.');
-    mockMatterFn.mockReturnValue({ data: { key: 'value' }, content: '\nBody content.' });
+    vi.mocked(readFileSync).mockReturnValue(
+      '---\nkey: value\n---\nBody content.',
+    );
+    mockMatterFn.mockReturnValue({
+      data: { key: 'value' },
+      content: '\nBody content.',
+    });
     mockMatterStringify.mockReturnValue(
       '---\nkey: value\nsource_hash: abc123\nembedding_model: text-embedding-3-small\n---\nBody content.',
     );
@@ -187,7 +209,11 @@ describe('updateFrontmatter', () => {
 
     updateFrontmatter('/path/to/file.md', { source_hash: 'hash' });
 
-    expect(writeFileSync).toHaveBeenCalledWith('/path/to/file.md', updatedFile, 'utf-8');
+    expect(writeFileSync).toHaveBeenCalledWith(
+      '/path/to/file.md',
+      updatedFile,
+      'utf-8',
+    );
   });
 });
 
@@ -221,14 +247,21 @@ describe('embedEntry', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default matter mock for updateFrontmatter calls in embedEntry
-    vi.mocked(readFileSync).mockReturnValue('---\nkey: value\n---\nBody content.');
-    mockMatterFn.mockReturnValue({ data: { key: 'value' }, content: '\nBody content.' });
+    vi.mocked(readFileSync).mockReturnValue(
+      '---\nkey: value\n---\nBody content.',
+    );
+    mockMatterFn.mockReturnValue({
+      data: { key: 'value' },
+      content: '\nBody content.',
+    });
     mockMatterStringify.mockReturnValue('---\nkey: value\n---\nBody content.');
   });
 
   it('returns embedded status after successful OpenAI call + Qdrant upsert', async () => {
     const entry = makeMockEntry();
-    vi.mocked(parseCortexEntry).mockReturnValue(entry as ReturnType<typeof parseCortexEntry>);
+    vi.mocked(parseCortexEntry).mockReturnValue(
+      entry as ReturnType<typeof parseCortexEntry>,
+    );
     const openai = makeMockOpenAI();
     const qdrant = makeMockQdrant();
 
@@ -264,12 +297,20 @@ describe('embedEntry', () => {
   });
 
   it('returns skipped when source_hash matches (content unchanged)', async () => {
-    const entry = makeMockEntry({ frontmatter: { source_hash: 'abc123deadbeef' } });
-    vi.mocked(parseCortexEntry).mockReturnValue(entry as ReturnType<typeof parseCortexEntry>);
+    const entry = makeMockEntry({
+      frontmatter: { source_hash: 'abc123deadbeef' },
+    });
+    vi.mocked(parseCortexEntry).mockReturnValue(
+      entry as ReturnType<typeof parseCortexEntry>,
+    );
     const openai = makeMockOpenAI();
     const qdrant = makeMockQdrant();
 
-    const result = await embedEntry(entry.filePath, openai as never, qdrant as never);
+    const result = await embedEntry(
+      entry.filePath,
+      openai as never,
+      qdrant as never,
+    );
 
     expect(result.status).toBe('skipped');
     expect(result.reason).toBe('content unchanged');
@@ -278,8 +319,12 @@ describe('embedEntry', () => {
   });
 
   it('embeds even when hash matches when force:true is passed', async () => {
-    const entry = makeMockEntry({ frontmatter: { source_hash: 'abc123deadbeef' } });
-    vi.mocked(parseCortexEntry).mockReturnValue(entry as ReturnType<typeof parseCortexEntry>);
+    const entry = makeMockEntry({
+      frontmatter: { source_hash: 'abc123deadbeef' },
+    });
+    vi.mocked(parseCortexEntry).mockReturnValue(
+      entry as ReturnType<typeof parseCortexEntry>,
+    );
     const openai = makeMockOpenAI();
     const qdrant = makeMockQdrant();
 
@@ -296,11 +341,17 @@ describe('embedEntry', () => {
 
   it('returns skipped when content body is shorter than 50 chars', async () => {
     const entry = makeMockEntry({ content: 'Short.' });
-    vi.mocked(parseCortexEntry).mockReturnValue(entry as ReturnType<typeof parseCortexEntry>);
+    vi.mocked(parseCortexEntry).mockReturnValue(
+      entry as ReturnType<typeof parseCortexEntry>,
+    );
     const openai = makeMockOpenAI();
     const qdrant = makeMockQdrant();
 
-    const result = await embedEntry(entry.filePath, openai as never, qdrant as never);
+    const result = await embedEntry(
+      entry.filePath,
+      openai as never,
+      qdrant as never,
+    );
 
     expect(result.status).toBe('skipped');
     expect(result.reason).toBe('content too short');
@@ -311,16 +362,27 @@ describe('embedEntry', () => {
     const entry = makeMockEntry({
       validation: {
         valid: false,
-        data: { cortex_level: 'L20', confidence: 'medium', domain: 'nanoclaw', scope: 'architecture' },
+        data: {
+          cortex_level: 'L20',
+          confidence: 'medium',
+          domain: 'nanoclaw',
+          scope: 'architecture',
+        },
         warnings: [],
         errors: ['cortex_level: Required'],
       },
     });
-    vi.mocked(parseCortexEntry).mockReturnValue(entry as ReturnType<typeof parseCortexEntry>);
+    vi.mocked(parseCortexEntry).mockReturnValue(
+      entry as ReturnType<typeof parseCortexEntry>,
+    );
     const openai = makeMockOpenAI();
     const qdrant = makeMockQdrant();
 
-    const result = await embedEntry(entry.filePath, openai as never, qdrant as never);
+    const result = await embedEntry(
+      entry.filePath,
+      openai as never,
+      qdrant as never,
+    );
 
     expect(result.status).toBe('error');
     expect(result.reason).toContain('cortex_level');
@@ -328,12 +390,18 @@ describe('embedEntry', () => {
 
   it('returns error status when OpenAI call throws', async () => {
     const entry = makeMockEntry();
-    vi.mocked(parseCortexEntry).mockReturnValue(entry as ReturnType<typeof parseCortexEntry>);
+    vi.mocked(parseCortexEntry).mockReturnValue(
+      entry as ReturnType<typeof parseCortexEntry>,
+    );
     const openai = makeMockOpenAI();
     openai.embeddings.create.mockRejectedValue(new Error('OpenAI API error'));
     const qdrant = makeMockQdrant();
 
-    const result = await embedEntry(entry.filePath, openai as never, qdrant as never);
+    const result = await embedEntry(
+      entry.filePath,
+      openai as never,
+      qdrant as never,
+    );
 
     expect(result.status).toBe('error');
     expect(result.reason).toContain('OpenAI API error');
@@ -341,7 +409,9 @@ describe('embedEntry', () => {
 
   it('writes source_hash and embedding_model back to frontmatter after successful embed', async () => {
     const entry = makeMockEntry();
-    vi.mocked(parseCortexEntry).mockReturnValue(entry as ReturnType<typeof parseCortexEntry>);
+    vi.mocked(parseCortexEntry).mockReturnValue(
+      entry as ReturnType<typeof parseCortexEntry>,
+    );
     const openai = makeMockOpenAI();
     const qdrant = makeMockQdrant();
 

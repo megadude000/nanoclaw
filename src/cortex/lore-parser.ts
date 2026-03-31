@@ -54,10 +54,7 @@ export interface LoreAtom {
  * @param since - Optional date filter (e.g., '2026-01-01')
  * @returns Array of LoreAtom objects
  */
-export function parseLoreFromGit(
-  repoDir: string,
-  since?: string,
-): LoreAtom[] {
+export function parseLoreFromGit(repoDir: string, since?: string): LoreAtom[] {
   const args = ['git', 'log', `--format=${GIT_FORMAT}`];
   if (since) args.push(`--since=${since}`);
 

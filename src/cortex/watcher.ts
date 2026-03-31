@@ -105,9 +105,7 @@ export async function startCortexWatcher(cortexDir: string): Promise<void> {
   // Guard: check OPENAI_API_KEY via readEnvFile
   const env = readEnvFile(['OPENAI_API_KEY']);
   if (!env.OPENAI_API_KEY) {
-    logger.warn(
-      'Cortex watcher disabled: OPENAI_API_KEY not found in .env',
-    );
+    logger.warn('Cortex watcher disabled: OPENAI_API_KEY not found in .env');
     return;
   }
 
@@ -155,10 +153,7 @@ export async function startCortexWatcher(cortexDir: string): Promise<void> {
     }, DEBOUNCE_MS);
   });
 
-  logger.info(
-    { cortexDir, debounceMs: DEBOUNCE_MS },
-    'Cortex watcher started',
-  );
+  logger.info({ cortexDir, debounceMs: DEBOUNCE_MS }, 'Cortex watcher started');
 }
 
 // ---------------------------------------------------------------------------

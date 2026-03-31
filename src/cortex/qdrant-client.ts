@@ -30,7 +30,9 @@ export function createQdrantClient(): QdrantClient {
  *
  * @returns true if Qdrant responds within the retry budget, false otherwise.
  */
-export async function checkQdrantHealth(client: QdrantClient): Promise<boolean> {
+export async function checkQdrantHealth(
+  client: QdrantClient,
+): Promise<boolean> {
   for (let attempt = 1; attempt <= HEALTH_MAX_ATTEMPTS; attempt++) {
     try {
       await client.getCollections();
@@ -42,7 +44,9 @@ export async function checkQdrantHealth(client: QdrantClient): Promise<boolean> 
           { attempt, maxAttempts: HEALTH_MAX_ATTEMPTS, err },
           'Qdrant health check failed, retrying',
         );
-        await new Promise((resolve) => setTimeout(resolve, HEALTH_RETRY_DELAY_MS));
+        await new Promise((resolve) =>
+          setTimeout(resolve, HEALTH_RETRY_DELAY_MS),
+        );
       } else {
         logger.warn(
           { attempt, maxAttempts: HEALTH_MAX_ATTEMPTS, err },

@@ -211,15 +211,27 @@ describe('markStaleEntries', () => {
   });
 
   it('writes stale: true to frontmatter and returns 1', () => {
-    mockReadFileSync.mockReturnValue('---\ncortex_level: L10\n---\nbody' as any);
-    mockMatter.mockReturnValue({ data: { cortex_level: 'L10' }, content: 'body' });
-    mockMatter.stringify.mockReturnValue('---\ncortex_level: L10\nstale: true\n---\nbody');
+    mockReadFileSync.mockReturnValue(
+      '---\ncortex_level: L10\n---\nbody' as any,
+    );
+    mockMatter.mockReturnValue({
+      data: { cortex_level: 'L10' },
+      content: 'body',
+    });
+    mockMatter.stringify.mockReturnValue(
+      '---\ncortex_level: L10\nstale: true\n---\nbody',
+    );
 
     const count = markStaleEntries([makeStale('/cortex/old.md')]);
 
     expect(count).toBe(1);
-    expect(mockMatter).toHaveBeenCalledWith('---\ncortex_level: L10\n---\nbody');
-    expect(mockMatter.stringify).toHaveBeenCalledWith('body', { cortex_level: 'L10', stale: true });
+    expect(mockMatter).toHaveBeenCalledWith(
+      '---\ncortex_level: L10\n---\nbody',
+    );
+    expect(mockMatter.stringify).toHaveBeenCalledWith('body', {
+      cortex_level: 'L10',
+      stale: true,
+    });
     expect(mockWriteFileSync).toHaveBeenCalledWith(
       '/cortex/old.md',
       '---\ncortex_level: L10\nstale: true\n---\nbody',
@@ -237,7 +249,9 @@ describe('markStaleEntries', () => {
   });
 
   it('logs warning and skips file when readFileSync throws', () => {
-    mockReadFileSync.mockImplementation(() => { throw new Error('ENOENT'); });
+    mockReadFileSync.mockImplementation(() => {
+      throw new Error('ENOENT');
+    });
 
     const count = markStaleEntries([makeStale('/cortex/missing.md')]);
 
@@ -246,9 +260,16 @@ describe('markStaleEntries', () => {
   });
 
   it('marks multiple files and returns correct count', () => {
-    mockReadFileSync.mockReturnValue('---\ncortex_level: L20\n---\nbody' as any);
-    mockMatter.mockImplementation(() => ({ data: { cortex_level: 'L20' }, content: 'body' }));
-    mockMatter.stringify.mockReturnValue('---\ncortex_level: L20\nstale: true\n---\nbody');
+    mockReadFileSync.mockReturnValue(
+      '---\ncortex_level: L20\n---\nbody' as any,
+    );
+    mockMatter.mockImplementation(() => ({
+      data: { cortex_level: 'L20' },
+      content: 'body',
+    }));
+    mockMatter.stringify.mockReturnValue(
+      '---\ncortex_level: L20\nstale: true\n---\nbody',
+    );
 
     const count = markStaleEntries([
       makeStale('/cortex/a.md'),
@@ -466,8 +487,13 @@ describe('runReconciliation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // markStaleEntries deps: default to no-op
-    mockReadFileSync.mockReturnValue('---\ncortex_level: L10\n---\nbody' as any);
-    mockMatter.mockReturnValue({ data: { cortex_level: 'L10' }, content: 'body' });
+    mockReadFileSync.mockReturnValue(
+      '---\ncortex_level: L10\n---\nbody' as any,
+    );
+    mockMatter.mockReturnValue({
+      data: { cortex_level: 'L10' },
+      content: 'body',
+    });
     mockMatter.stringify.mockReturnValue('---\nstale: true\n---\nbody');
   });
 
@@ -553,8 +579,13 @@ describe('runReconciliation — lore mining step', () => {
     mockBuildIndex.mockReturnValue(new Map());
     mockMineLoreFromHistory.mockResolvedValue(miningSummary);
     // markStaleEntries deps: no stale entries so no file writes
-    mockReadFileSync.mockReturnValue('---\ncortex_level: L10\n---\nbody' as any);
-    mockMatter.mockReturnValue({ data: { cortex_level: 'L10' }, content: 'body' });
+    mockReadFileSync.mockReturnValue(
+      '---\ncortex_level: L10\n---\nbody' as any,
+    );
+    mockMatter.mockReturnValue({
+      data: { cortex_level: 'L10' },
+      content: 'body',
+    });
     mockMatter.stringify.mockReturnValue('---\nstale: true\n---\nbody');
   });
 

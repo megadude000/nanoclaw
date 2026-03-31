@@ -12,7 +12,13 @@
  */
 
 import { z } from 'zod';
-import { existsSync, readFileSync, writeFileSync, mkdirSync, renameSync } from 'node:fs';
+import {
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  renameSync,
+} from 'node:fs';
 import path from 'node:path';
 
 // ---------------------------------------------------------------------------
@@ -131,7 +137,10 @@ export function buildIndex(graph: CortexGraph): GraphIndex {
 /**
  * Get all neighbors for an entry path. Returns empty array if not in index.
  */
-export function getNeighbors(index: GraphIndex, entryPath: string): NeighborEntry[] {
+export function getNeighbors(
+  index: GraphIndex,
+  entryPath: string,
+): NeighborEntry[] {
   return index.get(entryPath) ?? [];
 }
 

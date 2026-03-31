@@ -7,7 +7,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generateProjectEntries, type VaultDoc } from './multi-project-bootstrap.js';
+import {
+  generateProjectEntries,
+  type VaultDoc,
+} from './multi-project-bootstrap.js';
 import { buildSearchHandler } from './cortex-mcp-tools.js';
 
 // ---------------------------------------------------------------------------
@@ -74,7 +77,10 @@ describe('multi-project bootstrap', () => {
     });
 
     it('every entry from contentfactory has frontmatter.project === "contentfactory"', () => {
-      const entries = generateProjectEntries('contentfactory', CONTENTFACTORY_DOCS);
+      const entries = generateProjectEntries(
+        'contentfactory',
+        CONTENTFACTORY_DOCS,
+      );
       expect(entries.length).toBeGreaterThan(0);
       for (const entry of entries) {
         expect(entry.frontmatter.project).toBe('contentfactory');
@@ -106,7 +112,10 @@ describe('multi-project bootstrap', () => {
     });
 
     it('each entry has domain matching project slug', () => {
-      const entries = generateProjectEntries('contentfactory', CONTENTFACTORY_DOCS);
+      const entries = generateProjectEntries(
+        'contentfactory',
+        CONTENTFACTORY_DOCS,
+      );
       for (const entry of entries) {
         expect(entry.frontmatter.domain).toBe('contentfactory');
       }
@@ -148,35 +157,42 @@ describe('multi-project bootstrap', () => {
   describe('cortex_level assignment', () => {
     it('architecture doc gets cortex_level L20', () => {
       const entries = generateProjectEntries('nightshift', NIGHTSHIFT_DOCS);
-      const archEntry = entries.find(e => e.filename.includes('architecture'));
+      const archEntry = entries.find((e) =>
+        e.filename.includes('architecture'),
+      );
       expect(archEntry).toBeDefined();
       expect(archEntry!.frontmatter.cortex_level).toBe('L20');
     });
 
     it('spec doc gets cortex_level L20', () => {
       const entries = generateProjectEntries('yourwave', YOURWAVE_DOCS);
-      const specEntry = entries.find(e => e.filename.includes('spec'));
+      const specEntry = entries.find((e) => e.filename.includes('spec'));
       expect(specEntry).toBeDefined();
       expect(specEntry!.frontmatter.cortex_level).toBe('L20');
     });
 
     it('cron doc gets cortex_level L20', () => {
       const entries = generateProjectEntries('nightshift', NIGHTSHIFT_DOCS);
-      const cronEntry = entries.find(e => e.filename.includes('cron'));
+      const cronEntry = entries.find((e) => e.filename.includes('cron'));
       expect(cronEntry).toBeDefined();
       expect(cronEntry!.frontmatter.cortex_level).toBe('L20');
     });
 
     it('pipeline doc gets cortex_level L20', () => {
-      const entries = generateProjectEntries('contentfactory', CONTENTFACTORY_DOCS);
-      const pipelineEntry = entries.find(e => e.filename.includes('pipeline'));
+      const entries = generateProjectEntries(
+        'contentfactory',
+        CONTENTFACTORY_DOCS,
+      );
+      const pipelineEntry = entries.find((e) =>
+        e.filename.includes('pipeline'),
+      );
       expect(pipelineEntry).toBeDefined();
       expect(pipelineEntry!.frontmatter.cortex_level).toBe('L20');
     });
 
     it('market doc gets cortex_level L10 (not architecture/spec/pipeline/cron)', () => {
       const entries = generateProjectEntries('yourwave', YOURWAVE_DOCS);
-      const marketEntry = entries.find(e => e.filename.includes('market'));
+      const marketEntry = entries.find((e) => e.filename.includes('market'));
       expect(marketEntry).toBeDefined();
       expect(marketEntry!.frontmatter.cortex_level).toBe('L10');
     });
@@ -234,7 +250,10 @@ describe('multi-project bootstrap', () => {
     });
 
     it('each entry vaultPath ends with .md', () => {
-      const entries = generateProjectEntries('contentfactory', CONTENTFACTORY_DOCS);
+      const entries = generateProjectEntries(
+        'contentfactory',
+        CONTENTFACTORY_DOCS,
+      );
       for (const entry of entries) {
         expect(entry.vaultPath).toMatch(/\.md$/);
       }
@@ -289,7 +308,9 @@ describe('project filter scoping', () => {
 
     expect(mockSearch).toHaveBeenCalledOnce();
     const callArgs = mockSearch.mock.calls[0];
-    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    const searchArgs = callArgs[1] as {
+      filter?: { must?: Array<{ key: string; match: { value: string } }> };
+    };
     expect(searchArgs.filter).toBeDefined();
     expect(searchArgs.filter!.must).toEqual(
       expect.arrayContaining([
@@ -309,7 +330,9 @@ describe('project filter scoping', () => {
 
     expect(mockSearch).toHaveBeenCalledOnce();
     const callArgs = mockSearch.mock.calls[0];
-    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    const searchArgs = callArgs[1] as {
+      filter?: { must?: Array<{ key: string; match: { value: string } }> };
+    };
     expect(searchArgs.filter).toBeDefined();
     expect(searchArgs.filter!.must).toEqual(
       expect.arrayContaining([
@@ -328,7 +351,9 @@ describe('project filter scoping', () => {
     await handler({ query: 'reconciliation', project: 'nightshift' });
 
     const callArgs = mockSearch.mock.calls[0];
-    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    const searchArgs = callArgs[1] as {
+      filter?: { must?: Array<{ key: string; match: { value: string } }> };
+    };
     const mustConditions = searchArgs.filter?.must ?? [];
     const hasContentFactory = mustConditions.some(
       (c) => c.key === 'project' && c.match.value === 'contentfactory',
@@ -346,7 +371,9 @@ describe('project filter scoping', () => {
     await handler({ query: 'subscription model', project: 'yourwave' });
 
     const callArgs = mockSearch.mock.calls[0];
-    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    const searchArgs = callArgs[1] as {
+      filter?: { must?: Array<{ key: string; match: { value: string } }> };
+    };
     const mustConditions = searchArgs.filter?.must ?? [];
     const hasNightshift = mustConditions.some(
       (c) => c.key === 'project' && c.match.value === 'nightshift',
@@ -364,7 +391,9 @@ describe('project filter scoping', () => {
     await handler({ query: 'knowledge base' });
 
     const callArgs = mockSearch.mock.calls[0];
-    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    const searchArgs = callArgs[1] as {
+      filter?: { must?: Array<{ key: string; match: { value: string } }> };
+    };
     // No project filter means either filter is undefined or must array has no project key
     const mustConditions = searchArgs.filter?.must ?? [];
     const hasProjectFilter = mustConditions.some((c) => c.key === 'project');
@@ -378,10 +407,16 @@ describe('project filter scoping', () => {
       vaultRoot: '/tmp/vault',
     });
 
-    await handler({ query: 'architecture', project: 'yourwave', cortex_level: 'L20' });
+    await handler({
+      query: 'architecture',
+      project: 'yourwave',
+      cortex_level: 'L20',
+    });
 
     const callArgs = mockSearch.mock.calls[0];
-    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    const searchArgs = callArgs[1] as {
+      filter?: { must?: Array<{ key: string; match: { value: string } }> };
+    };
     const mustConditions = searchArgs.filter?.must ?? [];
     expect(mustConditions).toEqual(
       expect.arrayContaining([
@@ -398,10 +433,16 @@ describe('project filter scoping', () => {
       vaultRoot: '/tmp/vault',
     });
 
-    await handler({ query: 'operations', project: 'yourwave', domain: 'yourwave' });
+    await handler({
+      query: 'operations',
+      project: 'yourwave',
+      domain: 'yourwave',
+    });
 
     const callArgs = mockSearch.mock.calls[0];
-    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    const searchArgs = callArgs[1] as {
+      filter?: { must?: Array<{ key: string; match: { value: string } }> };
+    };
     const mustConditions = searchArgs.filter?.must ?? [];
     expect(mustConditions).toEqual(
       expect.arrayContaining([

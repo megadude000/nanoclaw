@@ -27,7 +27,7 @@ export interface GeneratedEntry {
   filename: string;
   vaultPath: string;
   content: string; // full file content with YAML frontmatter + body
-  body: string;    // markdown body only (no frontmatter)
+  body: string; // markdown body only (no frontmatter)
   level: 'L10' | 'L20' | 'L40';
   frontmatter: {
     cortex_level: 'L10' | 'L20' | 'L40';
@@ -77,16 +77,28 @@ export const PROJECT_PASCAL: Record<ProjectSlug, string> = {
  */
 export function inferCategory(filename: string): string {
   const name = filename.toLowerCase().replace(/\.md$/, '');
-  if (name.includes('platform') || name.includes('spec') || name.includes('architecture')) {
+  if (
+    name.includes('platform') ||
+    name.includes('spec') ||
+    name.includes('architecture')
+  ) {
     return 'platform';
   }
   if (name.includes('ops') || name.includes('cron') || name.includes('legal')) {
     return 'ops';
   }
-  if (name.includes('atlas') || name.includes('pipeline') || name.includes('content')) {
+  if (
+    name.includes('atlas') ||
+    name.includes('pipeline') ||
+    name.includes('content')
+  ) {
     return 'content';
   }
-  if (name.includes('market') || name.includes('branding') || name.includes('brand')) {
+  if (
+    name.includes('market') ||
+    name.includes('branding') ||
+    name.includes('brand')
+  ) {
     return 'market';
   }
   return 'core';
@@ -148,7 +160,9 @@ export function generateProjectEntries(
 
     // Truncate oversized bodies to stay within OpenAI 8192 token limit
     if (body.length > MAX_CONTENT_LENGTH) {
-      body = body.slice(0, MAX_CONTENT_LENGTH) + '\n\n[truncated — source document exceeds embedding token limit]';
+      body =
+        body.slice(0, MAX_CONTENT_LENGTH) +
+        '\n\n[truncated — source document exceeds embedding token limit]';
     }
 
     const level = classifyLevel(doc.filename);

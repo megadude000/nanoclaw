@@ -14,29 +14,41 @@ import type { FSWatcher } from 'node:fs';
 // Hoisted mock vars
 // ---------------------------------------------------------------------------
 
-const { mockWatchCallback, mockFsWatcherClose, mockFsWatcher } = vi.hoisted(() => {
-  let mockWatchCallback: ((event: string, filename: string | null) => void) | null = null;
-  const mockFsWatcherClose = vi.fn();
-  const mockFsWatcher = {
-    close: mockFsWatcherClose,
-  } as unknown as FSWatcher;
-  return { mockWatchCallback, mockFsWatcherClose, mockFsWatcher };
-});
+const { mockWatchCallback, mockFsWatcherClose, mockFsWatcher } = vi.hoisted(
+  () => {
+    let mockWatchCallback:
+      | ((event: string, filename: string | null) => void)
+      | null = null;
+    const mockFsWatcherClose = vi.fn();
+    const mockFsWatcher = {
+      close: mockFsWatcherClose,
+    } as unknown as FSWatcher;
+    return { mockWatchCallback, mockFsWatcherClose, mockFsWatcher };
+  },
+);
 
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
 
 vi.mock('node:fs', () => ({
-  watch: vi.fn((dir: string, opts: object, callback: (event: string, filename: string | null) => void) => {
-    // Store callback for test access
-    (globalThis as Record<string, unknown>).__mockWatchCallback = callback;
-    return mockFsWatcher;
-  }),
+  watch: vi.fn(
+    (
+      dir: string,
+      opts: object,
+      callback: (event: string, filename: string | null) => void,
+    ) => {
+      // Store callback for test access
+      (globalThis as Record<string, unknown>).__mockWatchCallback = callback;
+      return mockFsWatcher;
+    },
+  ),
 }));
 
 vi.mock('./embedder.js', () => ({
-  embedEntry: vi.fn().mockResolvedValue({ status: 'embedded', filePath: '/cortex/test.md' }),
+  embedEntry: vi
+    .fn()
+    .mockResolvedValue({ status: 'embedded', filePath: '/cortex/test.md' }),
   createOpenAIClient: vi.fn().mockReturnValue({ mock: 'openai' }),
 }));
 
@@ -63,7 +75,11 @@ vi.mock('../logger.js', () => ({
 // ---------------------------------------------------------------------------
 
 import { watch } from 'node:fs';
-import { startCortexWatcher, stopCortexWatcher, getInFlightFiles } from './watcher.js';
+import {
+  startCortexWatcher,
+  stopCortexWatcher,
+  getInFlightFiles,
+} from './watcher.js';
 import { embedEntry } from './embedder.js';
 import { checkQdrantHealth } from './qdrant-client.js';
 import { readEnvFile } from '../env.js';
@@ -93,7 +109,10 @@ describe('startCortexWatcher', () => {
     // Re-setup default mocks
     vi.mocked(readEnvFile).mockReturnValue({ OPENAI_API_KEY: 'sk-test-key' });
     vi.mocked(checkQdrantHealth).mockResolvedValue(true);
-    vi.mocked(embedEntry).mockResolvedValue({ status: 'embedded', filePath: '/cortex/test.md' });
+    vi.mocked(embedEntry).mockResolvedValue({
+      status: 'embedded',
+      filePath: '/cortex/test.md',
+    });
   });
 
   afterEach(() => {
@@ -137,9 +156,7 @@ describe('startCortexWatcher', () => {
     await startCortexWatcher('/home/user/cortex');
 
     expect(watch).not.toHaveBeenCalled();
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining('Qdrant'),
-    );
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Qdrant'));
   });
 });
 
@@ -150,7 +167,10 @@ describe('file change filtering', () => {
     (globalThis as Record<string, unknown>).__mockWatchCallback = null;
     vi.mocked(readEnvFile).mockReturnValue({ OPENAI_API_KEY: 'sk-test-key' });
     vi.mocked(checkQdrantHealth).mockResolvedValue(true);
-    vi.mocked(embedEntry).mockResolvedValue({ status: 'embedded', filePath: '/cortex/test.md' });
+    vi.mocked(embedEntry).mockResolvedValue({
+      status: 'embedded',
+      filePath: '/cortex/test.md',
+    });
   });
 
   afterEach(() => {
@@ -227,7 +247,10 @@ describe('inFlightFiles self-trigger prevention', () => {
     (globalThis as Record<string, unknown>).__mockWatchCallback = null;
     vi.mocked(readEnvFile).mockReturnValue({ OPENAI_API_KEY: 'sk-test-key' });
     vi.mocked(checkQdrantHealth).mockResolvedValue(true);
-    vi.mocked(embedEntry).mockResolvedValue({ status: 'embedded', filePath: '/cortex/test.md' });
+    vi.mocked(embedEntry).mockResolvedValue({
+      status: 'embedded',
+      filePath: '/cortex/test.md',
+    });
   });
 
   afterEach(() => {
@@ -289,7 +312,10 @@ describe('stopCortexWatcher', () => {
   });
 
   it('cancels the debounce timer so no embedEntry is called after stop', async () => {
-    vi.mocked(embedEntry).mockResolvedValue({ status: 'embedded', filePath: '/cortex/test.md' });
+    vi.mocked(embedEntry).mockResolvedValue({
+      status: 'embedded',
+      filePath: '/cortex/test.md',
+    });
     await startCortexWatcher('/home/user/cortex');
 
     simulateFileChange('change', 'Areas/test.md');

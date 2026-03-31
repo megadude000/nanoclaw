@@ -229,7 +229,10 @@ describe('indexLoreAtoms', () => {
   });
 
   it('calls embedEntry for each file path', async () => {
-    const paths = ['/cortex/Lore/abc1234-constraint.md', '/cortex/Lore/def5678-rejected.md'];
+    const paths = [
+      '/cortex/Lore/abc1234-constraint.md',
+      '/cortex/Lore/def5678-rejected.md',
+    ];
     mockEmbedEntry.mockResolvedValue({ status: 'embedded', filePath: '' });
 
     const mockOpenAI = {} as unknown;

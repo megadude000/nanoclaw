@@ -57,7 +57,12 @@ describe('mineLoreFromHistory', () => {
     );
     mockExecSync.mockReturnValue(Buffer.from(log));
 
-    const result = await mineLoreFromHistory('/repo', '/vault', fakeOpenAI, fakeQdrant);
+    const result = await mineLoreFromHistory(
+      '/repo',
+      '/vault',
+      fakeOpenAI,
+      fakeQdrant,
+    );
 
     expect(result.decisions_extracted).toBeGreaterThan(0);
     expect(mockWriteLoreAtom).toHaveBeenCalled();
@@ -101,7 +106,12 @@ describe('mineLoreFromHistory', () => {
     );
     mockExecSync.mockReturnValue(Buffer.from(log));
 
-    const result = await mineLoreFromHistory('/repo', '/vault', fakeOpenAI, fakeQdrant);
+    const result = await mineLoreFromHistory(
+      '/repo',
+      '/vault',
+      fakeOpenAI,
+      fakeQdrant,
+    );
 
     expect(result.decisions_extracted).toBe(0);
     expect(mockWriteLoreAtom).not.toHaveBeenCalled();
@@ -136,7 +146,12 @@ describe('mineLoreFromHistory', () => {
     ).join('\n');
     mockExecSync.mockReturnValue(Buffer.from(entries));
 
-    const result = await mineLoreFromHistory('/repo', '/vault', fakeOpenAI, fakeQdrant);
+    const result = await mineLoreFromHistory(
+      '/repo',
+      '/vault',
+      fakeOpenAI,
+      fakeQdrant,
+    );
 
     // Should cap at 40 per Pitfall 4
     expect(result.decisions_extracted).toBeLessThanOrEqual(40);

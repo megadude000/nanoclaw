@@ -13,7 +13,9 @@ import {
 const mockGetCollections = vi.fn();
 
 vi.mock('@qdrant/js-client-rest', () => ({
-  QdrantClient: vi.fn().mockImplementation(function (this: Record<string, unknown>) {
+  QdrantClient: vi.fn().mockImplementation(function (
+    this: Record<string, unknown>,
+  ) {
     this.getCollections = mockGetCollections;
   }),
 }));
@@ -29,7 +31,10 @@ describe('createQdrantClient', () => {
     const { QdrantClient } = await import('@qdrant/js-client-rest');
     vi.mocked(QdrantClient).mockClear();
     const client = createQdrantClient();
-    expect(vi.mocked(QdrantClient)).toHaveBeenCalledWith({ host: 'localhost', port: 6333 });
+    expect(vi.mocked(QdrantClient)).toHaveBeenCalledWith({
+      host: 'localhost',
+      port: 6333,
+    });
     expect(client).toBeDefined();
   });
 
@@ -71,7 +76,9 @@ describe('checkQdrantHealth', () => {
   });
 
   it('returns false when all 5 attempts fail', async () => {
-    mockClient.getCollections.mockRejectedValue(new Error('connection refused'));
+    mockClient.getCollections.mockRejectedValue(
+      new Error('connection refused'),
+    );
 
     const result = checkQdrantHealth(mockClient as never);
     await vi.runAllTimersAsync();

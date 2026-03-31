@@ -89,7 +89,13 @@ function makeGraph(edges: Edge[] = []): CortexGraph {
 
 describe('EdgeTypeSchema', () => {
   it('validates all 5 edge types', () => {
-    const types = ['BUILT_FROM', 'REFERENCES', 'BLOCKS', 'CROSS_LINK', 'SUPERSEDES'];
+    const types = [
+      'BUILT_FROM',
+      'REFERENCES',
+      'BLOCKS',
+      'CROSS_LINK',
+      'SUPERSEDES',
+    ];
     for (const t of types) {
       expect(EdgeTypeSchema.parse(t)).toBe(t);
     }
