@@ -18,6 +18,7 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { readEnvFile } from '../src/env.js';
 import {
   buildSearchHandler,
   buildReadHandler,
@@ -61,14 +62,18 @@ try {
   process.stderr.write(`[cortex-mcp] WARNING: Qdrant unavailable: ${err}\n`);
 }
 
-if (process.env.OPENAI_API_KEY) {
+// Read from project .env (same source containers use) — falls back to process.env
+const envVars = readEnvFile(['OPENAI_API_KEY']);
+const openaiKey = envVars['OPENAI_API_KEY'] ?? process.env.OPENAI_API_KEY;
+
+if (openaiKey) {
   try {
-    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    openai = new OpenAI({ apiKey: openaiKey });
   } catch (err) {
     process.stderr.write(`[cortex-mcp] WARNING: OpenAI init failed: ${err}\n`);
   }
 } else {
-  process.stderr.write('[cortex-mcp] WARNING: OPENAI_API_KEY not set — semantic search disabled, vault path reads still work\n');
+  process.stderr.write('[cortex-mcp] WARNING: OPENAI_API_KEY not in .env or environment — semantic search disabled, vault path reads still work\n');
 }
 
 let graphIndex = new Map();
