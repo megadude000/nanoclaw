@@ -126,7 +126,7 @@ Plans:
 - [x] **Phase 15: Qdrant Infrastructure** - Deploy persistent vector DB with systemd lifecycle management (completed 2026-03-30)
 - [x] **Phase 16: Embedding Pipeline** - Host-side service converts Cortex entries to vectors with deduplication (completed 2026-03-30)
 - [x] **Phase 17: Search & MCP Tools** - Agents can search, read, and write Cortex entries from containers (completed 2026-03-30)
-- [ ] **Phase 18: Knowledge Bootstrap** - Populate NanoClaw L10-L20 entries and wire agent auto-query
+- [x] **Phase 18: Knowledge Bootstrap** - Populate NanoClaw L10-L20 entries and wire agent auto-query (completed 2026-03-31)
 - [ ] **Phase 19: Knowledge Graph** - Explicit relationship edges between Cortex entries with agent tooling
 - [ ] **Phase 20: Lore Protocol** - Git trailer knowledge atoms indexed into Cortex
 - [ ] **Phase 21: Nightshift Reconciliation** - Nightly autonomous maintenance: staleness, discovery, cleanup
@@ -260,7 +260,7 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | 15. Qdrant Infrastructure | v3.0 | 1/1 | Complete    | 2026-03-30 |
 | 16. Embedding Pipeline | v3.0 | 2/2 | Complete    | 2026-03-30 |
 | 17. Search & MCP Tools | v3.0 | 3/3 | Complete    | 2026-03-30 |
-| 18. Knowledge Bootstrap | v3.0 | 0/3 | In progress | - |
+| 18. Knowledge Bootstrap | v3.0 | 3/3 | Complete   | 2026-03-31 |
 | 19. Knowledge Graph | v3.0 | 0/0 | Not started | - |
 | 20. Lore Protocol | v3.0 | 0/0 | Not started | - |
 | 21. Nightshift Reconciliation | v3.0 | 0/0 | Not started | - |
