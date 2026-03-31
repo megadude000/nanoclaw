@@ -1,5 +1,5 @@
 ---
-status: investigating
+status: awaiting_human_verify
 trigger: "Qdrant is not accessible from within agent containers"
 created: 2026-03-31T00:00:00Z
 updated: 2026-03-31T00:00:00Z
@@ -28,5 +28,14 @@ started: Recent — commit "fix(qdrant): bind to 0.0.0.0 so Docker containers ca
 
 root_cause:
 fix:
-verification:
-files_changed: []
+verification: |
+  - qdrant-client.test.ts: 7/7 tests pass (including new QDRANT_URL env var test)
+  - cortex-mcp-tools.test.ts: 34/34 tests pass
+  - Build succeeds (only pre-existing whatsapp/task-scheduler errors)
+  - Qdrant container confirmed reachable from Docker via alpine test
+  - systemd daemon-reload completed
+files_changed:
+  - src/cortex/qdrant-client.ts
+  - src/cortex/qdrant-client.test.ts
+  - src/container-runner.ts
+  - ~/.config/systemd/user/nanoclaw.service
