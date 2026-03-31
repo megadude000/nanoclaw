@@ -130,7 +130,7 @@ Plans:
 - [x] **Phase 19: Knowledge Graph** - Explicit relationship edges between Cortex entries with agent tooling (completed 2026-03-31)
 - [x] **Phase 20: Lore Protocol** - Git trailer knowledge atoms indexed into Cortex (completed 2026-03-31)
 - [x] **Phase 21: Nightshift Reconciliation** - Nightly autonomous maintenance: staleness, discovery, cleanup (completed 2026-03-31)
-- [ ] **Phase 22: Multi-Project Bootstrap** - Extend Cortex coverage to YourWave, ContentFactory, NightShift
+- [x] **Phase 22: Multi-Project Bootstrap** - Extend Cortex coverage to YourWave, ContentFactory, NightShift (completed 2026-03-31)
 
 ## Phase Details
 
@@ -262,7 +262,7 @@ Plans:
 
 Plans:
 - [x] 22-01-PLAN.md — Bootstrap scripts for YourWave, ContentFactory, NightShift
-- [ ] 22-02-PLAN.md — Project-scoped search validation
+- [x] 22-02-PLAN.md — Project-scoped search validation
 
 ## Progress
 
@@ -280,4 +280,4 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | 19. Knowledge Graph | v3.0 | 2/2 | Complete    | 2026-03-31 |
 | 20. Lore Protocol | v3.0 | 2/2 | Complete    | 2026-03-31 |
 | 21. Nightshift Reconciliation | v3.0 | 2/2 | Complete    | 2026-03-31 |
-| 22. Multi-Project Bootstrap | v3.0 | 1/2 | In Progress|  |
+| 22. Multi-Project Bootstrap | v3.0 | 2/2 | Complete   | 2026-03-31 |

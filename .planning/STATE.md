@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Agent Cortex Intelligence
-status: executing
-stopped_at: Completed 22-01-PLAN.md
-last_updated: "2026-03-31T11:06:45.475Z"
+status: verifying
+stopped_at: Completed 22-02-PLAN.md
+last_updated: "2026-03-31T11:10:23.243Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 9
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 18
-  completed_plans: 17
+  completed_plans: 18
   percent: 83
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 Phase: 22 (Multi-Project Bootstrap) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-31
 
 Progress: [████████░░] 83%
@@ -63,6 +63,7 @@ Progress: [████████░░] 83%
 | Phase 21-nightshift-reconciliation P01 | 3min | 1 tasks | 2 files |
 | Phase 21-nightshift-reconciliation P02 | 3min | 2 tasks | 4 files |
 | Phase 22-multi-project-bootstrap P01 | 6 | 3 tasks | 65 files |
+| Phase 22-multi-project-bootstrap P02 | 3 | 1 tasks | 1 files |
 
 ### Decisions
 
@@ -103,6 +104,8 @@ v3.0 decisions pending -- schema standard is first decision point.
 - [Phase 21]: No new cron entries -- cortex_reconcile integrates into existing Night Shift cycle (D-01/D-03)
 - [Phase 22-01]: Pure logic extracted to src/cortex/multi-project-bootstrap.ts to satisfy rootDir: src constraint while keeping generateProjectEntries() unit-testable
 - [Phase 22-01]: MAX_CONTENT_LENGTH=24000 chars truncation in bootstrap entries to prevent OpenAI 8192 token limit errors on large source docs
+- [Phase 22-02]: No changes to cortex-mcp-tools.ts required — buildSearchHandler already supported project param from Plan 01
+- [Phase 22-02]: Project filter scoping tests assert filter.must shape directly using mocked QdrantClient — no live Qdrant required
 
 ### Pending Todos
 
@@ -117,6 +120,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31T11:06:45.472Z
-Stopped at: Completed 22-01-PLAN.md
+Last session: 2026-03-31T11:10:23.240Z
+Stopped at: Completed 22-02-PLAN.md
 Resume file: None
