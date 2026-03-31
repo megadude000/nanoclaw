@@ -15,6 +15,7 @@ import {
   buildReconciliationEmbed,
 } from './agent-status-embeds.js';
 import { runReconciliation } from './cortex/reconciler.js';
+import { createOpenAIClient } from './cortex/embedder.js';
 import { AvailableGroup } from './container-runner.js';
 import { createTask, deleteTask, getTaskById, updateTask } from './db.js';
 import { isValidGroupFolder } from './group-folder.js';
@@ -126,7 +127,11 @@ export function startIpcWatcher(deps: IpcDeps): void {
                     'Unauthorized IPC message attempt blocked',
                   );
                 }
-              } else if (data.type === 'cortex_write' && data.path && data.content) {
+              } else if (
+                data.type === 'cortex_write' &&
+                data.path &&
+                data.content
+              ) {
                 const vaultRoot = path.join(process.cwd(), 'cortex');
                 const targetPath = path.resolve(vaultRoot, data.path as string);
                 // Security: block path traversal — must stay within cortex/ vault
@@ -144,24 +149,46 @@ export function startIpcWatcher(deps: IpcDeps): void {
                   );
                   // fs.watch in src/cortex/watcher.ts picks up the change and triggers re-embedding
                 }
-              } else if (data.type === 'cortex_relate' && data.source && data.target && data.edge_type) {
-                const graphPath = path.join(process.cwd(), 'cortex', 'cortex-graph.json');
+              } else if (
+                data.type === 'cortex_relate' &&
+                data.source &&
+                data.target &&
+                data.edge_type
+              ) {
+                const graphPath = path.join(
+                  process.cwd(),
+                  'cortex',
+                  'cortex-graph.json',
+                );
                 const graph = loadGraph(graphPath);
                 const added = addEdge(graph, {
                   source: data.source as string,
                   target: data.target as string,
-                  type: data.edge_type as 'BUILT_FROM' | 'REFERENCES' | 'BLOCKS' | 'CROSS_LINK' | 'SUPERSEDES',
+                  type: data.edge_type as
+                    | 'BUILT_FROM'
+                    | 'REFERENCES'
+                    | 'BLOCKS'
+                    | 'CROSS_LINK'
+                    | 'SUPERSEDES',
                   created: new Date().toISOString(),
                 });
                 if (added) {
                   saveGraph(graphPath, graph);
                   logger.info(
-                    { source: data.source, target: data.target, type: data.edge_type },
+                    {
+                      source: data.source,
+                      target: data.target,
+                      type: data.edge_type,
+                    },
                     'cortex_relate: edge added',
                   );
                 } else {
                   logger.info(
-                    { source: data.source, target: data.target, type: data.edge_type },
+                    {
+                      source: data.source,
+                      target: data.target,
+                      type: data.edge_type,
+                    },
                     'cortex_relate: edge exists or self-edge',
                   );
                 }
@@ -170,23 +197,50 @@ export function startIpcWatcher(deps: IpcDeps): void {
                 const cortexDir = path.join(process.cwd(), 'cortex');
                 const graphPath = path.join(cortexDir, 'cortex-graph.json');
                 try {
-                  const { QdrantClient } = await import('@qdrant/js-client-rest');
-                  const qdrantUrl = process.env.QDRANT_URL || 'http://localhost:6333';
+                  const { QdrantClient } =
+                    await import('@qdrant/js-client-rest');
+                  const qdrantUrl =
+                    process.env.QDRANT_URL || 'http://localhost:6333';
                   const qdrant = new QdrantClient({ url: qdrantUrl });
-                  const report = await runReconciliation(cortexDir, graphPath, qdrant);
+                  let openai;
+                  try {
+                    openai = createOpenAIClient();
+                  } catch (err) {
+                    logger.warn(
+                      { err },
+                      'cortex_reconcile: OpenAI client unavailable, lore mining skipped',
+                    );
+                  }
+                  const report = await runReconciliation(
+                    cortexDir,
+                    graphPath,
+                    qdrant,
+                    {
+                      openai,
+                      repoDir: process.cwd(),
+                    },
+                  );
                   logger.info(
-                    { stale: report.staleEntries.length, links: report.newLinks.length, orphans: report.orphans.length, durationMs: report.durationMs },
+                    {
+                      stale: report.staleEntries.length,
+                      links: report.newLinks.length,
+                      orphans: report.orphans.length,
+                      lore: report.loreSummary?.decisions_extracted ?? 0,
+                      durationMs: report.durationMs,
+                    },
                     'cortex_reconcile: reconciliation complete',
                   );
                   // Post summary to #agents
                   if (deps.sendToAgents) {
-                    await deps.sendToAgents(buildReconciliationEmbed({
-                      staleCount: report.staleEntries.length,
-                      newLinksCount: report.newLinks.length,
-                      orphanCount: report.orphans.length,
-                      runAt: report.runAt,
-                      durationMs: report.durationMs,
-                    }));
+                    await deps.sendToAgents(
+                      buildReconciliationEmbed({
+                        staleCount: report.staleEntries.length,
+                        newLinksCount: report.newLinks.length,
+                        orphanCount: report.orphans.length,
+                        runAt: report.runAt,
+                        durationMs: report.durationMs,
+                      }),
+                    );
                   }
                 } catch (err) {
                   logger.error({ err }, 'cortex_reconcile: failed');
