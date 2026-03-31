@@ -248,8 +248,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [x] 20-01-PLAN.md -- Lore parser module: git trailer extraction, vault file writing, embedding
-- [ ] 20-02-PLAN.md -- Convention documentation in CLAUDE.md, Night Shift mining script
+- [ ] 21-01-PLAN.md — Core reconciler module: checkStaleness, discoverCrossLinks, findOrphans, runReconciliation + unit tests
+- [ ] 21-02-PLAN.md — IPC cortex_reconcile handler, #agents summary embed, Night Shift planner prompt update
 
 ### Phase 22: Multi-Project Bootstrap
 **Goal**: Cortex coverage extends beyond NanoClaw to YourWave, ContentFactory, and NightShift -- validating the knowledge layer works across multiple codebases
@@ -261,8 +261,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 20-01-PLAN.md -- Lore parser module: git trailer extraction, vault file writing, embedding
-- [ ] 20-02-PLAN.md -- Convention documentation in CLAUDE.md, Night Shift mining script
+- [ ] 22-01-PLAN.md — Bootstrap scripts for YourWave, ContentFactory, NightShift
+- [ ] 22-02-PLAN.md — Project-scoped search validation
 
 ## Progress
 
@@ -279,5 +279,5 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | 18. Knowledge Bootstrap | v3.0 | 3/3 | Complete    | 2026-03-31 |
 | 19. Knowledge Graph | v3.0 | 2/2 | Complete    | 2026-03-31 |
 | 20. Lore Protocol | v3.0 | 2/2 | Complete    | 2026-03-31 |
-| 21. Nightshift Reconciliation | v3.0 | 0/0 | Not started | - |
+| 21. Nightshift Reconciliation | v3.0 | 0/2 | Planning | - |
 | 22. Multi-Project Bootstrap | v3.0 | 0/0 | Not started | - |
