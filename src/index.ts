@@ -10,6 +10,7 @@ import {
   GROUPS_DIR,
   IDLE_TIMEOUT,
   MAX_MESSAGES_PER_PROMPT,
+  NOTION_WEBHOOK_PORT,
   ONECLI_URL,
   POLL_INTERVAL,
   TIMEZONE,
@@ -68,6 +69,7 @@ import { ProgressTracker } from './progress-tracker.js';
 import { BotStatusPanel } from './bot-status-panel.js';
 import { EmbedBuilder } from 'discord.js';
 import { loadSwarmIdentities } from './swarm-webhook-manager.js';
+import { startWebhookServer } from './webhook-server.js';
 import { Channel, NewMessage, RegisteredGroup } from './types.js';
 import { logger } from './logger.js';
 
@@ -593,10 +595,31 @@ async function main(): Promise<void> {
 
   restoreRemoteControl();
 
+  // Start unified webhook server (ngrok/Cloudflare Tunnel forwards to this)
+  // Routes: POST /notion → Notion handler, POST /github → GitHub handler
+  const webhookEnv = readEnvFile([
+    'NOTION_WEBHOOK_SECRET',
+    'GITHUB_WEBHOOK_SECRET',
+    'NOTION_API_KEY',
+    'GITHUB_TOKEN',
+    'GITHUB_REPO',
+  ]);
+  if (webhookEnv.NOTION_API_KEY)
+    process.env.NOTION_API_KEY = webhookEnv.NOTION_API_KEY;
+  const webhookServer = startWebhookServer({
+    port: NOTION_WEBHOOK_PORT,
+    notionSigningSecret: webhookEnv.NOTION_WEBHOOK_SECRET ?? '',
+    githubSigningSecret: webhookEnv.GITHUB_WEBHOOK_SECRET ?? '',
+    githubToken: webhookEnv.GITHUB_TOKEN ?? '',
+    githubRepo: webhookEnv.GITHUB_REPO ?? '',
+    getRegisteredGroups: () => registeredGroups,
+  });
+
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'Shutdown signal received');
     stopCortexWatcher();
+    webhookServer.close();
     await queue.shutdown(10000);
     for (const ch of channels) await ch.disconnect();
     process.exit(0);

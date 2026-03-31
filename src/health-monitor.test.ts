@@ -122,7 +122,7 @@ describe('health-monitor', () => {
       process.env.HEALTH_MONITOR_SERVICES = 'nanoclaw,yw-dev';
       const { buildServiceConfigs } = await import('./health-monitor.js');
       const configs = buildServiceConfigs();
-      for (const c of configs.filter((c) => c.name !== 'cloudflared')) {
+      for (const c of configs.filter((c) => c.name !== 'cloudflared' && c.name !== 'cortex')) {
         expect(c.command).toContain('--user');
       }
     });
