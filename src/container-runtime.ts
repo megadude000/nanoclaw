@@ -88,7 +88,14 @@ export function cleanupOrphans(): void {
       `${CONTAINER_RUNTIME_BIN} ps --filter name=nanoclaw- --format '{{.Names}}'`,
       { stdio: ['pipe', 'pipe', 'pipe'], encoding: 'utf-8' },
     );
-    const orphans = output.trim().split('\n').filter(Boolean);
+    // Exclude infrastructure containers that share the nanoclaw- prefix
+    // but are not agent containers (e.g. nanoclaw-qdrant is a long-lived service)
+    const INFRASTRUCTURE = new Set(['nanoclaw-qdrant']);
+    const orphans = output
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .filter((name) => !INFRASTRUCTURE.has(name));
     for (const name of orphans) {
       try {
         stopContainer(name);
