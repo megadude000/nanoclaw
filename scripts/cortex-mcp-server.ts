@@ -31,9 +31,9 @@ import { buildIndex, loadGraph } from '../src/cortex/cortex-graph.js';
 // Hardcoded absolute paths
 // ---------------------------------------------------------------------------
 
-const VAULT_ROOT = '/home/andrii-panasenko/nanoclaw/cortex';
-const GRAPH_PATH = '/home/andrii-panasenko/nanoclaw/cortex/cortex-graph.json';
-const IPC_DIR = '/home/andrii-panasenko/nanoclaw/data/ipc';
+const VAULT_ROOT = process.env.CORTEX_VAULT_ROOT ?? '/home/andrii-panasenko/nanoclaw/cortex';
+const GRAPH_PATH = path.join(VAULT_ROOT, 'cortex-graph.json');
+const IPC_DIR = process.env.CORTEX_IPC_DIR ?? '/home/andrii-panasenko/nanoclaw/data/ipc';
 
 // ---------------------------------------------------------------------------
 // writeIpc helper
@@ -57,7 +57,8 @@ let qdrant: QdrantClient | null = null;
 let openai: OpenAI | null = null;
 
 try {
-  qdrant = new QdrantClient({ host: 'localhost', port: 6333 });
+  const qdrantUrl = process.env.QDRANT_URL ?? 'http://localhost:6333';
+  qdrant = new QdrantClient({ url: qdrantUrl });
 } catch (err) {
   process.stderr.write(`[cortex-mcp] WARNING: Qdrant unavailable: ${err}\n`);
 }

@@ -486,8 +486,14 @@ async function runQuery(
         },
         'nanoclaw-cortex': {
           type: 'stdio',
-          command: 'npx',
-          args: ['tsx', '/home/andrii-panasenko/nanoclaw/scripts/cortex-mcp-server.ts'],
+          command: '/workspace/project/node_modules/.bin/tsx',
+          args: ['/workspace/project/scripts/cortex-mcp-server.ts'],
+          env: {
+            CORTEX_VAULT_ROOT: '/workspace/cortex',
+            CORTEX_IPC_DIR: '/workspace/ipc',
+            QDRANT_URL: process.env.QDRANT_URL ?? 'http://host.docker.internal:6333',
+            OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? '',
+          },
         },
       },
       hooks: {
