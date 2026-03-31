@@ -64,6 +64,12 @@ Clear separation of automated notifications and project workstreams into dedicat
 - Cortex YAML frontmatter standard: Zod schemas (strict + permissive), gray-matter parser, path-based default inference, source_hash computation, L10-L50 knowledge pyramid documented — Validated in Phase 14
 - Qdrant vector database: Docker container with persistent bind-mount (./data/qdrant/), systemd auto-start, cortex-entries collection with cosine distance + payload indexes — Validated in Phase 15
 - Embedding pipeline: embedEntry() with hash-skip dedup, debounced fs.watch watcher (10-min inactivity), batch cortex-reembed script with --force, watcher wired to main process startup/shutdown — Validated in Phase 16
+- Search & MCP tools: cortex_search, cortex_read, cortex_write tools wired into container agents — Validated in Phase 17
+- Knowledge bootstrap: L10-L20 population for NanoClaw (src/), YourWave, ContentFactory, NightShift — Validated in Phase 18
+- Knowledge graph: cortex-graph.json with typed edges (BUILT_FROM, REFERENCES, BLOCKS, CROSS_LINK) — Validated in Phase 19
+- Lore Protocol: git commit trailer knowledge atoms (Constraint/Rejected/Directive) indexed as Cortex entries — Validated in Phase 20
+- Nightshift reconciliation: Alfred nightly staleness cascade, CROSS_LINK discovery, orphan cleanup — Validated in Phase 21
+- Multi-project bootstrap: generateProjectEntries() + bootstrap script for YourWave/ContentFactory/NightShift; project filter scoping in cortex_search (no cross-project contamination) — Validated in Phase 22
 
 ### Active (Candidates for v3.0)
 
@@ -156,4 +162,4 @@ Andy HQ (server)
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-30 — Phase 16 complete: Embedding pipeline live — Cortex entries auto-embed on change, batch re-embed available*
+*Last updated: 2026-03-31 — Phase 22 complete: v3.0 Agent Cortex Intelligence all 9 phases complete — multi-project bootstrap live, Cortex covers NanoClaw + YourWave + ContentFactory + NightShift*
