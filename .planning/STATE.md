@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Agent Cortex Intelligence
-status: verifying
-stopped_at: Completed 17-02-PLAN.md
-last_updated: "2026-03-30T21:00:47.261Z"
-last_activity: 2026-03-30
+status: executing
+stopped_at: Completed 18-02-PLAN.md
+last_updated: "2026-03-31T07:37:18.212Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 9
   completed_phases: 4
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 10
+  completed_plans: 8
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Agents can retrieve surgically scoped context before every task -- closing the "decision shadow" where agents see what code does but not why decisions were made.
-**Current focus:** Phase 17 — search-mcp-tools
+**Current focus:** Phase 18 — knowledge-bootstrap
 
 ## Current Position
 
-Phase: 18
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-30
+Phase: 18 (knowledge-bootstrap) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-03-31
 
 Progress: [..........] 0%
 
@@ -55,6 +55,7 @@ Progress: [..........] 0%
 | Phase 17-search-mcp-tools P01 | 2min | 1 tasks | 1 files |
 | Phase 17-search-mcp-tools P03 | 126 | 2 tasks | 2 files |
 | Phase 17-search-mcp-tools P02 | 4 | 2 tasks | 4 files |
+| Phase 18 P02 | 5 | 2 tasks | 54 files |
 
 ### Decisions
 
@@ -78,6 +79,8 @@ v3.0 decisions pending -- schema standard is first decision point.
 - [Phase 17-03]: Added readEnvFile import to container-runner.ts for OPENAI_API_KEY — plan's thirdPartyKeys block no longer exists; OneCLI handles other credentials
 - [Phase 17-02]: Named fs imports in cortex-mcp-tools.ts — test mocks node:fs as named exports; default import fails vitest mock resolution
 - [Phase 17-02]: Inline logic in ipc-mcp-stdio.ts — container build cannot cross-import from host src/cortex/ packages
+- [Phase 18]: Regex handles multi-line function params by scanning forward up to 10 lines after opening paren
+- [Phase 18]: Added --write-only flag to bootstrap-cortex.ts for vault file generation without embedding
 
 ### Pending Todos
 
@@ -92,6 +95,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:55:08.297Z
-Stopped at: Completed 17-02-PLAN.md
+Last session: 2026-03-31T07:37:18.208Z
+Stopped at: Completed 18-02-PLAN.md
 Resume file: None
