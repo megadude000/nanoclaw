@@ -14,6 +14,33 @@ import OpenAI from 'openai';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import matter from 'gray-matter';
 
+// ---------------------------------------------------------------------------
+// Inline graph loading for search augmentation (container cannot import from host src/cortex/)
+// ---------------------------------------------------------------------------
+
+type NeighborEntry = { path: string; type: string; direction: 'outgoing' | 'incoming' };
+type GraphIndex = Map<string, NeighborEntry[]>;
+
+function loadGraphIndex(graphPath: string): GraphIndex {
+  const idx: GraphIndex = new Map();
+  try {
+    if (!fs.existsSync(graphPath)) return idx;
+    const raw = JSON.parse(fs.readFileSync(graphPath, 'utf-8'));
+    if (!raw?.edges || !Array.isArray(raw.edges)) return idx;
+    for (const edge of raw.edges) {
+      if (!edge.source || !edge.target || !edge.type) continue;
+      if (!idx.has(edge.source)) idx.set(edge.source, []);
+      idx.get(edge.source)!.push({ path: edge.target, type: edge.type, direction: 'outgoing' });
+      if (!idx.has(edge.target)) idx.set(edge.target, []);
+      idx.get(edge.target)!.push({ path: edge.source, type: edge.type, direction: 'incoming' });
+    }
+  } catch { /* graceful degradation: empty graph */ }
+  return idx;
+}
+
+// Load graph at MCP server startup -- read-only in container, stale during session (acceptable per Phase 19 design)
+const graphIndex = loadGraphIndex('/workspace/cortex/cortex-graph.json');
+
 const IPC_DIR = '/workspace/ipc';
 const MESSAGES_DIR = path.join(IPC_DIR, 'messages');
 const TASKS_DIR = path.join(IPC_DIR, 'tasks');
@@ -521,13 +548,20 @@ server.tool(
       filter: mustConditions.length > 0 ? { must: mustConditions } : undefined,
     });
 
-    const formatted = results.map((r) => ({
-      path: r.payload?.file_path,
-      score: r.score,
-      level: r.payload?.cortex_level,
-      domain: r.payload?.domain,
-      project: r.payload?.project,
-    }));
+    const formatted = results.map((r) => {
+      const base: Record<string, unknown> = {
+        path: r.payload?.file_path,
+        score: r.score,
+        level: r.payload?.cortex_level,
+        domain: r.payload?.domain,
+        project: r.payload?.project,
+      };
+      const neighbors = graphIndex.get(r.payload?.file_path as string);
+      if (neighbors && neighbors.length > 0) {
+        base.related = neighbors;
+      }
+      return base;
+    });
 
     return { content: [{ type: 'text' as const, text: JSON.stringify(formatted, null, 2) }] };
   },
@@ -604,6 +638,32 @@ server.tool(
     });
 
     return { content: [{ type: 'text' as const, text: `Entry queued for write: ${args.path}` }] };
+  },
+);
+
+// cortex_relate — declare a typed relationship between two Cortex entries via IPC
+server.tool(
+  'cortex_relate',
+  'Declare a typed relationship between two Cortex entries. Edge types: BUILT_FROM (implementation from spec), REFERENCES (cites/depends), BLOCKS (prerequisite), CROSS_LINK (related across domains), SUPERSEDES (newer replaces older).',
+  {
+    source: z.string().describe('Source entry vault path (e.g. "Areas/Projects/NanoClaw/ipc-design.md")'),
+    target: z.string().describe('Target entry vault path'),
+    edge_type: z.enum(['BUILT_FROM', 'REFERENCES', 'BLOCKS', 'CROSS_LINK', 'SUPERSEDES'])
+      .describe('Relationship type from source to target'),
+  },
+  async (args) => {
+    if (args.source === args.target) {
+      return { content: [{ type: 'text' as const, text: 'Error: self-edges not allowed' }], isError: true };
+    }
+    writeIpcFile(MESSAGES_DIR, {
+      type: 'cortex_relate',
+      source: args.source,
+      target: args.target,
+      edge_type: args.edge_type,
+      groupFolder,
+      timestamp: new Date().toISOString(),
+    });
+    return { content: [{ type: 'text' as const, text: `Edge declared: ${args.source} --${args.edge_type}--> ${args.target}` }] };
   },
 );
 
