@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Agent Cortex Intelligence
-status: verifying
-stopped_at: Completed 21-02-PLAN.md
-last_updated: "2026-03-31T10:44:09.134Z"
+status: executing
+stopped_at: Completed 22-01-PLAN.md
+last_updated: "2026-03-31T11:06:45.475Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 9
   completed_phases: 8
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 18
+  completed_plans: 17
   percent: 83
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Agents can retrieve surgically scoped context before every task -- closing the "decision shadow" where agents see what code does but not why decisions were made.
-**Current focus:** Phase 21 — Nightshift Reconciliation
+**Current focus:** Phase 22 — Multi-Project Bootstrap
 
 ## Current Position
 
-Phase: 22
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 22 (Multi-Project Bootstrap) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-31
 
 Progress: [████████░░] 83%
@@ -62,6 +62,7 @@ Progress: [████████░░] 83%
 | Phase 20-lore-protocol P02 | 3min | 2 tasks | 3 files |
 | Phase 21-nightshift-reconciliation P01 | 3min | 1 tasks | 2 files |
 | Phase 21-nightshift-reconciliation P02 | 3min | 2 tasks | 4 files |
+| Phase 22-multi-project-bootstrap P01 | 6 | 3 tasks | 65 files |
 
 ### Decisions
 
@@ -100,6 +101,8 @@ v3.0 decisions pending -- schema standard is first decision point.
 - [Phase 21]: Graceful Qdrant failure: runReconciliation returns partial report with empty newLinks on connection error
 - [Phase 21]: Dynamic import of QdrantClient in IPC handler for graceful degradation
 - [Phase 21]: No new cron entries -- cortex_reconcile integrates into existing Night Shift cycle (D-01/D-03)
+- [Phase 22-01]: Pure logic extracted to src/cortex/multi-project-bootstrap.ts to satisfy rootDir: src constraint while keeping generateProjectEntries() unit-testable
+- [Phase 22-01]: MAX_CONTENT_LENGTH=24000 chars truncation in bootstrap entries to prevent OpenAI 8192 token limit errors on large source docs
 
 ### Pending Todos
 
@@ -114,6 +117,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31T10:41:32.840Z
-Stopped at: Completed 21-02-PLAN.md
+Last session: 2026-03-31T11:06:45.472Z
+Stopped at: Completed 22-01-PLAN.md
 Resume file: None
