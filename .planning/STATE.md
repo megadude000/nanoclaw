@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Phase: 22
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-03-31
+Last activity: 2026-03-31 - Completed quick task 260331-q2: Add cortex MCP health check row to heartbeat status
 
 Progress: [████████░░] 83%
 
@@ -119,6 +119,7 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260331-irl | Hook cortex into global Claude Code MCP | 2026-03-31 | 7aed599 | [260331-irl-hook-cortex-into-global-claude-code-mcp](./quick/260331-irl-hook-cortex-into-global-claude-code-mcp/) |
+| 260331-q2 | Add cortex MCP health check row to heartbeat status | 2026-03-31 | 4eef3a9 | [260331-q2-cortex-health-check-status-row](./quick/260331-q2-cortex-health-check-status-row/) |
 
 ### Blockers/Concerns
 
