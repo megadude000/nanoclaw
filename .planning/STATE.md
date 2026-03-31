@@ -111,6 +111,12 @@ v3.0 decisions pending -- schema standard is first decision point.
 
 None.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260331-irl | Hook cortex into global Claude Code MCP | 2026-03-31 | 7aed599 | [260331-irl-hook-cortex-into-global-claude-code-mcp](./quick/260331-irl-hook-cortex-into-global-claude-code-mcp/) |
+
 ### Blockers/Concerns
 
 - Schema must be locked before first vector is stored (highest-cost pitfall per research)
