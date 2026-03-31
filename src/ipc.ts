@@ -12,7 +12,9 @@ import {
   buildProgressEmbed,
   buildBlockerEmbed,
   buildHandoffEmbed,
+  buildReconciliationEmbed,
 } from './agent-status-embeds.js';
+import { runReconciliation } from './cortex/reconciler.js';
 import { AvailableGroup } from './container-runner.js';
 import { createTask, deleteTask, getTaskById, updateTask } from './db.js';
 import { isValidGroupFolder } from './group-folder.js';
@@ -162,6 +164,32 @@ export function startIpcWatcher(deps: IpcDeps): void {
                     { source: data.source, target: data.target, type: data.edge_type },
                     'cortex_relate: edge exists or self-edge',
                   );
+                }
+              } else if (data.type === 'cortex_reconcile') {
+                // NIGHT-01: Host-side reconciliation triggered by Night Shift agent
+                const cortexDir = path.join(process.cwd(), 'cortex');
+                const graphPath = path.join(cortexDir, 'cortex-graph.json');
+                try {
+                  const { QdrantClient } = await import('@qdrant/js-client-rest');
+                  const qdrantUrl = process.env.QDRANT_URL || 'http://localhost:6333';
+                  const qdrant = new QdrantClient({ url: qdrantUrl });
+                  const report = await runReconciliation(cortexDir, graphPath, qdrant);
+                  logger.info(
+                    { stale: report.staleEntries.length, links: report.newLinks.length, orphans: report.orphans.length, durationMs: report.durationMs },
+                    'cortex_reconcile: reconciliation complete',
+                  );
+                  // Post summary to #agents
+                  if (deps.sendToAgents) {
+                    await deps.sendToAgents(buildReconciliationEmbed({
+                      staleCount: report.staleEntries.length,
+                      newLinksCount: report.newLinks.length,
+                      orphanCount: report.orphans.length,
+                      runAt: report.runAt,
+                      durationMs: report.durationMs,
+                    }));
+                  }
+                } catch (err) {
+                  logger.error({ err }, 'cortex_reconcile: failed');
                 }
               } else if (data.type === 'restart' && isMain) {
                 logger.info({ sourceGroup }, 'Restart requested via IPC');
