@@ -215,7 +215,11 @@ Plans:
   1. cortex-graph.json stores typed edges (BUILT_FROM, REFERENCES, BLOCKS, CROSS_LINK, SUPERSEDES) between entry IDs
   2. cortex_search results include 1-hop graph neighbors alongside semantic matches
   3. Agent calls cortex_relate to declare an edge between two entries and the edge persists in cortex-graph.json
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 19-01-PLAN.md — cortex-graph.ts module: Zod schema, load/save, in-memory index, edge operations + unit tests
+- [ ] 19-02-PLAN.md — cortex_relate MCP tool (container + host IPC), graph-augmented cortex_search results
 
 ### Phase 20: Lore Protocol
 **Goal**: Architectural decisions captured in git commit trailers are indexed as searchable Cortex entries, closing the gap between "what changed" and "why it changed"
@@ -261,7 +265,7 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | 16. Embedding Pipeline | v3.0 | 2/2 | Complete    | 2026-03-30 |
 | 17. Search & MCP Tools | v3.0 | 3/3 | Complete    | 2026-03-30 |
 | 18. Knowledge Bootstrap | v3.0 | 3/3 | Complete    | 2026-03-31 |
-| 19. Knowledge Graph | v3.0 | 0/0 | Not started | - |
+| 19. Knowledge Graph | v3.0 | 0/2 | Not started | - |
 | 20. Lore Protocol | v3.0 | 0/0 | Not started | - |
 | 21. Nightshift Reconciliation | v3.0 | 0/0 | Not started | - |
 | 22. Multi-Project Bootstrap | v3.0 | 0/0 | Not started | - |
