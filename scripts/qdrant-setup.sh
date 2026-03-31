@@ -41,8 +41,8 @@ docker run -d \
   --name "$CONTAINER_NAME" \
   --restart=unless-stopped \
   -v "${DATA_DIR}:/qdrant/storage:z" \
-  -p 127.0.0.1:6333:6333 \
-  -p 127.0.0.1:6334:6334 \
+  -p 6333:6333 \
+  -p 6334:6334 \
   "$IMAGE"
 
 echo "Qdrant container '${CONTAINER_NAME}' started."
