@@ -1,14 +1,14 @@
 /**
- * Unit tests for multi-project bootstrap entry generation.
+ * Unit tests for multi-project bootstrap entry generation and project filter scoping.
  *
  * Tests generateProjectEntries(projectSlug, vaultDocs) function from
- * scripts/bootstrap-multi-project.ts.
- *
- * All tests start RED — implementation does not exist yet.
+ * src/cortex/multi-project-bootstrap.ts, and project filter construction
+ * in buildSearchHandler from src/cortex/cortex-mcp-tools.ts.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generateProjectEntries, type VaultDoc } from './multi-project-bootstrap.js';
+import { buildSearchHandler } from './cortex-mcp-tools.js';
 
 // ---------------------------------------------------------------------------
 // Test fixtures
@@ -246,5 +246,168 @@ describe('multi-project bootstrap', () => {
         expect(entry.vaultPath).toContain('bootstrap');
       }
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Project filter scoping tests
+// ---------------------------------------------------------------------------
+
+describe('project filter scoping', () => {
+  // Shared mock setup
+  const mockSearch = vi.fn();
+  const mockEmbeddingsCreate = vi.fn();
+
+  const mockQdrant = {
+    search: mockSearch,
+  } as unknown as import('@qdrant/js-client-rest').QdrantClient;
+
+  const mockOpenAI = {
+    embeddings: {
+      create: mockEmbeddingsCreate,
+    },
+  } as unknown as import('openai').default;
+
+  beforeEach(() => {
+    mockSearch.mockReset();
+    mockEmbeddingsCreate.mockReset();
+    // Default: return empty results
+    mockSearch.mockResolvedValue([]);
+    mockEmbeddingsCreate.mockResolvedValue({
+      data: [{ embedding: new Array(1536).fill(0.1) }],
+    });
+  });
+
+  it('calling with project="yourwave" passes must filter with key="project" match value="yourwave"', async () => {
+    const handler = buildSearchHandler({
+      qdrant: mockQdrant,
+      openai: mockOpenAI,
+      vaultRoot: '/tmp/vault',
+    });
+
+    await handler({ query: 'subscription model', project: 'yourwave' });
+
+    expect(mockSearch).toHaveBeenCalledOnce();
+    const callArgs = mockSearch.mock.calls[0];
+    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    expect(searchArgs.filter).toBeDefined();
+    expect(searchArgs.filter!.must).toEqual(
+      expect.arrayContaining([
+        { key: 'project', match: { value: 'yourwave' } },
+      ]),
+    );
+  });
+
+  it('calling with project="contentfactory" passes must filter with key="project" match value="contentfactory"', async () => {
+    const handler = buildSearchHandler({
+      qdrant: mockQdrant,
+      openai: mockOpenAI,
+      vaultRoot: '/tmp/vault',
+    });
+
+    await handler({ query: 'content pipeline', project: 'contentfactory' });
+
+    expect(mockSearch).toHaveBeenCalledOnce();
+    const callArgs = mockSearch.mock.calls[0];
+    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    expect(searchArgs.filter).toBeDefined();
+    expect(searchArgs.filter!.must).toEqual(
+      expect.arrayContaining([
+        { key: 'project', match: { value: 'contentfactory' } },
+      ]),
+    );
+  });
+
+  it('calling with project="nightshift" does NOT include a contentfactory project filter', async () => {
+    const handler = buildSearchHandler({
+      qdrant: mockQdrant,
+      openai: mockOpenAI,
+      vaultRoot: '/tmp/vault',
+    });
+
+    await handler({ query: 'reconciliation', project: 'nightshift' });
+
+    const callArgs = mockSearch.mock.calls[0];
+    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    const mustConditions = searchArgs.filter?.must ?? [];
+    const hasContentFactory = mustConditions.some(
+      (c) => c.key === 'project' && c.match.value === 'contentfactory',
+    );
+    expect(hasContentFactory).toBe(false);
+  });
+
+  it('calling with project="yourwave" does NOT include a nightshift project filter', async () => {
+    const handler = buildSearchHandler({
+      qdrant: mockQdrant,
+      openai: mockOpenAI,
+      vaultRoot: '/tmp/vault',
+    });
+
+    await handler({ query: 'subscription model', project: 'yourwave' });
+
+    const callArgs = mockSearch.mock.calls[0];
+    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    const mustConditions = searchArgs.filter?.must ?? [];
+    const hasNightshift = mustConditions.some(
+      (c) => c.key === 'project' && c.match.value === 'nightshift',
+    );
+    expect(hasNightshift).toBe(false);
+  });
+
+  it('calling with no project filter passes undefined filter (or no project key in must)', async () => {
+    const handler = buildSearchHandler({
+      qdrant: mockQdrant,
+      openai: mockOpenAI,
+      vaultRoot: '/tmp/vault',
+    });
+
+    await handler({ query: 'knowledge base' });
+
+    const callArgs = mockSearch.mock.calls[0];
+    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    // No project filter means either filter is undefined or must array has no project key
+    const mustConditions = searchArgs.filter?.must ?? [];
+    const hasProjectFilter = mustConditions.some((c) => c.key === 'project');
+    expect(hasProjectFilter).toBe(false);
+  });
+
+  it('project filter can be combined with cortex_level filter in must array', async () => {
+    const handler = buildSearchHandler({
+      qdrant: mockQdrant,
+      openai: mockOpenAI,
+      vaultRoot: '/tmp/vault',
+    });
+
+    await handler({ query: 'architecture', project: 'yourwave', cortex_level: 'L20' });
+
+    const callArgs = mockSearch.mock.calls[0];
+    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    const mustConditions = searchArgs.filter?.must ?? [];
+    expect(mustConditions).toEqual(
+      expect.arrayContaining([
+        { key: 'project', match: { value: 'yourwave' } },
+        { key: 'cortex_level', match: { value: 'L20' } },
+      ]),
+    );
+  });
+
+  it('project filter can be combined with domain filter in must array', async () => {
+    const handler = buildSearchHandler({
+      qdrant: mockQdrant,
+      openai: mockOpenAI,
+      vaultRoot: '/tmp/vault',
+    });
+
+    await handler({ query: 'operations', project: 'yourwave', domain: 'yourwave' });
+
+    const callArgs = mockSearch.mock.calls[0];
+    const searchArgs = callArgs[1] as { filter?: { must?: Array<{ key: string; match: { value: string } }> } };
+    const mustConditions = searchArgs.filter?.must ?? [];
+    expect(mustConditions).toEqual(
+      expect.arrayContaining([
+        { key: 'project', match: { value: 'yourwave' } },
+        { key: 'domain', match: { value: 'yourwave' } },
+      ]),
+    );
   });
 });
