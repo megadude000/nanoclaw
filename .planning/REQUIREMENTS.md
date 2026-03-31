@@ -36,7 +36,7 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 
 ### Knowledge Graph
 
-- [ ] **GRAPH-01**: cortex-graph.json stores explicit edges (BUILT_FROM, REFERENCES, BLOCKS, CROSS_LINK)
+- [x] **GRAPH-01**: cortex-graph.json stores explicit edges (BUILT_FROM, REFERENCES, BLOCKS, CROSS_LINK)
 - [ ] **GRAPH-02**: Graph queryable from cortex_search results (traverse related entries)
 
 ### Knowledge Population
@@ -102,7 +102,7 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 | MCP-03 | Phase 17 | Complete |
 | MCP-04 | Phase 19 | Pending |
 | MCP-05 | Phase 17 | Complete |
-| GRAPH-01 | Phase 19 | Pending |
+| GRAPH-01 | Phase 19 | Complete |
 | GRAPH-02 | Phase 19 | Pending |
 | POP-01 | Phase 18 | Complete |
 | POP-02 | Phase 22 | Pending |
