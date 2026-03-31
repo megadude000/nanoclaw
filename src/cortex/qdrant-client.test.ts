@@ -27,7 +27,8 @@ describe('COLLECTION_NAME', () => {
 });
 
 describe('createQdrantClient', () => {
-  it('returns a QdrantClient instance configured for localhost:6333', async () => {
+  it('returns a QdrantClient instance configured for localhost:6333 when QDRANT_URL is unset', async () => {
+    delete process.env.QDRANT_URL;
     const { QdrantClient } = await import('@qdrant/js-client-rest');
     vi.mocked(QdrantClient).mockClear();
     const client = createQdrantClient();
@@ -38,7 +39,20 @@ describe('createQdrantClient', () => {
     expect(client).toBeDefined();
   });
 
+  it('uses QDRANT_URL env var when set', async () => {
+    process.env.QDRANT_URL = 'http://host.docker.internal:6333';
+    const { QdrantClient } = await import('@qdrant/js-client-rest');
+    vi.mocked(QdrantClient).mockClear();
+    const client = createQdrantClient();
+    expect(vi.mocked(QdrantClient)).toHaveBeenCalledWith({
+      url: 'http://host.docker.internal:6333',
+    });
+    expect(client).toBeDefined();
+    delete process.env.QDRANT_URL;
+  });
+
   it('creates a new instance on each call (no singleton caching)', async () => {
+    delete process.env.QDRANT_URL;
     const { QdrantClient } = await import('@qdrant/js-client-rest');
     vi.mocked(QdrantClient).mockClear();
     createQdrantClient();

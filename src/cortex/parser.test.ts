@@ -73,7 +73,7 @@ describe('Cortex Parser', () => {
     expect(result.content).toContain('YourWave');
   });
 
-  it('strict mode fails on real vault file missing cortex fields', () => {
+  it('strict mode passes on real vault file with cortex fields', () => {
     const vaultFile =
       '/home/andrii-panasenko/nanoclaw/cortex/Areas/Projects/YourWave/YourWave.md';
     if (!existsSync(vaultFile)) {
@@ -81,7 +81,7 @@ describe('Cortex Parser', () => {
     }
 
     const result = parseCortexEntry(vaultFile, 'strict');
-    expect(result.validation.valid).toBe(false);
-    expect(result.validation.errors.length).toBeGreaterThan(0);
+    // YourWave.md has cortex fields (type, cortex_level, confidence, domain)
+    expect(result.validation.valid).toBe(true);
   });
 });

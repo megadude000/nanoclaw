@@ -17,10 +17,15 @@ const HEALTH_MAX_ATTEMPTS = 5;
 const HEALTH_RETRY_DELAY_MS = 2000;
 
 /**
- * Create a new QdrantClient configured for localhost:6333.
+ * Create a new QdrantClient.
+ * Uses QDRANT_URL env var if set, otherwise defaults to localhost:6333.
  * No singleton — callers own the lifecycle.
  */
 export function createQdrantClient(): QdrantClient {
+  const qdrantUrl = process.env.QDRANT_URL;
+  if (qdrantUrl) {
+    return new QdrantClient({ url: qdrantUrl });
+  }
   return new QdrantClient({ host: 'localhost', port: 6333 });
 }
 

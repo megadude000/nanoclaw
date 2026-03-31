@@ -1236,6 +1236,7 @@ describe('DiscordChannel', () => {
       await channel.connect();
 
       const mockInteraction = {
+        isChatInputCommand: () => false,
         isButton: () => true,
         deferUpdate: vi.fn().mockResolvedValue(undefined),
         channelId: '1234567890123456',
@@ -1269,6 +1270,7 @@ describe('DiscordChannel', () => {
       await channel.connect();
 
       const mockInteraction = {
+        isChatInputCommand: () => false,
         isButton: () => false,
       };
 
@@ -1285,6 +1287,7 @@ describe('DiscordChannel', () => {
       await channel.connect();
 
       const mockInteraction = {
+        isChatInputCommand: () => false,
         isButton: () => true,
         deferUpdate: vi.fn().mockResolvedValue(undefined),
         channelId: '1234567890123456',

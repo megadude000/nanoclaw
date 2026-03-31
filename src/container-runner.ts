@@ -46,6 +46,7 @@ export interface ContainerInput {
   triggerMessageId?: string;
   script?: string;
   imageAttachments?: Array<{ relativePath: string; mediaType: string }>;
+  model?: string;
 }
 
 export interface ContainerOutput {
@@ -69,29 +70,27 @@ function buildVolumeMounts(
   const projectRoot = process.cwd();
   const groupDir = resolveGroupFolderPath(group.folder);
 
-  if (isMain) {
-    // Main gets the project root read-only. Writable paths the agent needs
-    // (group folder, IPC, .claude/) are mounted separately below.
-    // Read-only prevents the agent from modifying host application code
-    // (src/, dist/, package.json, etc.) which would bypass the sandbox
-    // entirely on next restart.
+  // Project root read-only for ALL containers.
+  // Needed for cortex MCP server (tsx binary + script at /workspace/project/scripts/).
+  // Read-only prevents the agent from modifying host application code.
+  mounts.push({
+    hostPath: projectRoot,
+    containerPath: '/workspace/project',
+    readonly: true,
+  });
+
+  // Shadow .env so the agent cannot read secrets from the mounted project root.
+  // Credentials are injected by the credential proxy, never exposed to containers.
+  const envFile = path.join(projectRoot, '.env');
+  if (fs.existsSync(envFile)) {
     mounts.push({
-      hostPath: projectRoot,
-      containerPath: '/workspace/project',
+      hostPath: '/dev/null',
+      containerPath: '/workspace/project/.env',
       readonly: true,
     });
+  }
 
-    // Shadow .env so the agent cannot read secrets from the mounted project root.
-    // Credentials are injected by the credential proxy, never exposed to containers.
-    const envFile = path.join(projectRoot, '.env');
-    if (fs.existsSync(envFile)) {
-      mounts.push({
-        hostPath: '/dev/null',
-        containerPath: '/workspace/project/.env',
-        readonly: true,
-      });
-    }
-
+  if (isMain) {
     // Host home directory — gives main group agent full PC access for system
     // configuration (email setup, global Claude settings, skill management, etc.)
     const hostHome = process.env.HOME ?? '/root';
@@ -111,21 +110,7 @@ function buildVolumeMounts(
         readonly: false,
       });
     }
-
-    // Main also gets its group folder as the working directory
-    mounts.push({
-      hostPath: groupDir,
-      containerPath: '/workspace/group',
-      readonly: false,
-    });
   } else {
-    // Other groups only get their own folder
-    mounts.push({
-      hostPath: groupDir,
-      containerPath: '/workspace/group',
-      readonly: false,
-    });
-
     // Global memory directory (read-only for non-main)
     // Only directory mounts are supported, not file mounts
     const globalDir = path.join(GROUPS_DIR, 'global');
@@ -137,6 +122,13 @@ function buildVolumeMounts(
       });
     }
   }
+
+  // All groups get their own group folder as the working directory
+  mounts.push({
+    hostPath: groupDir,
+    containerPath: '/workspace/group',
+    readonly: false,
+  });
 
   // Cortex vault — read-only for all containers (Phase 17: cortex_read and cortex_search)
   const cortexDir = path.join(projectRoot, 'cortex');

@@ -111,7 +111,7 @@ export async function startRemoteControl(
   try {
     proc = spawn('claude', ['remote-control', '--name', 'NanoClaw Remote'], {
       cwd,
-      stdio: ['pipe', stdoutFd, stderrFd],
+      stdio: ['ignore', stdoutFd, stderrFd],
       detached: true,
     });
   } catch (err: any) {
