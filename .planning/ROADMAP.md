@@ -273,7 +273,9 @@ Plans:
   1. `runReconciliation()` in `reconciler.ts` calls `mineLoreFromHistory()` and indexes new lore atoms via `indexLoreAtoms()` on every Night Shift cycle
   2. New lore atoms written to vault by `writeLoreAtom()` are picked up by the cortex watcher and embedded into Qdrant
   3. `cortex_search` returns lore-atom type entries after a Night Shift cycle that processes commits with Constraint/Rejected/Directive trailers
-**Plans**: 0 plans
+**Plans**: 1 plan
+Plans:
+- [ ] 23-01-PLAN.md — Wire lore mining into reconciler production cycle
 
 ## Progress
 
