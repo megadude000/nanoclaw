@@ -4,7 +4,7 @@
 
 - [x] **v1.0 Discord Integration** - Phases 1-8 (shipped 2026-03-27)
 - [x] **v2.0 Agent Dashboard** - Phases 9-13 (shipped 2026-03-28)
-- [ ] **v3.0 Agent Cortex Intelligence** - Phases 14-22 (in progress)
+- [ ] **v3.0 Agent Cortex Intelligence** - Phases 14-23 (in progress)
 
 ## Phases
 
@@ -264,10 +264,21 @@ Plans:
 - [x] 22-01-PLAN.md — Bootstrap scripts for YourWave, ContentFactory, NightShift
 - [x] 22-02-PLAN.md — Project-scoped search validation
 
+### Phase 23: Lore Mining Production Wiring
+**Goal**: Lore atoms extracted from git commit trailers are automatically indexed into Cortex on every Night Shift cycle — closing the runtime gap where LORE-02/LORE-03 implementations exist but have no production trigger
+**Depends on**: Phase 20, Phase 21
+**Requirements**: LORE-02, LORE-03
+**Gap Closure**: Closes tech debt from v3.0 audit — lore parsing functions have no production call site
+**Success Criteria** (what must be TRUE):
+  1. `runReconciliation()` in `reconciler.ts` calls `mineLoreFromHistory()` and indexes new lore atoms via `indexLoreAtoms()` on every Night Shift cycle
+  2. New lore atoms written to vault by `writeLoreAtom()` are picked up by the cortex watcher and embedded into Qdrant
+  3. `cortex_search` returns lore-atom type entries after a Night Shift cycle that processes commits with Constraint/Rejected/Directive trailers
+**Plans**: 0 plans
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 14 -> 15 -> 16 -> 17 -> 18 -> 19 -> 20 -> 21 -> 22
+Phases execute in numeric order: 14 -> 15 -> 16 -> 17 -> 18 -> 19 -> 20 -> 21 -> 22 -> 23
 Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in parallel with Phases 17-19.
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -281,3 +292,4 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | 20. Lore Protocol | v3.0 | 2/2 | Complete    | 2026-03-31 |
 | 21. Nightshift Reconciliation | v3.0 | 2/2 | Complete    | 2026-03-31 |
 | 22. Multi-Project Bootstrap | v3.0 | 2/2 | Complete    | 2026-03-31 |
+| 23. Lore Mining Production Wiring | v3.0 | 0/0 | Not started | - |
