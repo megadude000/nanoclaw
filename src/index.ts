@@ -61,9 +61,13 @@ import {
   loadSenderAllowlist,
   shouldDropMessage,
 } from './sender-allowlist.js';
+import { readEnvFile } from './env.js';
 import { startSchedulerLoop } from './task-scheduler.js';
 import { startCortexWatcher, stopCortexWatcher } from './cortex/watcher.js';
 import { ProgressTracker } from './progress-tracker.js';
+import { BotStatusPanel } from './bot-status-panel.js';
+import { EmbedBuilder } from 'discord.js';
+import { loadSwarmIdentities } from './swarm-webhook-manager.js';
 import { Channel, NewMessage, RegisteredGroup } from './types.js';
 import { logger } from './logger.js';
 
@@ -80,6 +84,8 @@ const channels: Channel[] = [];
 const queue = new GroupQueue();
 
 let progressTracker: ProgressTracker | null = null;
+let botStatusPanel: BotStatusPanel | undefined;
+let sendToAgents: ((embed: EmbedBuilder) => Promise<void>) | undefined;
 
 const onecli = new OneCLI({ url: ONECLI_URL });
 
@@ -284,6 +290,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
 
   await channel.setTyping?.(chatJid, true);
   progressTracker?.onMessageSent(chatJid, group.folder);
+  botStatusPanel?.onGroupStarted(chatJid, group.folder);
   let hadError = false;
   let outputSentToUser = false;
 
@@ -307,6 +314,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
 
     if (result.status === 'success') {
       progressTracker?.onResponseReceived(chatJid);
+      botStatusPanel?.onGroupDone(chatJid);
       queue.notifyIdle(chatJid);
     }
 
@@ -318,6 +326,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
   await channel.setTyping?.(chatJid, false);
   if (idleTimer) clearTimeout(idleTimer);
   progressTracker?.onContainerStopped(chatJid, output === 'error' ? 1 : 0);
+  if (output === 'error') botStatusPanel?.onGroupError(chatJid);
 
   if (output === 'error' || hadError) {
     // If we already sent output to the user, don't roll back the cursor —
@@ -528,12 +537,8 @@ async function startMessageLoop(): Promise<void> {
             lastAgentTimestamp[chatJid] =
               messagesToSend[messagesToSend.length - 1].timestamp;
             saveState();
-            // Show typing indicator while the container processes the piped message
-            channel
-              .setTyping?.(chatJid, true)
-              ?.catch((err) =>
-                logger.warn({ chatJid, err }, 'Failed to set typing indicator'),
-              );
+            // Restart progress tracking for the piped message (typing heartbeat + progress message)
+            progressTracker?.onMessageSent(chatJid, group.folder);
           } else {
             // No active container — enqueue for a new one
             queue.enqueueMessageCheck(chatJid);
@@ -702,22 +707,73 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Initialize progress tracker using the first channel that supports edit/delete
+  // Wire #logs channel for startup notifications
+  const logsEnv = readEnvFile(['DISCORD_LOGS_CHANNEL_ID']);
+  const logsChannelId =
+    process.env.DISCORD_LOGS_CHANNEL_ID || logsEnv.DISCORD_LOGS_CHANNEL_ID || '';
+  const dumpJid = logsChannelId ? `dc:${logsChannelId}` : undefined;
+
+  // Wire #agents channel for agent status embeds
+  const agentsEnv = readEnvFile(['DISCORD_AGENTS_CHANNEL_ID']);
+  const agentsChannelId =
+    process.env.DISCORD_AGENTS_CHANNEL_ID || agentsEnv.DISCORD_AGENTS_CHANNEL_ID || '';
+  const agentsJid = agentsChannelId ? `dc:${agentsChannelId}` : undefined;
+  sendToAgents = agentsJid
+    ? async (embed: EmbedBuilder) => {
+        const ch = findChannel(channels, agentsJid);
+        if (ch?.sendEmbed) await ch.sendEmbed(agentsJid, embed).catch(() => {});
+      }
+    : undefined;
+
+  // Initialize progress tracker
   progressTracker = new ProgressTracker({
     sendMsg: async (jid, text) => {
-      const ch = findChannel(channels, jid);
+      const ch = findChannel(channels, jid) as any;
       return ch?.sendMessageRaw?.(jid, text);
     },
     editMsg: async (jid, msgId, text) => {
-      const ch = findChannel(channels, jid);
-      await ch?.editMessage?.(jid, String(msgId), text);
+      const ch = findChannel(channels, jid) as any;
+      await ch?.editMessage?.(jid, msgId, text);
     },
-    deleteMsg: async (_jid, _msgId) => {},
+    deleteMsg: async (jid, msgId) => {
+      const ch = findChannel(channels, jid) as any;
+      await ch?.deleteMessage?.(jid, msgId);
+    },
     setTyping: async (jid, typing) => {
       const ch = findChannel(channels, jid);
       await ch?.setTyping?.(jid, typing);
     },
+    dumpJid,
   });
+
+  // Initialize bot status panel (posts to #bot-control / DISCORD_BOT_MANAGEMENT_CHANNEL_ID)
+  const botMgmtEnv = readEnvFile(['DISCORD_BOT_MANAGEMENT_CHANNEL_ID']);
+  const botMgmtChannelId =
+    process.env.DISCORD_BOT_MANAGEMENT_CHANNEL_ID ||
+    botMgmtEnv.DISCORD_BOT_MANAGEMENT_CHANNEL_ID ||
+    '';
+  if (botMgmtChannelId) {
+    const panelJid = `dc:${botMgmtChannelId}`;
+    const swarmNames = loadSwarmIdentities().map((i: any) => i.name);
+    const botNames = [ASSISTANT_NAME, ...swarmNames];
+    botStatusPanel = new BotStatusPanel({
+      channelJid: panelJid,
+      botNames,
+      defaultBot: ASSISTANT_NAME,
+      sendMsg: async (jid, text) => {
+        const ch = findChannel(channels, jid) as any;
+        return ch?.sendMessageRaw?.(jid, text);
+      },
+      editMsg: async (jid, msgId, text) => {
+        const ch = findChannel(channels, jid) as any;
+        await ch?.editMessage?.(jid, msgId, text);
+      },
+      getState: (key: string) => getRouterState(key),
+      setState: (key: string, value: string) => setRouterState(key, value),
+    });
+    await botStatusPanel.initialize();
+    logger.info({ panelJid, botNames }, 'BotStatusPanel initialized');
+  }
 
   // Start subsystems (independently of connection handler)
   startSchedulerLoop({
@@ -735,12 +791,30 @@ async function main(): Promise<void> {
       const text = formatOutbound(rawText);
       if (text) await channel.sendMessage(jid, text);
     },
+    progressTracker: progressTracker ?? undefined,
+    botStatusPanel,
+    sendToAgents,
   });
   startIpcWatcher({
-    sendMessage: (jid, text) => {
+    sendMessage: (jid, text, sender) => {
       const channel = findChannel(channels, jid);
       if (!channel) throw new Error(`No channel for JID: ${jid}`);
-      return channel.sendMessage(jid, text);
+      if (sender) botStatusPanel?.onBotSeen(sender, jid);
+      return channel.sendMessage(jid, text, sender);
+    },
+    reactToMessage: async (jid, messageId, emoji) => {
+      const channel = findChannel(channels, jid);
+      if (channel?.reactToMessage)
+        await channel.reactToMessage(jid, messageId, emoji);
+    },
+    sendWithButtons: async (jid, text, buttons, rowSize) => {
+      const channel = findChannel(channels, jid);
+      if (channel?.sendWithButtons)
+        await channel.sendWithButtons(jid, text, buttons, rowSize);
+    },
+    sendPhoto: async (jid: string, photoPath: string, caption?: string) => {
+      const channel = findChannel(channels, jid);
+      if (channel?.sendPhoto) await channel.sendPhoto(jid, photoPath, caption);
     },
     registeredGroups: () => registeredGroups,
     registerGroup,
@@ -770,6 +844,7 @@ async function main(): Promise<void> {
         writeTasksSnapshot(group.folder, group.isMain === true, taskRows);
       }
     },
+    sendToAgents,
   });
   // Start Cortex embedding watcher (best-effort, non-blocking)
   const cortexDir = path.join(process.cwd(), 'cortex');
