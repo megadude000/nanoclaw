@@ -15,12 +15,20 @@
 
 import { globSync } from 'node:fs';
 import type { QdrantClient } from '@qdrant/js-client-rest';
+import type OpenAI from 'openai';
 import { parseCortexEntry } from './parser.js';
 import { STALENESS_TTLS } from './types.js';
 import type { CortexLevel } from './types.js';
 import {
-  loadGraph, saveGraph, addEdge, hasEdge, buildIndex, getNeighbors,
+  loadGraph,
+  saveGraph,
+  addEdge,
+  hasEdge,
+  buildIndex,
+  getNeighbors,
 } from './cortex-graph.js';
+import { mineLoreFromHistory } from './lore-mining.js';
+import type { MiningSummary } from './lore-mining.js';
 import { logger } from '../logger.js';
 
 // ---------------------------------------------------------------------------
@@ -51,12 +59,15 @@ export interface ReconciliationReport {
   orphans: OrphanEntry[];
   runAt: string;
   durationMs: number;
+  loreSummary?: MiningSummary;
 }
 
 export interface ReconciliationOptions {
   stalenessTTLs?: Record<string, number>;
   cosineThreshold?: number;
   maxLinksPerEntry?: number;
+  openai?: OpenAI;
+  repoDir?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -100,7 +111,9 @@ export function checkStaleness(
       const ttlDays = effectiveTTLs[cortexLevel] ?? 14;
 
       // Read updated date from frontmatter (Pitfall 2: never use file mtime)
-      const dateStr = (fm.updated ?? fm.last_updated ?? fm.created) as string | undefined;
+      const dateStr = (fm.updated ?? fm.last_updated ?? fm.created) as
+        | string
+        | undefined;
 
       let daysSinceUpdate: number;
       if (!dateStr) {
@@ -110,19 +123,32 @@ export function checkStaleness(
         if (Number.isNaN(updatedMs)) {
           daysSinceUpdate = Infinity;
         } else {
-          daysSinceUpdate = Math.floor((now - updatedMs) / (1000 * 60 * 60 * 24));
+          daysSinceUpdate = Math.floor(
+            (now - updatedMs) / (1000 * 60 * 60 * 24),
+          );
         }
       }
 
       if (daysSinceUpdate > ttlDays) {
-        stale.push({ filePath: fullPath, cortexLevel, daysSinceUpdate, ttlDays });
+        stale.push({
+          filePath: fullPath,
+          cortexLevel,
+          daysSinceUpdate,
+          ttlDays,
+        });
       }
     } catch (err) {
-      logger.warn({ err, file: fullPath }, 'checkStaleness: failed to parse entry');
+      logger.warn(
+        { err, file: fullPath },
+        'checkStaleness: failed to parse entry',
+      );
     }
   }
 
-  logger.info({ total: files.length, stale: stale.length }, 'checkStaleness complete');
+  logger.info(
+    { total: files.length, stale: stale.length },
+    'checkStaleness complete',
+  );
   return stale;
 }
 
@@ -159,7 +185,8 @@ export async function discoverCrossLinks(
   const discovered: DiscoveredLink[] = [];
 
   for (const point of points) {
-    const sourceFilePath = (point.payload as Record<string, unknown>)?.file_path as string;
+    const sourceFilePath = (point.payload as Record<string, unknown>)
+      ?.file_path as string;
     if (!sourceFilePath) continue;
 
     const vector = point.vector as number[];
@@ -177,14 +204,16 @@ export async function discoverCrossLinks(
     for (const match of results) {
       if (linksAdded >= maxLinksPerEntry) break;
 
-      const targetFilePath = (match.payload as Record<string, unknown>)?.file_path as string;
+      const targetFilePath = (match.payload as Record<string, unknown>)
+        ?.file_path as string;
       if (!targetFilePath) continue;
 
       // Skip self-matches
       if (targetFilePath === sourceFilePath) continue;
 
       // Skip existing edges
-      if (hasEdge(graph, sourceFilePath, targetFilePath, 'CROSS_LINK')) continue;
+      if (hasEdge(graph, sourceFilePath, targetFilePath, 'CROSS_LINK'))
+        continue;
 
       const edge = {
         source: sourceFilePath,
@@ -194,7 +223,11 @@ export async function discoverCrossLinks(
       };
 
       if (addEdge(graph, edge)) {
-        discovered.push({ source: sourceFilePath, target: targetFilePath, score: match.score });
+        discovered.push({
+          source: sourceFilePath,
+          target: targetFilePath,
+          score: match.score,
+        });
         linksAdded++;
       }
     }
@@ -203,7 +236,10 @@ export async function discoverCrossLinks(
   // Save graph only when new edges were discovered
   if (discovered.length > 0) {
     saveGraph(graphPath, graph);
-    logger.info({ newLinks: discovered.length }, 'discoverCrossLinks: saved new edges');
+    logger.info(
+      { newLinks: discovered.length },
+      'discoverCrossLinks: saved new edges',
+    );
   }
 
   return discovered;
@@ -244,7 +280,8 @@ export function findOrphans(
       const missingFields = REQUIRED_FM_FIELDS.filter(
         (f) => fm[f] === undefined || fm[f] === null || fm[f] === '',
       );
-      const hasBadFrontmatter = !entry.validation.valid || missingFields.length > 0;
+      const hasBadFrontmatter =
+        !entry.validation.valid || missingFields.length > 0;
       if (!hasBadFrontmatter) continue;
 
       // Condition C: short content
@@ -261,11 +298,17 @@ export function findOrphans(
 
       orphans.push({ filePath: fullPath, reason: reasons.join('; ') });
     } catch (err) {
-      logger.warn({ err, file: fullPath }, 'findOrphans: failed to parse entry');
+      logger.warn(
+        { err, file: fullPath },
+        'findOrphans: failed to parse entry',
+      );
     }
   }
 
-  logger.info({ total: files.length, orphans: orphans.length }, 'findOrphans complete');
+  logger.info(
+    { total: files.length, orphans: orphans.length },
+    'findOrphans complete',
+  );
   return orphans;
 }
 
@@ -300,22 +343,48 @@ export async function runReconciliation(
       options?.maxLinksPerEntry ?? 3,
     );
   } catch (err) {
-    logger.warn({ err }, 'runReconciliation: Qdrant unavailable, skipping cross-link discovery');
+    logger.warn(
+      { err },
+      'runReconciliation: Qdrant unavailable, skipping cross-link discovery',
+    );
   }
 
   // Step 3: Orphan detection
   const orphans = findOrphans(cortexDir, graphPath);
 
+  // Step 4: Lore mining (LORE-02/LORE-03)
+  let loreSummary: MiningSummary | undefined;
+  if (options?.openai && options?.repoDir) {
+    try {
+      loreSummary = await mineLoreFromHistory(
+        options.repoDir,
+        cortexDir,
+        options.openai,
+        qdrant,
+      );
+      logger.info({ ...loreSummary }, 'runReconciliation: lore mining complete');
+    } catch (err) {
+      logger.warn({ err }, 'runReconciliation: lore mining failed, skipping');
+    }
+  }
+
   const report: ReconciliationReport = {
     staleEntries,
     newLinks,
     orphans,
+    loreSummary,
     runAt: new Date().toISOString(),
     durationMs: Date.now() - start,
   };
 
   logger.info(
-    { stale: staleEntries.length, links: newLinks.length, orphans: orphans.length, durationMs: report.durationMs },
+    {
+      stale: staleEntries.length,
+      links: newLinks.length,
+      orphans: orphans.length,
+      lore: loreSummary?.decisions_extracted ?? 0,
+      durationMs: report.durationMs,
+    },
     'runReconciliation complete',
   );
 

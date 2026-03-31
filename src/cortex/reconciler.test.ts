@@ -32,6 +32,10 @@ vi.mock('../logger.js', () => ({
   logger: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock('./lore-mining.js', () => ({
+  mineLoreFromHistory: vi.fn(),
+}));
+
 // ---------------------------------------------------------------------------
 // Imports (after mocks)
 // ---------------------------------------------------------------------------
@@ -39,7 +43,12 @@ vi.mock('../logger.js', () => ({
 import { globSync } from 'node:fs';
 import { parseCortexEntry } from './parser.js';
 import {
-  loadGraph, saveGraph, addEdge, hasEdge, buildIndex, getNeighbors,
+  loadGraph,
+  saveGraph,
+  addEdge,
+  hasEdge,
+  buildIndex,
+  getNeighbors,
 } from './cortex-graph.js';
 import {
   checkStaleness,
@@ -47,8 +56,12 @@ import {
   findOrphans,
   runReconciliation,
 } from './reconciler.js';
+import { mineLoreFromHistory } from './lore-mining.js';
+import type { QdrantClient } from '@qdrant/js-client-rest';
+import type OpenAI from 'openai';
 
 const mockGlobSync = vi.mocked(globSync);
+const mockMineLoreFromHistory = vi.mocked(mineLoreFromHistory);
 const mockParseCortexEntry = vi.mocked(parseCortexEntry);
 const mockLoadGraph = vi.mocked(loadGraph);
 const mockSaveGraph = vi.mocked(saveGraph);
@@ -192,7 +205,7 @@ describe('discoverCrossLinks', () => {
       next_page_offset: null,
     });
     fakeQdrant.search.mockResolvedValue([
-      { id: 'id2', score: 0.90, payload: { file_path: 'b.md' } },
+      { id: 'id2', score: 0.9, payload: { file_path: 'b.md' } },
     ]);
     mockLoadGraph.mockReturnValue(emptyGraph);
     mockHasEdge.mockReturnValue(false);
@@ -200,16 +213,14 @@ describe('discoverCrossLinks', () => {
 
     const result = await discoverCrossLinks(fakeQdrant, '/graph.json');
     expect(result).toHaveLength(1);
-    expect(result[0]).toEqual({ source: 'a.md', target: 'b.md', score: 0.90 });
+    expect(result[0]).toEqual({ source: 'a.md', target: 'b.md', score: 0.9 });
     expect(mockAddEdge).toHaveBeenCalled();
     expect(mockSaveGraph).toHaveBeenCalled();
   });
 
   it('skips self-matches (same file_path)', async () => {
     fakeQdrant.scroll.mockResolvedValue({
-      points: [
-        { id: 'id1', vector: [0.1], payload: { file_path: 'a.md' } },
-      ],
+      points: [{ id: 'id1', vector: [0.1], payload: { file_path: 'a.md' } }],
       next_page_offset: null,
     });
     fakeQdrant.search.mockResolvedValue([
@@ -224,13 +235,11 @@ describe('discoverCrossLinks', () => {
 
   it('skips entries that already have a CROSS_LINK edge', async () => {
     fakeQdrant.scroll.mockResolvedValue({
-      points: [
-        { id: 'id1', vector: [0.1], payload: { file_path: 'a.md' } },
-      ],
+      points: [{ id: 'id1', vector: [0.1], payload: { file_path: 'a.md' } }],
       next_page_offset: null,
     });
     fakeQdrant.search.mockResolvedValue([
-      { id: 'id2', score: 0.90, payload: { file_path: 'b.md' } },
+      { id: 'id2', score: 0.9, payload: { file_path: 'b.md' } },
     ]);
     mockLoadGraph.mockReturnValue(emptyGraph);
     mockHasEdge.mockReturnValue(true);
@@ -242,13 +251,11 @@ describe('discoverCrossLinks', () => {
 
   it('does not save graph when no new edges discovered', async () => {
     fakeQdrant.scroll.mockResolvedValue({
-      points: [
-        { id: 'id1', vector: [0.1], payload: { file_path: 'a.md' } },
-      ],
+      points: [{ id: 'id1', vector: [0.1], payload: { file_path: 'a.md' } }],
       next_page_offset: null,
     });
     fakeQdrant.search.mockResolvedValue([
-      { id: 'id2', score: 0.90, payload: { file_path: 'b.md' } },
+      { id: 'id2', score: 0.9, payload: { file_path: 'b.md' } },
     ]);
     mockLoadGraph.mockReturnValue(emptyGraph);
     mockHasEdge.mockReturnValue(true); // already linked
@@ -259,9 +266,7 @@ describe('discoverCrossLinks', () => {
 
   it('respects MAX_LINKS_PER_ENTRY = 3', async () => {
     fakeQdrant.scroll.mockResolvedValue({
-      points: [
-        { id: 'id1', vector: [0.1], payload: { file_path: 'a.md' } },
-      ],
+      points: [{ id: 'id1', vector: [0.1], payload: { file_path: 'a.md' } }],
       next_page_offset: null,
     });
     // Return 5 matches above threshold
@@ -294,9 +299,20 @@ describe('findOrphans', () => {
       makeEntry('/cortex/linked.md', { cortex_level: 'L10' }, 'short') as any,
     );
     mockLoadGraph.mockReturnValue(emptyGraph);
-    mockBuildIndex.mockReturnValue(new Map([
-      ['/cortex/linked.md', [{ path: 'other.md', type: 'REFERENCES', direction: 'outgoing' as const }]],
-    ]));
+    mockBuildIndex.mockReturnValue(
+      new Map([
+        [
+          '/cortex/linked.md',
+          [
+            {
+              path: 'other.md',
+              type: 'REFERENCES',
+              direction: 'outgoing' as const,
+            },
+          ],
+        ],
+      ]),
+    );
     mockGetNeighbors.mockReturnValue([
       { path: 'other.md', type: 'REFERENCES', direction: 'outgoing' as const },
     ]);
@@ -338,12 +354,17 @@ describe('findOrphans', () => {
   it('does NOT flag entries with valid frontmatter even if no edges', () => {
     mockGlobSync.mockReturnValue(['valid-fm.md'] as any);
     mockParseCortexEntry.mockReturnValue(
-      makeEntry('/cortex/valid-fm.md', {
-        cortex_level: 'L20',
-        confidence: 'high',
-        domain: 'nanoclaw',
-        scope: 'project',
-      }, 'short', true) as any,
+      makeEntry(
+        '/cortex/valid-fm.md',
+        {
+          cortex_level: 'L20',
+          confidence: 'high',
+          domain: 'nanoclaw',
+          scope: 'project',
+        },
+        'short',
+        true,
+      ) as any,
     );
     mockLoadGraph.mockReturnValue(emptyGraph);
     mockBuildIndex.mockReturnValue(new Map());
@@ -382,7 +403,11 @@ describe('runReconciliation', () => {
     mockBuildIndex.mockReturnValue(new Map());
     mockGetNeighbors.mockReturnValue([]);
 
-    const report = await runReconciliation('/cortex', '/graph.json', fakeQdrant);
+    const report = await runReconciliation(
+      '/cortex',
+      '/graph.json',
+      fakeQdrant,
+    );
     expect(report.staleEntries).toHaveLength(1);
     expect(report.newLinks).toEqual([]);
     expect(report.orphans).toBeDefined();
@@ -400,10 +425,80 @@ describe('runReconciliation', () => {
       search: vi.fn(),
     } as any;
 
-    const report = await runReconciliation('/cortex', '/graph.json', brokenQdrant);
+    const report = await runReconciliation(
+      '/cortex',
+      '/graph.json',
+      brokenQdrant,
+    );
     // Should still return partial report without crashing
     expect(report.newLinks).toEqual([]);
     expect(report.runAt).toBeTruthy();
     expect(report.durationMs).toBeGreaterThanOrEqual(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// runReconciliation — lore mining step
+// ---------------------------------------------------------------------------
+
+describe('runReconciliation — lore mining step', () => {
+  const fakeQdrant = {
+    scroll: vi.fn().mockResolvedValue({ points: [] }),
+    search: vi.fn().mockResolvedValue([]),
+  } as unknown as QdrantClient;
+
+  const fakeOpenAI = {} as unknown as OpenAI;
+
+  const miningSummary = {
+    total_commits_scanned: 10,
+    decisions_extracted: 3,
+    files_written: 2,
+    files_skipped: 1,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGlobSync.mockReturnValue([]);
+    mockLoadGraph.mockReturnValue(emptyGraph);
+    mockBuildIndex.mockReturnValue(new Map());
+    mockMineLoreFromHistory.mockResolvedValue(miningSummary);
+  });
+
+  it('calls mineLoreFromHistory when openai and repoDir are provided', async () => {
+    const report = await runReconciliation('/cortex', '/graph.json', fakeQdrant, {
+      openai: fakeOpenAI,
+      repoDir: '/repo',
+    });
+    expect(mockMineLoreFromHistory).toHaveBeenCalledWith(
+      '/repo',
+      '/cortex',
+      fakeOpenAI,
+      fakeQdrant,
+    );
+    expect(report.loreSummary).toEqual(miningSummary);
+  });
+
+  it('sets loreSummary undefined when options have no openai', async () => {
+    const report = await runReconciliation('/cortex', '/graph.json', fakeQdrant, {
+      repoDir: '/repo',
+    });
+    expect(mockMineLoreFromHistory).not.toHaveBeenCalled();
+    expect(report.loreSummary).toBeUndefined();
+  });
+
+  it('handles mineLoreFromHistory failure gracefully — returns report with loreSummary undefined', async () => {
+    mockMineLoreFromHistory.mockRejectedValue(new Error('git failure'));
+    const report = await runReconciliation('/cortex', '/graph.json', fakeQdrant, {
+      openai: fakeOpenAI,
+      repoDir: '/repo',
+    });
+    expect(report.loreSummary).toBeUndefined();
+    expect(report.staleEntries).toBeDefined();
+  });
+
+  it('does not call mineLoreFromHistory when no options provided (backward compat)', async () => {
+    const report = await runReconciliation('/cortex', '/graph.json', fakeQdrant);
+    expect(mockMineLoreFromHistory).not.toHaveBeenCalled();
+    expect(report.loreSummary).toBeUndefined();
   });
 });
