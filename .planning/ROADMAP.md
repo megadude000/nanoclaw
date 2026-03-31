@@ -200,7 +200,12 @@ Plans:
   1. Bootstrap script produces 50-100 L10-L20 entries covering NanoClaw src/ exports, IPC contracts, env vars, and channel interfaces
   2. Container CLAUDE.md instructs agents to query Cortex at task start, and agents follow this instruction
   3. An agent in a container calls cortex_search for a NanoClaw concept and receives a relevant bootstrapped entry (end-to-end smoke test)
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 1-01-PLAN.md -- Update global CLAUDE.md with Cortex auto-query instruction
+- [ ] 1-02-PLAN.md -- Create bootstrap-cortex.ts script for NanoClaw L10/L20 entry generation
+- [ ] 2-03-PLAN.md -- E2E smoke test: agent searches Cortex and gets a bootstrapped entry
 
 ### Phase 19: Knowledge Graph
 **Goal**: Cortex entries have explicit typed relationships that agents can traverse to discover connected context beyond keyword similarity
@@ -255,7 +260,7 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | 15. Qdrant Infrastructure | v3.0 | 1/1 | Complete    | 2026-03-30 |
 | 16. Embedding Pipeline | v3.0 | 2/2 | Complete    | 2026-03-30 |
 | 17. Search & MCP Tools | v3.0 | 3/3 | Complete    | 2026-03-30 |
-| 18. Knowledge Bootstrap | v3.0 | 0/0 | Not started | - |
+| 18. Knowledge Bootstrap | v3.0 | 0/3 | In progress | - |
 | 19. Knowledge Graph | v3.0 | 0/0 | Not started | - |
 | 20. Lore Protocol | v3.0 | 0/0 | Not started | - |
 | 21. Nightshift Reconciliation | v3.0 | 0/0 | Not started | - |
