@@ -129,7 +129,7 @@ Plans:
 - [x] **Phase 18: Knowledge Bootstrap** - Populate NanoClaw L10-L20 entries and wire agent auto-query (completed 2026-03-31)
 - [x] **Phase 19: Knowledge Graph** - Explicit relationship edges between Cortex entries with agent tooling (completed 2026-03-31)
 - [x] **Phase 20: Lore Protocol** - Git trailer knowledge atoms indexed into Cortex (completed 2026-03-31)
-- [ ] **Phase 21: Nightshift Reconciliation** - Nightly autonomous maintenance: staleness, discovery, cleanup
+- [x] **Phase 21: Nightshift Reconciliation** - Nightly autonomous maintenance: staleness, discovery, cleanup (completed 2026-03-31)
 - [ ] **Phase 22: Multi-Project Bootstrap** - Extend Cortex coverage to YourWave, ContentFactory, NightShift
 
 ## Phase Details
@@ -249,7 +249,7 @@ Plans:
 
 Plans:
 - [x] 21-01-PLAN.md — Core reconciler module: checkStaleness, discoverCrossLinks, findOrphans, runReconciliation + unit tests
-- [ ] 21-02-PLAN.md — IPC cortex_reconcile handler, #agents summary embed, Night Shift planner prompt update
+- [x] 21-02-PLAN.md — IPC cortex_reconcile handler, #agents summary embed, Night Shift planner prompt update
 
 ### Phase 22: Multi-Project Bootstrap
 **Goal**: Cortex coverage extends beyond NanoClaw to YourWave, ContentFactory, and NightShift -- validating the knowledge layer works across multiple codebases
@@ -279,5 +279,5 @@ Note: Phase 20 (Lore Protocol) depends only on Phase 16 and can execute in paral
 | 18. Knowledge Bootstrap | v3.0 | 3/3 | Complete    | 2026-03-31 |
 | 19. Knowledge Graph | v3.0 | 2/2 | Complete    | 2026-03-31 |
 | 20. Lore Protocol | v3.0 | 2/2 | Complete    | 2026-03-31 |
-| 21. Nightshift Reconciliation | v3.0 | 1/2 | In Progress|  |
+| 21. Nightshift Reconciliation | v3.0 | 2/2 | Complete   | 2026-03-31 |
 | 22. Multi-Project Bootstrap | v3.0 | 0/0 | Not started | - |

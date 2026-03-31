@@ -53,7 +53,7 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 
 ### Autonomous Maintenance (Nightshift)
 
-- [ ] **NIGHT-01**: Nightshift reconciliation runs nightly via Alfred scheduled task
+- [x] **NIGHT-01**: Nightshift reconciliation runs nightly via Alfred scheduled task
 - [x] **NIGHT-02**: Staleness cascade flags entries not updated in configurable N days
 - [x] **NIGHT-03**: CROSS_LINK auto-discovery promotes semantically similar entries (cosine > threshold) to graph edges
 - [x] **NIGHT-04**: Orphan cleanup identifies entries with no references or searches
@@ -110,7 +110,7 @@ Requirements for Cortex Intelligence milestone. Each maps to roadmap phases.
 | LORE-01 | Phase 20 | Complete |
 | LORE-02 | Phase 20 | Complete |
 | LORE-03 | Phase 20 | Complete |
-| NIGHT-01 | Phase 21 | Pending |
+| NIGHT-01 | Phase 21 | Complete |
 | NIGHT-02 | Phase 21 | Complete |
 | NIGHT-03 | Phase 21 | Complete |
 | NIGHT-04 | Phase 21 | Complete |
