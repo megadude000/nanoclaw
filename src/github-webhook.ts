@@ -118,7 +118,6 @@ async function handleEvent(
       getRegisteredGroups: config.getRegisteredGroups,
     });
   }
-
 }
 
 async function handleWorkflowRunEvent(
@@ -244,27 +243,57 @@ function deployAfterCI(
 
   const deployStart = Date.now();
 
-  exec(deployScript, { timeout: 120_000, shell: '/bin/bash' }, (err, _stdout, stderr) => {
-    const elapsed = ((Date.now() - deployStart) / 1000).toFixed(1);
-    const groups = config.getRegisteredGroups();
-    const targets = resolveTargets('github-ci', groups);
-    const now = new Date().toISOString();
+  exec(
+    deployScript,
+    { timeout: 120_000, shell: '/bin/bash' },
+    (err, _stdout, stderr) => {
+      const elapsed = ((Date.now() - deployStart) / 1000).toFixed(1);
+      const groups = config.getRegisteredGroups();
+      const targets = resolveTargets('github-ci', groups);
+      const now = new Date().toISOString();
 
-    if (err) {
-      logger.error({ err, stderr: stderr.slice(0, 500), runId }, 'Deploy failed');
-      const failPrompt = `Send this message exactly (no research, no extra text):
+      if (err) {
+        logger.error(
+          { err, stderr: stderr.slice(0, 500), runId },
+          'Deploy failed',
+        );
+        const failPrompt = `Send this message exactly (no research, no extra text):
 
 ❌ **Deploy failed** after CI pass — \`${repoFullName}\`
 > ${displayTitle.split('\n')[0]}
 Error: ${(err.message || 'unknown').slice(0, 200)}
 Duration: ${elapsed}s`;
 
+        for (const target of targets) {
+          createTask({
+            id: `${deployId}-fail@${target.jid}`,
+            group_folder: target.group.folder,
+            chat_jid: target.jid,
+            prompt: failPrompt,
+            schedule_type: 'once',
+            schedule_value: now,
+            context_mode: 'isolated',
+            next_run: now,
+            status: 'active',
+            created_at: now,
+          });
+        }
+        return;
+      }
+
+      logger.info({ runId, elapsed }, 'Deploy succeeded after CI pass');
+      const successPrompt = `Send this message exactly (no research, no extra text):
+
+🚀 **Deployed** after CI ✅ — \`${repoFullName}\`
+> ${displayTitle.split('\n')[0]}
+Duration: ${elapsed}s | Services restarted: yw-dev, yw-storybook`;
+
       for (const target of targets) {
         createTask({
-          id: `${deployId}-fail@${target.jid}`,
+          id: `${deployId}-ok@${target.jid}`,
           group_folder: target.group.folder,
           chat_jid: target.jid,
-          prompt: failPrompt,
+          prompt: successPrompt,
           schedule_type: 'once',
           schedule_value: now,
           context_mode: 'isolated',
@@ -273,31 +302,8 @@ Duration: ${elapsed}s`;
           created_at: now,
         });
       }
-      return;
-    }
-
-    logger.info({ runId, elapsed }, 'Deploy succeeded after CI pass');
-    const successPrompt = `Send this message exactly (no research, no extra text):
-
-🚀 **Deployed** after CI ✅ — \`${repoFullName}\`
-> ${displayTitle.split('\n')[0]}
-Duration: ${elapsed}s | Services restarted: yw-dev, yw-storybook`;
-
-    for (const target of targets) {
-      createTask({
-        id: `${deployId}-ok@${target.jid}`,
-        group_folder: target.group.folder,
-        chat_jid: target.jid,
-        prompt: successPrompt,
-        schedule_type: 'once',
-        schedule_value: now,
-        context_mode: 'isolated',
-        next_run: now,
-        status: 'active',
-        created_at: now,
-      });
-    }
-  });
+    },
+  );
 }
 
 interface CIRunInfo {

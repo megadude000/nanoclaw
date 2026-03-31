@@ -877,22 +877,38 @@ describe('DiscordChannel', () => {
 
   describe('ownsJid', () => {
     it('owns dc: JIDs', () => {
-      const channel = new DiscordChannel('test-token', 'main-channel-id', createTestOpts());
+      const channel = new DiscordChannel(
+        'test-token',
+        'main-channel-id',
+        createTestOpts(),
+      );
       expect(channel.ownsJid('dc:1234567890123456')).toBe(true);
     });
 
     it('does not own WhatsApp group JIDs', () => {
-      const channel = new DiscordChannel('test-token', 'main-channel-id', createTestOpts());
+      const channel = new DiscordChannel(
+        'test-token',
+        'main-channel-id',
+        createTestOpts(),
+      );
       expect(channel.ownsJid('12345@g.us')).toBe(false);
     });
 
     it('does not own Telegram JIDs', () => {
-      const channel = new DiscordChannel('test-token', 'main-channel-id', createTestOpts());
+      const channel = new DiscordChannel(
+        'test-token',
+        'main-channel-id',
+        createTestOpts(),
+      );
       expect(channel.ownsJid('tg:123456789')).toBe(false);
     });
 
     it('does not own unknown JID formats', () => {
-      const channel = new DiscordChannel('test-token', 'main-channel-id', createTestOpts());
+      const channel = new DiscordChannel(
+        'test-token',
+        'main-channel-id',
+        createTestOpts(),
+      );
       expect(channel.ownsJid('random-string')).toBe(false);
     });
   });
@@ -942,7 +958,11 @@ describe('DiscordChannel', () => {
 
   describe('channel properties', () => {
     it('has name "discord"', () => {
-      const channel = new DiscordChannel('test-token', 'main-channel-id', createTestOpts());
+      const channel = new DiscordChannel(
+        'test-token',
+        'main-channel-id',
+        createTestOpts(),
+      );
       expect(channel.name).toBe('discord');
     });
   });
@@ -1386,7 +1406,11 @@ describe('DiscordChannel', () => {
         const opts = createTestOpts({
           registeredGroups: vi.fn(() => ({})),
         });
-        const channel = new DiscordChannel('test-token', UNREGISTERED_CHANNEL_ID, opts);
+        const channel = new DiscordChannel(
+          'test-token',
+          UNREGISTERED_CHANNEL_ID,
+          opts,
+        );
         await channel.connect();
 
         const msg = createMessage({

@@ -55,11 +55,21 @@ function extractPlainText(richText: any[]): string {
 async function fetchNotionContext(
   pageId: string,
   commentId: string,
-): Promise<{ pageTitle: string; commentText: string; agentProp: string; isBot: boolean }> {
+): Promise<{
+  pageTitle: string;
+  commentText: string;
+  agentProp: string;
+  isBot: boolean;
+}> {
   const envVars = readEnvFile(['NOTION_API_KEY']);
   const apiKey = process.env.NOTION_API_KEY || envVars.NOTION_API_KEY || '';
   if (!apiKey) {
-    return { pageTitle: '(unknown)', commentText: '(unknown)', agentProp: '', isBot: false };
+    return {
+      pageTitle: '(unknown)',
+      commentText: '(unknown)',
+      agentProp: '',
+      isBot: false,
+    };
   }
 
   let pageTitle = '(unknown)';
@@ -265,7 +275,10 @@ async function handleCommentCreated(
 
   // Skip bot-authored comments to prevent infinite webhook loops
   if (context.isBot) {
-    logger.debug({ commentId, pageId }, 'Notion webhook: skipping bot-authored comment');
+    logger.debug(
+      { commentId, pageId },
+      'Notion webhook: skipping bot-authored comment',
+    );
     return;
   }
 

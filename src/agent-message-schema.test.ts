@@ -75,7 +75,10 @@ describe('AgentMessageMetaSchema', () => {
 describe('withAgentMeta', () => {
   it('appends Agent and Type inline fields', () => {
     const embed = new EmbedBuilder().setTitle('Test');
-    const result = withAgentMeta(embed, { agentName: 'Friday', messageType: 'took' });
+    const result = withAgentMeta(embed, {
+      agentName: 'Friday',
+      messageType: 'took',
+    });
     const data = result.toJSON();
 
     const agentField = data.fields?.find((f: any) => f.name === 'Agent');
@@ -89,7 +92,11 @@ describe('withAgentMeta', () => {
 
   it('appends Task field when taskId is present', () => {
     const embed = new EmbedBuilder().setTitle('Test');
-    withAgentMeta(embed, { agentName: 'Friday', messageType: 'took', taskId: '#42' });
+    withAgentMeta(embed, {
+      agentName: 'Friday',
+      messageType: 'took',
+      taskId: '#42',
+    });
     const data = embed.toJSON();
 
     const taskField = data.fields?.find((f: any) => f.name === 'Task');
@@ -131,7 +138,10 @@ describe('withAgentMeta', () => {
 
   it('returns the same embed instance', () => {
     const embed = new EmbedBuilder().setTitle('Test');
-    const result = withAgentMeta(embed, { agentName: 'Friday', messageType: 'took' });
+    const result = withAgentMeta(embed, {
+      agentName: 'Friday',
+      messageType: 'took',
+    });
     expect(result).toBe(embed);
   });
 });

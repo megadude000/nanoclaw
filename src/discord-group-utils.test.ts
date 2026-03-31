@@ -179,7 +179,16 @@ describe('createGroupStub template selection', () => {
   });
 
   it('all 8 channel templates are loadable', () => {
-    const channels = ['main', 'agents', 'yw-tasks', 'bugs', 'progress', 'dev-alerts', 'logs', 'bot-control'];
+    const channels = [
+      'main',
+      'agents',
+      'yw-tasks',
+      'bugs',
+      'progress',
+      'dev-alerts',
+      'logs',
+      'bot-control',
+    ];
     for (const ch of channels) {
       const content = createGroupStub(ch, ch === 'main');
       expect(content.length).toBeGreaterThan(50);

@@ -68,9 +68,7 @@ export class SwarmWebhookManager {
   private cache = new Map<string, Webhook>();
 
   constructor(identities: SwarmIdentity[]) {
-    this.identities = new Map(
-      identities.map((i) => [i.name.toLowerCase(), i]),
-    );
+    this.identities = new Map(identities.map((i) => [i.name.toLowerCase(), i]));
   }
 
   /** Check if a sender name matches a configured swarm identity (case-insensitive). */

@@ -11,18 +11,30 @@ import {
 describe('agent-status-embeds', () => {
   describe('buildTookEmbed', () => {
     it('returns an EmbedBuilder with correct color (AGENT_COLORS.took = 0x5865f2)', () => {
-      const embed = buildTookEmbed({ title: 'Fix login bug', taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildTookEmbed({
+        title: 'Fix login bug',
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       expect(embed).toBeInstanceOf(EmbedBuilder);
       expect(embed.data.color).toBe(0x5865f2);
     });
 
     it('sets title starting with "Took:"', () => {
-      const embed = buildTookEmbed({ title: 'Fix login bug', taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildTookEmbed({
+        title: 'Fix login bug',
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       expect(embed.data.title).toBe('Took: Fix login bug');
     });
 
     it('includes Task ID field inline', () => {
-      const embed = buildTookEmbed({ title: 'Fix login bug', taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildTookEmbed({
+        title: 'Fix login bug',
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       const fields = embed.data.fields ?? [];
       const taskField = fields.find((f) => f.name === 'Task ID');
       expect(taskField).toBeDefined();
@@ -31,7 +43,11 @@ describe('agent-status-embeds', () => {
     });
 
     it('includes Agent and Type metadata fields from withAgentMeta', () => {
-      const embed = buildTookEmbed({ title: 'Fix login bug', taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildTookEmbed({
+        title: 'Fix login bug',
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       const fields = embed.data.fields ?? [];
       const agentField = fields.find((f) => f.name === 'Agent');
       const typeField = fields.find((f) => f.name === 'Type');
@@ -53,38 +69,62 @@ describe('agent-status-embeds', () => {
     });
 
     it('omits Description field when description is not provided', () => {
-      const embed = buildTookEmbed({ title: 'Fix login bug', taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildTookEmbed({
+        title: 'Fix login bug',
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       const fields = embed.data.fields ?? [];
       const descField = fields.find((f) => f.name === 'Description');
       expect(descField).toBeUndefined();
     });
 
     it('has a timestamp set', () => {
-      const embed = buildTookEmbed({ title: 'Fix login bug', taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildTookEmbed({
+        title: 'Fix login bug',
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       expect(embed.data.timestamp).toBeDefined();
     });
 
     it('truncates title at 256 chars', () => {
       const longTitle = 'A'.repeat(300);
-      const embed = buildTookEmbed({ title: longTitle, taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildTookEmbed({
+        title: longTitle,
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       expect(embed.data.title!.length).toBeLessThanOrEqual(256);
     });
   });
 
   describe('buildClosedEmbed', () => {
     it('returns an EmbedBuilder with correct color (AGENT_COLORS.closed = 0x57f287)', () => {
-      const embed = buildClosedEmbed({ title: 'Fix login bug', taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildClosedEmbed({
+        title: 'Fix login bug',
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       expect(embed).toBeInstanceOf(EmbedBuilder);
       expect(embed.data.color).toBe(0x57f287);
     });
 
     it('sets title starting with "Closed:"', () => {
-      const embed = buildClosedEmbed({ title: 'Fix login bug', taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildClosedEmbed({
+        title: 'Fix login bug',
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       expect(embed.data.title).toBe('Closed: Fix login bug');
     });
 
     it('includes Task ID field inline', () => {
-      const embed = buildClosedEmbed({ title: 'Fix login bug', taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildClosedEmbed({
+        title: 'Fix login bug',
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       const fields = embed.data.fields ?? [];
       const taskField = fields.find((f) => f.name === 'Task ID');
       expect(taskField?.value).toBe('task-123');
@@ -106,14 +146,23 @@ describe('agent-status-embeds', () => {
     });
 
     it('omits PR field when prUrl is not provided', () => {
-      const embed = buildClosedEmbed({ title: 'Fix login bug', taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildClosedEmbed({
+        title: 'Fix login bug',
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       const fields = embed.data.fields ?? [];
       const prField = fields.find((f) => f.name === 'PR');
       expect(prField).toBeUndefined();
     });
 
     it('includes Agent and Type metadata fields from withAgentMeta', () => {
-      const embed = buildClosedEmbed({ title: 'Fix login bug', taskId: 'task-123', agentName: 'Friday', summary: 'Fixed auth flow' });
+      const embed = buildClosedEmbed({
+        title: 'Fix login bug',
+        taskId: 'task-123',
+        agentName: 'Friday',
+        summary: 'Fixed auth flow',
+      });
       const fields = embed.data.fields ?? [];
       const agentField = fields.find((f) => f.name === 'Agent');
       const typeField = fields.find((f) => f.name === 'Type');
@@ -135,36 +184,61 @@ describe('agent-status-embeds', () => {
     });
 
     it('has a timestamp set', () => {
-      const embed = buildClosedEmbed({ title: 'Fix login bug', taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildClosedEmbed({
+        title: 'Fix login bug',
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       expect(embed.data.timestamp).toBeDefined();
     });
 
     it('truncates title at 256 chars', () => {
       const longTitle = 'A'.repeat(300);
-      const embed = buildClosedEmbed({ title: longTitle, taskId: 'task-123', agentName: 'Friday' });
+      const embed = buildClosedEmbed({
+        title: longTitle,
+        taskId: 'task-123',
+        agentName: 'Friday',
+      });
       expect(embed.data.title!.length).toBeLessThanOrEqual(256);
     });
   });
 
   describe('buildProgressEmbed', () => {
     it('returns an EmbedBuilder with correct color (AGENT_COLORS.progress = 0xfeb932)', () => {
-      const embed = buildProgressEmbed({ title: 'Fix login bug', agentName: 'Friday', description: 'Analyzing auth module' });
+      const embed = buildProgressEmbed({
+        title: 'Fix login bug',
+        agentName: 'Friday',
+        description: 'Analyzing auth module',
+      });
       expect(embed).toBeInstanceOf(EmbedBuilder);
       expect(embed.data.color).toBe(0xfeb932);
     });
 
     it('sets title starting with "Progress:"', () => {
-      const embed = buildProgressEmbed({ title: 'Fix login bug', agentName: 'Friday', description: 'Analyzing auth module' });
+      const embed = buildProgressEmbed({
+        title: 'Fix login bug',
+        agentName: 'Friday',
+        description: 'Analyzing auth module',
+      });
       expect(embed.data.title).toBe('Progress: Fix login bug');
     });
 
     it('sets description', () => {
-      const embed = buildProgressEmbed({ title: 'Fix login bug', agentName: 'Friday', description: 'Analyzing auth module' });
+      const embed = buildProgressEmbed({
+        title: 'Fix login bug',
+        agentName: 'Friday',
+        description: 'Analyzing auth module',
+      });
       expect(embed.data.description).toBe('Analyzing auth module');
     });
 
     it('includes Agent and Type metadata fields from withAgentMeta', () => {
-      const embed = buildProgressEmbed({ title: 'Fix login bug', agentName: 'Friday', description: 'Analyzing auth module', taskId: 'task-123' });
+      const embed = buildProgressEmbed({
+        title: 'Fix login bug',
+        agentName: 'Friday',
+        description: 'Analyzing auth module',
+        taskId: 'task-123',
+      });
       const fields = embed.data.fields ?? [];
       const agentField = fields.find((f) => f.name === 'Agent');
       const typeField = fields.find((f) => f.name === 'Type');
@@ -173,20 +247,33 @@ describe('agent-status-embeds', () => {
     });
 
     it('includes Task field when taskId is provided', () => {
-      const embed = buildProgressEmbed({ title: 'Fix login bug', agentName: 'Friday', description: 'Analyzing auth module', taskId: 'task-123' });
+      const embed = buildProgressEmbed({
+        title: 'Fix login bug',
+        agentName: 'Friday',
+        description: 'Analyzing auth module',
+        taskId: 'task-123',
+      });
       const fields = embed.data.fields ?? [];
       const taskField = fields.find((f) => f.name === 'Task');
       expect(taskField?.value).toBe('task-123');
     });
 
     it('has a timestamp set', () => {
-      const embed = buildProgressEmbed({ title: 'Fix login bug', agentName: 'Friday', description: 'Analyzing auth module' });
+      const embed = buildProgressEmbed({
+        title: 'Fix login bug',
+        agentName: 'Friday',
+        description: 'Analyzing auth module',
+      });
       expect(embed.data.timestamp).toBeDefined();
     });
 
     it('truncates title at 256 chars', () => {
       const longTitle = 'A'.repeat(300);
-      const embed = buildProgressEmbed({ title: longTitle, agentName: 'Friday', description: 'test' });
+      const embed = buildProgressEmbed({
+        title: longTitle,
+        agentName: 'Friday',
+        description: 'test',
+      });
       expect(embed.data.title!.length).toBeLessThanOrEqual(256);
     });
   });

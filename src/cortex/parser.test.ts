@@ -24,7 +24,10 @@ describe('Cortex Parser', () => {
   it('source_hash excludes frontmatter: same body different frontmatter -> same hash', () => {
     const body = '# Hello World\n\nSome meaningful content here.';
     const fileA = createTempFile('hash-a', `---\ntitle: A\n---\n${body}`);
-    const fileB = createTempFile('hash-b', `---\ntitle: B\nstatus: active\n---\n${body}`);
+    const fileB = createTempFile(
+      'hash-b',
+      `---\ntitle: B\nstatus: active\n---\n${body}`,
+    );
 
     const a = parseCortexEntry(fileA, 'permissive');
     const b = parseCortexEntry(fileB, 'permissive');

@@ -140,7 +140,8 @@ export class ProgressTracker {
     this._cleanup(chatJid);
     if (exitCode !== 0) {
       if (msgId) this.deleteMsg(chatJid, msgId).catch(() => {});
-      if (logsMsgId && this.dumpJid) this.deleteMsg(this.dumpJid, logsMsgId).catch(() => {});
+      if (logsMsgId && this.dumpJid)
+        this.deleteMsg(this.dumpJid, logsMsgId).catch(() => {});
     }
   }
 
@@ -288,7 +289,11 @@ export class ProgressTracker {
         const logsText = `[${state.groupFolder}] ${text}`;
         this.sendMsg(this.dumpJid, logsText)
           .then((res: any) => {
-            if (state.logsMsgId === null && res?.message_id && this.states.has(chatJid)) {
+            if (
+              state.logsMsgId === null &&
+              res?.message_id &&
+              this.states.has(chatJid)
+            ) {
               state.logsMsgId = res.message_id;
             }
           })
@@ -315,7 +320,11 @@ export class ProgressTracker {
         setTimeout(() => {
           const s = this.states.get(chatJid);
           if (s?.progressMsgId)
-            this.editMsg(chatJid, s.progressMsgId, this._formatProgress(s)).catch(() => {});
+            this.editMsg(
+              chatJid,
+              s.progressMsgId,
+              this._formatProgress(s),
+            ).catch(() => {});
         }, 5000);
       } else if (err?.error_code === 400) {
         if (state) state.progressMsgId = null;
@@ -324,9 +333,11 @@ export class ProgressTracker {
     // Edit logs channel
     if (state.logsMsgId && this.dumpJid && this.dumpJid !== chatJid) {
       const logsText = `[${state.groupFolder}] ${text}`;
-      this.editMsg(this.dumpJid, state.logsMsgId, logsText).catch((err: any) => {
-        if (err?.error_code === 400) state.logsMsgId = null;
-      });
+      this.editMsg(this.dumpJid, state.logsMsgId, logsText).catch(
+        (err: any) => {
+          if (err?.error_code === 400) state.logsMsgId = null;
+        },
+      );
     }
   }
 

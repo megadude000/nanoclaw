@@ -58,7 +58,11 @@ export class DiscordChannel implements Channel {
   private mainChannelId: string;
   private swarmManager: SwarmWebhookManager | null = null;
 
-  constructor(botToken: string, mainChannelId: string, opts: DiscordChannelOpts) {
+  constructor(
+    botToken: string,
+    mainChannelId: string,
+    opts: DiscordChannelOpts,
+  ) {
     this.botToken = botToken;
     this.mainChannelId = mainChannelId;
     this.opts = opts;
@@ -217,7 +221,10 @@ export class DiscordChannel implements Channel {
                 continue;
               }
             } catch (err) {
-              logger.warn({ err, name: att.name }, 'Discord image download failed');
+              logger.warn(
+                { err, name: att.name },
+                'Discord image download failed',
+              );
             }
             descriptions.push(`[Image: ${att.name || 'image'}]`);
           } else if (contentType.startsWith('video/')) {
@@ -590,7 +597,7 @@ export class DiscordChannel implements Channel {
         .setDescription(`Check if ${ASSISTANT_NAME} is online`),
       new SlashCommandBuilder()
         .setName('chatid')
-        .setDescription('Show this channel\'s JID, name, and type'),
+        .setDescription("Show this channel's JID, name, and type"),
       new SlashCommandBuilder()
         .setName('kill')
         .setDescription('Kill the running agent container for this channel'),
@@ -619,7 +626,9 @@ export class DiscordChannel implements Channel {
       }
     }
     // Clear any stale global commands
-    await rest.put(Routes.applicationCommands(botUserId), { body: [] }).catch(() => {});
+    await rest
+      .put(Routes.applicationCommands(botUserId), { body: [] })
+      .catch(() => {});
   }
 
   private async _handleSlashCommand(
@@ -704,9 +713,14 @@ export class DiscordChannel implements Channel {
       logger.error({ cmd, err }, 'Slash command handler error');
       try {
         if (!interaction.replied && !interaction.deferred) {
-          await interaction.reply({ content: 'Command failed.', ephemeral: true });
+          await interaction.reply({
+            content: 'Command failed.',
+            ephemeral: true,
+          });
         }
-      } catch { /* already replied */ }
+      } catch {
+        /* already replied */
+      }
     }
   }
 
@@ -743,7 +757,9 @@ export class DiscordChannel implements Channel {
     let parentId: string | undefined;
     if (categoryName) {
       const cat = guild.channels.cache.find(
-        (c) => c.type === ChannelType.GuildCategory && c.name.toLowerCase() === categoryName.toLowerCase(),
+        (c) =>
+          c.type === ChannelType.GuildCategory &&
+          c.name.toLowerCase() === categoryName.toLowerCase(),
       );
       if (cat) {
         parentId = cat.id;
@@ -759,7 +775,8 @@ export class DiscordChannel implements Channel {
     const channel = await guild.channels.create({
       name,
       type: ChannelType.GuildText,
-      topic: 'Night Shift activity log — automated progress from Friday & Alfred',
+      topic:
+        'Night Shift activity log — automated progress from Friday & Alfred',
       ...(parentId ? { parent: parentId } : {}),
     });
     return { jid: `dc:${channel.id}`, created: true };
@@ -801,6 +818,8 @@ registerChannel('discord', (opts: ChannelOpts) => {
     return null;
   }
   const mainChannelId =
-    process.env.DISCORD_MAIN_CHANNEL_ID || envVars.DISCORD_MAIN_CHANNEL_ID || '';
+    process.env.DISCORD_MAIN_CHANNEL_ID ||
+    envVars.DISCORD_MAIN_CHANNEL_ID ||
+    '';
   return new DiscordChannel(token, mainChannelId, opts);
 });

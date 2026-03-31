@@ -126,32 +126,35 @@ describe('Cortex Schema Validation', () => {
     });
 
     it('infer level from path: System/Templates -> L10', () => {
-      expect(
-        inferDefaults('System/Templates/foo.md', {}).cortex_level,
-      ).toBe('L10');
+      expect(inferDefaults('System/Templates/foo.md', {}).cortex_level).toBe(
+        'L10',
+      );
     });
 
     it('infer level from path: Calendar/Daily -> L40', () => {
-      expect(
-        inferDefaults('Calendar/Daily/foo.md', {}).cortex_level,
-      ).toBe('L40');
+      expect(inferDefaults('Calendar/Daily/foo.md', {}).cortex_level).toBe(
+        'L40',
+      );
     });
 
     it('infer level from path: Research -> L20', () => {
       expect(
-        inferDefaults('Areas/Work/Projects/YourWave/Research/design.md', {}).cortex_level,
+        inferDefaults('Areas/Work/Projects/YourWave/Research/design.md', {})
+          .cortex_level,
       ).toBe('L20');
     });
 
     it('infer level from path: Projects hub file -> L40', () => {
       expect(
-        inferDefaults('Areas/Work/Projects/YourWave/YourWave.md', {}).cortex_level,
+        inferDefaults('Areas/Work/Projects/YourWave/YourWave.md', {})
+          .cortex_level,
       ).toBe('L40');
     });
 
     it('infer level from path: Projects sub file -> L20', () => {
       expect(
-        inferDefaults('Areas/Work/Projects/YourWave/yw.branding.md', {}).cortex_level,
+        inferDefaults('Areas/Work/Projects/YourWave/yw.branding.md', {})
+          .cortex_level,
       ).toBe('L20');
     });
 
@@ -160,21 +163,22 @@ describe('Cortex Schema Validation', () => {
     });
 
     it('infer domain from project field', () => {
-      expect(
-        inferDefaults('test.md', { project: 'YourWave' }).domain,
-      ).toBe('yourwave');
+      expect(inferDefaults('test.md', { project: 'YourWave' }).domain).toBe(
+        'yourwave',
+      );
     });
 
     it('infer domain from path when no project field', () => {
       expect(
-        inferDefaults('Areas/Work/Projects/NightShift/NightShift.md', {}).domain,
+        inferDefaults('Areas/Work/Projects/NightShift/NightShift.md', {})
+          .domain,
       ).toBe('nightshift');
     });
 
     it('infer scope from type field', () => {
-      expect(
-        inferDefaults('test.md', { type: 'session' }).scope,
-      ).toBe('session');
+      expect(inferDefaults('test.md', { type: 'session' }).scope).toBe(
+        'session',
+      );
     });
 
     it('infer scope from filename when no type', () => {

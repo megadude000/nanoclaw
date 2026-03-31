@@ -183,9 +183,7 @@ describe('resolveTargets', () => {
   it('includes target when enabled is explicitly true', () => {
     const config = JSON.stringify({
       'github-issues': {
-        targets: [
-          { platform: 'discord', jid: 'dc:456', enabled: true },
-        ],
+        targets: [{ platform: 'discord', jid: 'dc:456', enabled: true }],
       },
     });
     mockExistsSync.mockReturnValue(true);
@@ -230,14 +228,10 @@ describe('resolveTargets', () => {
   it('has independent enabled flags per webhook type', () => {
     const config = JSON.stringify({
       'github-issues': {
-        targets: [
-          { platform: 'discord', jid: 'dc:456', enabled: false },
-        ],
+        targets: [{ platform: 'discord', jid: 'dc:456', enabled: false }],
       },
       notion: {
-        targets: [
-          { platform: 'discord', jid: 'dc:456', enabled: true },
-        ],
+        targets: [{ platform: 'discord', jid: 'dc:456', enabled: true }],
       },
     });
     mockExistsSync.mockReturnValue(true);

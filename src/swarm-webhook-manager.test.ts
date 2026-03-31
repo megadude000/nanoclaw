@@ -30,7 +30,9 @@ import { chunkMessage } from './discord-chunker.js';
 
 // --- Helpers to create mock discord.js objects ---
 
-function mockWebhook(overrides: Partial<{ send: ReturnType<typeof vi.fn> }> = {}) {
+function mockWebhook(
+  overrides: Partial<{ send: ReturnType<typeof vi.fn> }> = {},
+) {
   return {
     send: overrides.send ?? vi.fn().mockResolvedValue({}),
     token: 'mock-token',
@@ -48,8 +50,10 @@ function mockChannel(
 ) {
   return {
     id,
-    createWebhook: overrides.createWebhook ?? vi.fn().mockResolvedValue(mockWebhook()),
-    fetchWebhooks: overrides.fetchWebhooks ?? vi.fn().mockResolvedValue(new Map()),
+    createWebhook:
+      overrides.createWebhook ?? vi.fn().mockResolvedValue(mockWebhook()),
+    fetchWebhooks:
+      overrides.fetchWebhooks ?? vi.fn().mockResolvedValue(new Map()),
   };
 }
 
@@ -57,7 +61,12 @@ function mockChannel(
 
 describe('loadSwarmIdentities', () => {
   it('returns parsed identities from valid JSON config', () => {
-    const configPath = resolve(__dirname, '..', 'config', 'swarm-identities.json');
+    const configPath = resolve(
+      __dirname,
+      '..',
+      'config',
+      'swarm-identities.json',
+    );
     const identities = loadSwarmIdentities(configPath);
     expect(identities).toHaveLength(2);
     expect(identities[0].name).toBe('Friday');
@@ -69,7 +78,10 @@ describe('loadSwarmIdentities', () => {
   it('throws on invalid config (missing name)', async () => {
     const fs = await import('node:fs');
     const tmpPath = resolve(__dirname, '..', 'config', '_test_invalid.json');
-    fs.writeFileSync(tmpPath, JSON.stringify([{ avatarURL: 'https://example.com/a.png' }]));
+    fs.writeFileSync(
+      tmpPath,
+      JSON.stringify([{ avatarURL: 'https://example.com/a.png' }]),
+    );
     try {
       expect(() => loadSwarmIdentities(tmpPath)).toThrow();
     } finally {
@@ -80,7 +92,10 @@ describe('loadSwarmIdentities', () => {
   it('throws on invalid config (bad URL)', async () => {
     const fs = await import('node:fs');
     const tmpPath = resolve(__dirname, '..', 'config', '_test_badurl.json');
-    fs.writeFileSync(tmpPath, JSON.stringify([{ name: 'Test', avatarURL: 'not-a-url' }]));
+    fs.writeFileSync(
+      tmpPath,
+      JSON.stringify([{ name: 'Test', avatarURL: 'not-a-url' }]),
+    );
     try {
       expect(() => loadSwarmIdentities(tmpPath)).toThrow();
     } finally {
@@ -214,7 +229,9 @@ describe('SwarmWebhookManager', () => {
 
     it('returns false and logs warning when createWebhook fails', async () => {
       const channel = mockChannel('ch-001', {
-        createWebhook: vi.fn().mockRejectedValue(new Error('Permission denied')),
+        createWebhook: vi
+          .fn()
+          .mockRejectedValue(new Error('Permission denied')),
       });
 
       const result = await manager.send(channel as any, 'Hello', 'Friday');
@@ -266,8 +283,18 @@ describe('SwarmWebhookManager', () => {
     });
 
     it('skips webhooks without token or non-matching name', async () => {
-      const noToken = { name: 'NanoClaw-Friday', token: null, send: vi.fn(), id: 'wh-1' };
-      const wrongName = { name: 'OtherBot', token: 'has-token', send: vi.fn(), id: 'wh-2' };
+      const noToken = {
+        name: 'NanoClaw-Friday',
+        token: null,
+        send: vi.fn(),
+        id: 'wh-1',
+      };
+      const wrongName = {
+        name: 'OtherBot',
+        token: 'has-token',
+        send: vi.fn(),
+        id: 'wh-2',
+      };
 
       const webhooksMap = new Map<string, any>([
         ['wh-1', noToken],

@@ -45,7 +45,10 @@ export function execAsync(
     exec(cmd, { timeout: timeoutMs }, (err, stdout, stderr) => {
       if (err) {
         // Attach stdout/stderr to the error for inspection
-        const enriched = Object.assign(err, { stdout: stdout ?? '', stderr: stderr ?? '' });
+        const enriched = Object.assign(err, {
+          stdout: stdout ?? '',
+          stderr: stderr ?? '',
+        });
         reject(enriched);
       } else {
         resolve({ stdout: stdout ?? '', stderr: stderr ?? '' });
@@ -72,7 +75,10 @@ export function loadState(services: string[]): Map<string, ServiceState> {
     const parsed = JSON.parse(raw) as Record<string, string>;
     for (const [key, value] of Object.entries(parsed)) {
       // Only restore keys that are in the current service list
-      if (result.has(key) && (value === 'up' || value === 'down' || value === 'unknown')) {
+      if (
+        result.has(key) &&
+        (value === 'up' || value === 'down' || value === 'unknown')
+      ) {
         result.set(key, value as ServiceState);
       }
     }
@@ -89,7 +95,10 @@ export function loadState(services: string[]): Map<string, ServiceState> {
 export function saveState(stateMap: Map<string, ServiceState>): void {
   const stateFile = path.join(DATA_DIR, 'health-state.json');
   try {
-    fs.writeFileSync(stateFile, JSON.stringify(Object.fromEntries(stateMap), null, 2));
+    fs.writeFileSync(
+      stateFile,
+      JSON.stringify(Object.fromEntries(stateMap), null, 2),
+    );
   } catch (err) {
     logger.error({ err }, 'Failed to save health state to disk');
   }
@@ -106,7 +115,10 @@ export function saveState(stateMap: Map<string, ServiceState>): void {
  * - cloudflared: systemctl is-active cloudflared (system daemon, no --user)
  */
 export function buildServiceConfigs(): ServiceConfig[] {
-  const envValues = readEnvFile(['HEALTH_MONITOR_SERVICES', 'CLOUDFLARE_TUNNEL_NAME']);
+  const envValues = readEnvFile([
+    'HEALTH_MONITOR_SERVICES',
+    'CLOUDFLARE_TUNNEL_NAME',
+  ]);
 
   const servicesEnv =
     process.env.HEALTH_MONITOR_SERVICES ??
@@ -140,7 +152,9 @@ export function buildServiceConfigs(): ServiceConfig[] {
 /**
  * Check a single service's current state by running its systemctl command.
  */
-async function checkService(svc: ServiceConfig): Promise<{ state: ServiceState; stderr: string }> {
+async function checkService(
+  svc: ServiceConfig,
+): Promise<{ state: ServiceState; stderr: string }> {
   try {
     const { stdout } = await execAsync(svc.command);
     return { state: stdout.trim() === 'active' ? 'up' : 'down', stderr: '' };
@@ -168,7 +182,10 @@ export async function runHealthCheck(
     if (current === previous) continue;
 
     // State transition detected
-    logger.info({ service: svc.name, from: previous, to: current }, 'Health state transition');
+    logger.info(
+      { service: svc.name, from: previous, to: current },
+      'Health state transition',
+    );
 
     stateMap.set(svc.name, current);
     changed = true;
@@ -230,7 +247,9 @@ export function startHealthMonitor(sendEmbed: SendEmbedFn): () => void {
 
   const envValues = readEnvFile(['HEALTH_CHECK_INTERVAL_MS']);
   const checkIntervalMs = parseInt(
-    process.env.HEALTH_CHECK_INTERVAL_MS ?? envValues.HEALTH_CHECK_INTERVAL_MS ?? '60000',
+    process.env.HEALTH_CHECK_INTERVAL_MS ??
+      envValues.HEALTH_CHECK_INTERVAL_MS ??
+      '60000',
     10,
   );
   const heartbeatIntervalMs = 1800000; // 30 minutes

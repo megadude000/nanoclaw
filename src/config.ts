@@ -109,9 +109,7 @@ export const NOTION_WEBHOOK_PORT = parseInt(
 );
 
 // Telegram bot pool tokens (comma-separated)
-export const TELEGRAM_BOT_POOL: string[] = (
-  process.env.TELEGRAM_BOT_POOL || ''
-)
+export const TELEGRAM_BOT_POOL: string[] = (process.env.TELEGRAM_BOT_POOL || '')
   .split(',')
   .map((t) => t.trim())
   .filter(Boolean);

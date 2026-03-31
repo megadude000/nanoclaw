@@ -161,7 +161,10 @@ async function handleGitHubIssuesLabeled(
   // GitHub sends both "opened" and "labeled" events when an issue is created with labels
   const issueCreatedAt = new Date(issue.created_at as string).getTime();
   if (Date.now() - issueCreatedAt < 30_000) {
-    logger.debug({ issueNumber: issue.number }, 'GitHub issues webhook: skipping labeled event for freshly opened issue');
+    logger.debug(
+      { issueNumber: issue.number },
+      'GitHub issues webhook: skipping labeled event for freshly opened issue',
+    );
     return;
   }
 
@@ -178,7 +181,10 @@ async function handleGitHubIssuesLabeled(
   const taskId = `github-issue-${issueNumber}-immediate`;
 
   if (getTaskById(taskId)) {
-    logger.debug({ taskId }, 'GitHub issues webhook: duplicate labeled event, skipping');
+    logger.debug(
+      { taskId },
+      'GitHub issues webhook: duplicate labeled event, skipping',
+    );
     return;
   }
 

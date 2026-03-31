@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "cb0ce470daf2788e",
+        "id": "70790b9121ce81d8",
         "type": "tabs",
         "children": [
           {
-            "id": "023f2a908a2bc88d",
+            "id": "d0b9af63f15213b2",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Areas/Work/Projects/ContentFactory/ContentFactory.md",
+                "file": "Areas/Work/Projects/YourWave/Research/audio-atlas-implementation.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ContentFactory"
+              "title": "audio-atlas-implementation"
             }
           }
         ]
@@ -78,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 462.5
   },
   "right": {
     "id": "07f320441d3f553b",
@@ -183,41 +183,43 @@
       "bases:Create new base": false
     }
   },
-  "active": "023f2a908a2bc88d",
+  "active": "d0b9af63f15213b2",
   "lastOpenFiles": [
-    "Areas/Work/Projects/MorningDigest/MorningDigest.md",
-    "Areas/Work/Session-Logs/2026-03-23-nightshift-planning-approval.md",
-    "Areas/Work/Session-Logs/2026-03-23-nightshift-v2-grants-platform.md",
-    "Areas/Work/Projects/YourWave/Research/instagram-strategy.md",
-    "Areas/Work/Projects/YourWave/Research/brand-moodboard.md",
-    "Areas/Work/Projects/NightShift/cron-registry.md",
-    "Areas/Work/Projects/NightShift/nightshift.architecture.md",
-    "Areas/Work/Session-Logs/2026-03-23-platform-discovery-cloudflare.md",
-    "Areas/Work/Projects/YourWave/yw.platform-discovery.md.tmp.58.1774266557634",
-    "Areas/Work/Projects/YourWave/yw.platform-discovery.md",
-    "Areas/Work/Projects/MorningDigest",
-    "Areas/Work/Session-Logs/2026-03-23-nightshift-execution.md",
-    "Calendar/Daily/2026-03-23.md",
-    "Areas/Work/Session-Logs/2026-03-22-nightshift-system.md",
-    "CLAUDE.md",
-    "Areas/Work/Projects/NightShift/NightShift.md",
+    "Areas/Projects/NanoClaw/src/cortex/watcher.md",
+    "Areas/Projects/NanoClaw/src/cortex/types.md",
+    "Areas/Projects/NanoClaw/src/cortex/schema.md",
+    "Areas/Projects/NanoClaw/src/cortex/qdrant-client.md",
+    "Areas/Projects/NanoClaw/src/cortex/parser.md",
+    "Areas/Projects/NanoClaw/src/cortex/embedder.md",
+    "Areas/Projects/NanoClaw/src/cortex/cortex-mcp-tools.md",
+    "Areas/Projects/NanoClaw/src/channels/whatsapp.md",
+    "Areas/Projects/NanoClaw/src/channels/telegram.md",
+    "Areas/Projects/NanoClaw/src/channels/registry.md",
+    "Areas/Projects/NanoClaw/src/channels/discord.md",
+    "Areas/Projects/NanoClaw/src/channels/gmail.md",
+    "Areas/Projects/NanoClaw/src/webhook-server.md",
+    "Areas/Projects/NanoClaw/src/webhook-router.md",
+    "Areas/Projects/NanoClaw/src/types.md",
+    "Areas/Projects/NanoClaw/src/tunnel-manager.md",
+    "Areas/Projects/NanoClaw/src/transcription.md",
+    "Areas/Projects/NanoClaw/src/timezone.md",
+    "Areas/Projects/NanoClaw/src/task-scheduler.md",
+    "Areas/Projects/NanoClaw/src/swarm-webhook-manager.md",
+    "Areas/Projects/NanoClaw/src/sender-allowlist.md",
+    "Areas/Projects/NanoClaw/src/router.md",
+    "Areas/Projects/NanoClaw/src/remote-control.md",
+    "Areas/Projects/NanoClaw/src/progress-tracker.md",
+    "Areas/Projects/NanoClaw/src/notion-webhook.md",
+    "Areas/Projects/NanoClaw/src/mount-security.md",
+    "Areas/Projects/NanoClaw/src/cortex",
+    "Areas/Projects/NanoClaw/src/channels",
+    "Areas/Projects/NanoClaw/src",
+    "Areas/Projects/NanoClaw",
+    "Areas/Work/Projects/YourWave/Research",
+    "Areas/Work/Projects/YourWave",
     "Areas/Work/Projects/NightShift",
-    "System/Templates/Project.md",
-    "Calendar/Daily/2026-03-17.md",
-    "Calendar/Daily/2026-03-18.md",
-    "Areas/Work/_Index.md",
-    "Areas/Work/Session-Logs/2026-03-20-yourwave-atlas-ci.md",
-    "Areas/Work/Session-Logs/2026-03-22-atlas-content-system.md",
-    "Areas/Work/Session-Logs/2026-03-16-21-14-nanoclaw-setup.md",
-    "Welcome.md",
-    "System/Templates/Daily-Note.md",
-    "Areas/Work/_Index.md.tmp.7010.1773676399719",
-    "System/Templates/Daily-Note.md.tmp.7010.1773676399279",
-    "System/Templates/Project.md.tmp.7010.1773676394667",
-    "System/Templates/Meeting-Note.md",
-    "System/Templates/Meeting-Note.md.tmp.7010.1773676393851",
-    "CLAUDE.md.tmp.7010.1773676390297",
-    "System/Templates",
-    "System/Dashboards"
+    "Areas/Work/Projects/MorningDigest",
+    "Areas/Work/Projects/ContentFactory",
+    "Areas/Work/Projects"
   ]
 }

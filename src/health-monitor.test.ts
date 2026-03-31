@@ -49,29 +49,33 @@ const mockExec = vi.mocked(exec);
 // Helper: make exec resolve with stdout (active)
 // exec callback signature: (err, stdout, stderr)
 function mockExecActive() {
-  mockExec.mockImplementation((_cmd: unknown, _opts: unknown, callback: unknown) => {
-    const cb = (typeof _opts === 'function' ? _opts : callback) as (
-      err: null,
-      stdout: string,
-      stderr: string,
-    ) => void;
-    cb(null, 'active\n', '');
-    return {} as ReturnType<typeof exec>;
-  });
+  mockExec.mockImplementation(
+    (_cmd: unknown, _opts: unknown, callback: unknown) => {
+      const cb = (typeof _opts === 'function' ? _opts : callback) as (
+        err: null,
+        stdout: string,
+        stderr: string,
+      ) => void;
+      cb(null, 'active\n', '');
+      return {} as ReturnType<typeof exec>;
+    },
+  );
 }
 
 // Helper: make exec call back with error (non-zero exit — inactive service)
 function mockExecInactive() {
-  mockExec.mockImplementation((_cmd: unknown, _opts: unknown, callback: unknown) => {
-    const cb = (typeof _opts === 'function' ? _opts : callback) as (
-      err: Error,
-      stdout: string,
-      stderr: string,
-    ) => void;
-    const err = new Error('inactive');
-    cb(err, '', 'inactive');
-    return {} as ReturnType<typeof exec>;
-  });
+  mockExec.mockImplementation(
+    (_cmd: unknown, _opts: unknown, callback: unknown) => {
+      const cb = (typeof _opts === 'function' ? _opts : callback) as (
+        err: Error,
+        stdout: string,
+        stderr: string,
+      ) => void;
+      const err = new Error('inactive');
+      cb(err, '', 'inactive');
+      return {} as ReturnType<typeof exec>;
+    },
+  );
 }
 
 describe('health-monitor', () => {

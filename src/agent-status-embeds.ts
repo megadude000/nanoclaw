@@ -34,7 +34,11 @@ export function buildTookEmbed(params: {
   embed.addFields({ name: 'Task ID', value: params.taskId, inline: true });
 
   if (params.description) {
-    embed.addFields({ name: 'Description', value: truncate(params.description, 1024), inline: false });
+    embed.addFields({
+      name: 'Description',
+      value: truncate(params.description, 1024),
+      inline: false,
+    });
   }
 
   return withAgentMeta(embed, {
@@ -126,7 +130,11 @@ export function buildBlockerEmbed(params: {
     embed.addFields({ name: 'Task ID', value: params.taskId, inline: true });
   }
 
-  return withAgentMeta(embed, { agentName: params.agentName, messageType, taskId: params.taskId });
+  return withAgentMeta(embed, {
+    agentName: params.agentName,
+    messageType,
+    taskId: params.taskId,
+  });
 }
 
 /**
@@ -152,5 +160,9 @@ export function buildHandoffEmbed(params: {
     embed.addFields({ name: 'Task', value: params.taskId, inline: true });
   }
 
-  return withAgentMeta(embed, { agentName: params.agentName, messageType: 'handoff', taskId: params.taskId });
+  return withAgentMeta(embed, {
+    agentName: params.agentName,
+    messageType: 'handoff',
+    taskId: params.taskId,
+  });
 }

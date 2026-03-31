@@ -58,7 +58,10 @@ function truncate(str: string, max: number): string {
  * Note: withAgentMeta() adds 2-4 fields. Caller's embed must have ≤21 fields
  * already to stay within Discord's 25-field limit.
  */
-export function withAgentMeta(embed: EmbedBuilder, meta: AgentMessageMeta): EmbedBuilder {
+export function withAgentMeta(
+  embed: EmbedBuilder,
+  meta: AgentMessageMeta,
+): EmbedBuilder {
   embed.addFields(
     { name: 'Agent', value: meta.agentName, inline: true },
     { name: 'Type', value: meta.messageType, inline: true },
@@ -67,7 +70,11 @@ export function withAgentMeta(embed: EmbedBuilder, meta: AgentMessageMeta): Embe
     embed.addFields({ name: 'Task', value: meta.taskId, inline: true });
   }
   if (meta.summary) {
-    embed.addFields({ name: 'Summary', value: truncate(meta.summary, 1024), inline: false });
+    embed.addFields({
+      name: 'Summary',
+      value: truncate(meta.summary, 1024),
+      inline: false,
+    });
   }
   return embed;
 }
@@ -77,12 +84,12 @@ export function withAgentMeta(embed: EmbedBuilder, meta: AgentMessageMeta): Embe
  * Use AGENT_COLORS[meta.messageType] to set embed color without a switch statement.
  */
 export const AGENT_COLORS: Record<AgentMessageType, number> = {
-  took:               0x5865f2, // Blurple — active/in-progress
-  closed:             0x57f287, // Green — success
-  progress:           0xfeb932, // Orange — in-flight
-  'blocker-perm':     0xed4245, // Red — permission error
-  'blocker-service':  0xed4245, // Red — service unavailable
+  took: 0x5865f2, // Blurple — active/in-progress
+  closed: 0x57f287, // Green — success
+  progress: 0xfeb932, // Orange — in-flight
+  'blocker-perm': 0xed4245, // Red — permission error
+  'blocker-service': 0xed4245, // Red — service unavailable
   'blocker-conflict': 0xed4245, // Red — human input needed
-  handoff:            0x9b59b6, // Purple — transition
-  digest:             0x95a5a6, // Grey — informational
+  handoff: 0x9b59b6, // Purple — transition
+  digest: 0x95a5a6, // Grey — informational
 } as const;

@@ -124,7 +124,12 @@ function inferScopeFromMeta(
 
   // Derive from filename: strip .md, replace dots/hyphens with spaces
   const basename = filePath.split('/').pop() ?? '';
-  return basename.replace(/\.md$/, '').replace(/[.\-_]/g, ' ').trim() || 'unknown';
+  return (
+    basename
+      .replace(/\.md$/, '')
+      .replace(/[.\-_]/g, ' ')
+      .trim() || 'unknown'
+  );
 }
 
 /**

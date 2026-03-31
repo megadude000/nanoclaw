@@ -198,11 +198,13 @@ async function runTask(
   deps.botStatusPanel?.onGroupStarted(task.chat_jid, task.group_folder);
 
   // ASTATUS-01: Report task picked up to #agents
-  deps.sendToAgents?.(buildTookEmbed({
-    title: task.prompt.slice(0, 80),
-    taskId: task.id,
-    agentName: ASSISTANT_NAME,
-  }));
+  deps.sendToAgents?.(
+    buildTookEmbed({
+      title: task.prompt.slice(0, 80),
+      taskId: task.id,
+      agentName: ASSISTANT_NAME,
+    }),
+  );
 
   try {
     const output = await runContainerAgent(
@@ -268,12 +270,14 @@ async function runTask(
 
   // ASTATUS-02: Report task closed to #agents (success only)
   if (!error) {
-    deps.sendToAgents?.(buildClosedEmbed({
-      title: task.prompt.slice(0, 80),
-      taskId: task.id,
-      agentName: ASSISTANT_NAME,
-      summary: result?.slice(0, 200) ?? undefined,
-    }));
+    deps.sendToAgents?.(
+      buildClosedEmbed({
+        title: task.prompt.slice(0, 80),
+        taskId: task.id,
+        agentName: ASSISTANT_NAME,
+        summary: result?.slice(0, 200) ?? undefined,
+      }),
+    );
   }
 
   const durationMs = Date.now() - startTime;

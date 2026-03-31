@@ -109,9 +109,7 @@ function createSchema(database: Database.Database): void {
 
   // Add routing_tag column if it doesn't exist (migration for existing DBs)
   try {
-    database.exec(
-      `ALTER TABLE scheduled_tasks ADD COLUMN routing_tag TEXT`,
-    );
+    database.exec(`ALTER TABLE scheduled_tasks ADD COLUMN routing_tag TEXT`);
   } catch {
     /* column already exists */
   }

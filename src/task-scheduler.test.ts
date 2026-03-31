@@ -167,7 +167,11 @@ describe('task scheduler', () => {
       vi.mocked(resolveTargets).mockReturnValue([
         {
           jid: 'dc:agents-channel',
-          group: { folder: 'discord_agents', jid: 'dc:agents-channel', isMain: false } as any,
+          group: {
+            folder: 'discord_agents',
+            jid: 'dc:agents-channel',
+            isMain: false,
+          } as any,
         },
       ]);
 
@@ -183,7 +187,11 @@ describe('task scheduler', () => {
 
       startSchedulerLoop({
         registeredGroups: () => ({
-          'tg:main@g.us': { folder: 'main', jid: 'tg:main@g.us', isMain: true } as any,
+          'tg:main@g.us': {
+            folder: 'main',
+            jid: 'tg:main@g.us',
+            isMain: true,
+          } as any,
         }),
         getSessions: () => ({}),
         queue: { enqueueTask } as any,
@@ -194,7 +202,10 @@ describe('task scheduler', () => {
       await vi.advanceTimersByTimeAsync(10);
 
       // DIGEST-01: sendMessage must have been called with the routing target JID
-      expect(sendMessage).toHaveBeenCalledWith('dc:agents-channel', expect.any(String));
+      expect(sendMessage).toHaveBeenCalledWith(
+        'dc:agents-channel',
+        expect.any(String),
+      );
     });
 
     it('DIGEST-02: does NOT send to task.chat_jid when routing targets resolve', async () => {
@@ -223,7 +234,11 @@ describe('task scheduler', () => {
       vi.mocked(resolveTargets).mockReturnValue([
         {
           jid: 'dc:agents-channel',
-          group: { folder: 'discord_agents', jid: 'dc:agents-channel', isMain: false } as any,
+          group: {
+            folder: 'discord_agents',
+            jid: 'dc:agents-channel',
+            isMain: false,
+          } as any,
         },
       ]);
 
@@ -239,7 +254,11 @@ describe('task scheduler', () => {
 
       startSchedulerLoop({
         registeredGroups: () => ({
-          'tg:main@g.us': { folder: 'main', jid: 'tg:main@g.us', isMain: true } as any,
+          'tg:main@g.us': {
+            folder: 'main',
+            jid: 'tg:main@g.us',
+            isMain: true,
+          } as any,
         }),
         getSessions: () => ({}),
         queue: { enqueueTask } as any,
@@ -251,7 +270,10 @@ describe('task scheduler', () => {
 
       // DIGEST-02: sendMessage must NEVER have been called with task.chat_jid
       // This covers ALL send sites -- streaming callback AND post-run block
-      expect(sendMessage).not.toHaveBeenCalledWith('tg:main@g.us', expect.any(String));
+      expect(sendMessage).not.toHaveBeenCalledWith(
+        'tg:main@g.us',
+        expect.any(String),
+      );
     });
   });
 });

@@ -113,7 +113,10 @@ export interface Channel {
     text: string,
   ): Promise<{ message_id: string } | undefined>;
   // Optional: send a Discord embed (only implemented by Discord channel).
-  sendEmbed?(jid: string, embed: import('discord.js').EmbedBuilder): Promise<void>;
+  sendEmbed?(
+    jid: string,
+    embed: import('discord.js').EmbedBuilder,
+  ): Promise<void>;
 }
 
 // Callback type that channels use to deliver inbound messages
