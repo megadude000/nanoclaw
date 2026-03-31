@@ -453,6 +453,7 @@ async function runQuery(
         'NotebookEdit',
         'mcp__nanoclaw__*',
         'mcp__gmail__*',
+        'mcp__nanoclaw-cortex__*',
       ],
       env: sdkEnv,
       permissionMode: 'bypassPermissions',
@@ -482,6 +483,11 @@ async function runQuery(
               'Notion-Version': '2022-06-28',
             }),
           },
+        },
+        'nanoclaw-cortex': {
+          type: 'stdio',
+          command: 'npx',
+          args: ['tsx', '/home/andrii-panasenko/nanoclaw/scripts/cortex-mcp-server.ts'],
         },
       },
       hooks: {
