@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { generateProjectEntries, type VaultDoc } from '../../scripts/bootstrap-multi-project.js';
+import { generateProjectEntries, type VaultDoc } from './multi-project-bootstrap.js';
 
 // ---------------------------------------------------------------------------
 // Test fixtures
