@@ -229,7 +229,11 @@ Plans:
   1. Git commit trailer convention (Constraint/Rejected/Directive atoms) is documented with good and bad examples in CLAUDE.md
   2. Native git parsing extracts lore atoms from commit trailers without any external CLI dependency
   3. Extracted lore atoms are indexed in Qdrant as type lore-atom and returned by cortex_search queries
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 20-01-PLAN.md -- Lore parser module: git trailer extraction, vault file writing, embedding
+- [ ] 20-02-PLAN.md -- Convention documentation in CLAUDE.md, Night Shift mining script
 
 ### Phase 21: Nightshift Reconciliation
 **Goal**: The knowledge layer maintains itself autonomously -- stale entries are flagged, new connections are discovered, and orphans are cleaned up without human intervention
@@ -241,7 +245,11 @@ Plans:
   3. Semantically similar entries above cosine threshold are proposed as CROSS_LINK edges in cortex-graph.json
   4. Orphan entries (no references, no searches, missing frontmatter) are identified and reported
   5. A 3-5 line summary report posts to #agents after each nightly run
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 20-01-PLAN.md -- Lore parser module: git trailer extraction, vault file writing, embedding
+- [ ] 20-02-PLAN.md -- Convention documentation in CLAUDE.md, Night Shift mining script
 
 ### Phase 22: Multi-Project Bootstrap
 **Goal**: Cortex coverage extends beyond NanoClaw to YourWave, ContentFactory, and NightShift -- validating the knowledge layer works across multiple codebases
@@ -250,7 +258,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Bootstrap scripts produce L10-L20 entries for YourWave, ContentFactory, and NightShift projects
   2. Cortex search results are correctly scoped by project filter -- no cross-project contamination in filtered queries
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 20-01-PLAN.md -- Lore parser module: git trailer extraction, vault file writing, embedding
+- [ ] 20-02-PLAN.md -- Convention documentation in CLAUDE.md, Night Shift mining script
 
 ## Progress
 
