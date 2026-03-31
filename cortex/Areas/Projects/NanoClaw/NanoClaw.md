@@ -10,6 +10,8 @@ tags:
   - hub
 created: '2026-03-31'
 project: nanoclaw
+source_hash: acb62703ef6de688b72a8ffcd6402f16b0a287573cddb475996c309571d31c07
+embedding_model: text-embedding-3-small
 ---
 # NanoClaw
 

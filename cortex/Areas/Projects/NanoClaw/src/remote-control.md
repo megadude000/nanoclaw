@@ -10,6 +10,8 @@ tags:
   - core
 created: '2026-03-31'
 project: nanoclaw
+source_hash: ac5108d56e2b211b6bf4326d2d0ef8a07d2330617832dd89be48afab4096f104
+embedding_model: text-embedding-3-small
 ---
 # remote-control.ts
 

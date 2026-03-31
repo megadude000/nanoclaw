@@ -10,6 +10,8 @@ tags:
   - channel
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 357c7e73bf8b35e430c5b9400d2407a3e085b36d43c237aee0ec2d465ec4d417
+embedding_model: text-embedding-3-small
 ---
 # gmail.ts
 

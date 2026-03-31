@@ -10,6 +10,8 @@ tags:
   - channel
 created: '2026-03-31'
 project: nanoclaw
+source_hash: a0afe62a06a2f638b516aa4bc787e4b27a1b9eec8f4f9b68cc86c38307684c60
+embedding_model: text-embedding-3-small
 ---
 # discord.ts
 

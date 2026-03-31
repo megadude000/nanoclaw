@@ -10,6 +10,8 @@ tags:
   - cortex
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 951b8c0f1dba1254b92e5367867833f2b7beebff47bb32d7f14c0f403a7d3aed
+embedding_model: text-embedding-3-small
 ---
 # cortex-mcp-tools.ts
 

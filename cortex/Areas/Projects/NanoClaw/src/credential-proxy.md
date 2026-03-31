@@ -10,6 +10,8 @@ tags:
   - core
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 9cada945001a7c2ec6c5eea00838891c707539ad4939a76cc38fd9edd467c548
+embedding_model: text-embedding-3-small
 ---
 # credential-proxy.ts
 

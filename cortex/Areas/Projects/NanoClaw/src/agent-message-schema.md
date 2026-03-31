@@ -10,6 +10,8 @@ tags:
   - core
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 130c83d7c76009f67a57e68c4bc309ca8dec8967291a65cac04e35f2fe595593
+embedding_model: text-embedding-3-small
 ---
 # agent-message-schema.ts
 

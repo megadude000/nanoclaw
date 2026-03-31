@@ -10,6 +10,8 @@ tags:
   - discord
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 6c77e431dab3d93624fffd7eb1f86922a023c4ae65ca8d73975a0c35d2b249ea
+embedding_model: text-embedding-3-small
 ---
 # discord-embeds.ts
 

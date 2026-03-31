@@ -10,6 +10,8 @@ tags:
   - cortex
 created: '2026-03-31'
 project: nanoclaw
+source_hash: cd3b6b17878b6cd233915033327813659c5b79a988ee18dcc00c36a2a55e9c09
+embedding_model: text-embedding-3-small
 ---
 # parser.ts
 

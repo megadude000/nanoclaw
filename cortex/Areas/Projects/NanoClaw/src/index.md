@@ -10,6 +10,8 @@ tags:
   - core
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 6a27916cb12b5e6e055147ce5f967a8806845d338fb9b2edd6430e13294f5115
+embedding_model: text-embedding-3-small
 ---
 # index.ts
 

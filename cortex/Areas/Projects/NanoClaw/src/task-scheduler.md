@@ -10,6 +10,8 @@ tags:
   - scheduler
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 5ac38168612fd42588e387254f0634d695fe3ab57bf61df8686d0a1312fea5db
+embedding_model: text-embedding-3-small
 ---
 # task-scheduler.ts
 

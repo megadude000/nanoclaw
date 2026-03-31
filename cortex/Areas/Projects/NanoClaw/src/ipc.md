@@ -10,6 +10,8 @@ tags:
   - ipc
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 2be9f26e7526057e7029c15e64827fbb5dd8a5f4bd6ef90fd3023fa7f7f8a566
+embedding_model: text-embedding-3-small
 ---
 # ipc.ts
 

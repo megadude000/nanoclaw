@@ -10,6 +10,8 @@ tags:
   - health
 created: '2026-03-31'
 project: nanoclaw
+source_hash: b2342c1a76994bc70f7bb789562f166d0a2620cc71f941d7991be176a946ca2c
+embedding_model: text-embedding-3-small
 ---
 # health-monitor-embeds.ts
 

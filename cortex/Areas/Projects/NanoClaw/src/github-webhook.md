@@ -10,6 +10,8 @@ tags:
   - webhook
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 19ef672cd08a1d05a19e9759eddb9ce7c06f35dc35acc45f87289ce63e640c10
+embedding_model: text-embedding-3-small
 ---
 # github-webhook.ts
 

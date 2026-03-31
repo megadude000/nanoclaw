@@ -10,6 +10,8 @@ tags:
   - channel
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 3580491043d6fe3dbc08629a09c0e0ef45038b8405e6fbec78b232bf1d4f890b
+embedding_model: text-embedding-3-small
 ---
 # registry.ts
 

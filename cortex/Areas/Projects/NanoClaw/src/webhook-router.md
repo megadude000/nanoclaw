@@ -10,6 +10,8 @@ tags:
   - webhook
 created: '2026-03-31'
 project: nanoclaw
+source_hash: b0ab460d257738d2dd79cc6d13d3c97d361f3d51cc7f659c4350859cf751545e
+embedding_model: text-embedding-3-small
 ---
 # webhook-router.ts
 

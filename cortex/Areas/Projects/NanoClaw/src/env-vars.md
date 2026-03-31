@@ -11,6 +11,8 @@ tags:
   - env
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 5603186062c52d9f4113bafc5a1c993939a5208d3475ddb86bf85e3e3a84d37d
+embedding_model: text-embedding-3-small
 ---
 # Environment Variables
 

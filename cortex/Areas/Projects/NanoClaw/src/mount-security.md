@@ -10,6 +10,8 @@ tags:
   - core
 created: '2026-03-31'
 project: nanoclaw
+source_hash: a511506dcfca439c0d248f8142ef07f0507d6c54084a1b127841d18e1096b6b5
+embedding_model: text-embedding-3-small
 ---
 # mount-security.ts
 

@@ -10,6 +10,8 @@ tags:
   - core
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 25d77ab9dbd7571d9feef43232d8efda748d2ca014185626eec15de7dbefa6b1
+embedding_model: text-embedding-3-small
 ---
 # sender-allowlist.ts
 

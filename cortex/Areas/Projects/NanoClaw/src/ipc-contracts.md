@@ -11,6 +11,8 @@ tags:
   - mcp
 created: '2026-03-31'
 project: nanoclaw
+source_hash: f2de51090b66bc392e76755d2320b6d285966417cfac3570094eb69deddd6e6c
+embedding_model: text-embedding-3-small
 ---
 # IPC Contracts
 

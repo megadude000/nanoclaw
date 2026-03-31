@@ -10,6 +10,8 @@ tags:
   - webhook
 created: '2026-03-31'
 project: nanoclaw
+source_hash: d63e2bfa20405cfd8bc745c0a68b04f9764ad9168901175a6359d2b6743729df
+embedding_model: text-embedding-3-small
 ---
 # swarm-webhook-manager.ts
 

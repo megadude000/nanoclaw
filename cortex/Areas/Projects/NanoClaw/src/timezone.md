@@ -10,6 +10,8 @@ tags:
   - core
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 42e0412780808c48fc51b20d0028a04052a75936c1c0b7893e3145dcdd7a82e8
+embedding_model: text-embedding-3-small
 ---
 # timezone.ts
 

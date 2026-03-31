@@ -10,6 +10,8 @@ tags:
   - core
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 3b0663cc0901be059eb5a37cbba2f7a1520107da3c4d17aada75920d5fda88fa
+embedding_model: text-embedding-3-small
 ---
 # router.ts
 

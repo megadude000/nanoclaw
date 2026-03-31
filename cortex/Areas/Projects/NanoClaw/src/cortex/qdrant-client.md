@@ -10,6 +10,8 @@ tags:
   - cortex
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 0aee1808ed66aada2cd871d289dabcdb29a28fdee2ac5b8ecad48cf9428bc60e
+embedding_model: text-embedding-3-small
 ---
 # qdrant-client.ts
 

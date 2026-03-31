@@ -10,6 +10,8 @@ tags:
   - discord
 created: '2026-03-31'
 project: nanoclaw
+source_hash: c3022469631bf366648ac90d976e4bd66de66ef31fce9be6176c18a027e21bba
+embedding_model: text-embedding-3-small
 ---
 # discord-group-utils.ts
 

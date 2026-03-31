@@ -10,6 +10,8 @@ tags:
   - core
 created: '2026-03-31'
 project: nanoclaw
+source_hash: af251f01dbb2158613d9840dda3d5794ccc75361fd188b0012070624131bde0d
+embedding_model: text-embedding-3-small
 ---
 # group-folder.ts
 

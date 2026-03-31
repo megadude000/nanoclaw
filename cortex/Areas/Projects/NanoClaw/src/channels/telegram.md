@@ -10,6 +10,8 @@ tags:
   - channel
 created: '2026-03-31'
 project: nanoclaw
+source_hash: f84f223eb93b9681ae4f9d6e24e9d26aa26a3a22a5e2d643137aaa4cb56eb6b8
+embedding_model: text-embedding-3-small
 ---
 # telegram.ts
 

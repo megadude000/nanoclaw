@@ -10,6 +10,8 @@ tags:
   - container
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 5b70ebcce3170a3133d79d37b2eb5255934879b73af5a9060e748cf83b8ad388
+embedding_model: text-embedding-3-small
 ---
 # container-runtime.ts
 

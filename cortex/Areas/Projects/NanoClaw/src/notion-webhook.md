@@ -10,6 +10,8 @@ tags:
   - webhook
 created: '2026-03-31'
 project: nanoclaw
+source_hash: 7bdf72e1795228da0ec011081271621605d5ee4de6a226353be1607615f1a59c
+embedding_model: text-embedding-3-small
 ---
 # notion-webhook.ts
 
