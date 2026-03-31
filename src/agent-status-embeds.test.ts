@@ -6,6 +6,7 @@ import {
   buildProgressEmbed,
   buildBlockerEmbed,
   buildHandoffEmbed,
+  buildReconciliationEmbed,
 } from './agent-status-embeds.js';
 
 describe('agent-status-embeds', () => {
@@ -463,6 +464,112 @@ describe('agent-status-embeds', () => {
         agentName: 'Friday',
       });
       expect(embed.data.description!.length).toBeLessThanOrEqual(4096);
+    });
+  });
+
+  describe('buildReconciliationEmbed', () => {
+    it('returns an EmbedBuilder with title "Cortex Reconciliation"', () => {
+      const embed = buildReconciliationEmbed({
+        staleCount: 3,
+        newLinksCount: 5,
+        orphanCount: 2,
+        runAt: '2026-03-31T04:00:00Z',
+        durationMs: 12000,
+      });
+      expect(embed).toBeInstanceOf(EmbedBuilder);
+      expect(embed.data.title).toBe('Cortex Reconciliation');
+    });
+
+    it('description contains stale count formatted as bold', () => {
+      const embed = buildReconciliationEmbed({
+        staleCount: 3,
+        newLinksCount: 5,
+        orphanCount: 2,
+        runAt: '2026-03-31T04:00:00Z',
+        durationMs: 12000,
+      });
+      expect(embed.data.description).toContain('Stale entries flagged: **3**');
+    });
+
+    it('description contains new links count formatted as bold', () => {
+      const embed = buildReconciliationEmbed({
+        staleCount: 3,
+        newLinksCount: 5,
+        orphanCount: 2,
+        runAt: '2026-03-31T04:00:00Z',
+        durationMs: 12000,
+      });
+      expect(embed.data.description).toContain('New CROSS_LINKs: **5**');
+    });
+
+    it('description contains orphan count formatted as bold', () => {
+      const embed = buildReconciliationEmbed({
+        staleCount: 3,
+        newLinksCount: 5,
+        orphanCount: 2,
+        runAt: '2026-03-31T04:00:00Z',
+        durationMs: 12000,
+      });
+      expect(embed.data.description).toContain('Orphans found: **2**');
+    });
+
+    it('embed color is 0x9b59b6 (purple)', () => {
+      const embed = buildReconciliationEmbed({
+        staleCount: 0,
+        newLinksCount: 0,
+        orphanCount: 0,
+        runAt: '2026-03-31T04:00:00Z',
+        durationMs: 5000,
+      });
+      expect(embed.data.color).toBe(0x9b59b6);
+    });
+
+    it('has a timestamp set from report.runAt', () => {
+      const embed = buildReconciliationEmbed({
+        staleCount: 0,
+        newLinksCount: 0,
+        orphanCount: 0,
+        runAt: '2026-03-31T04:00:00Z',
+        durationMs: 5000,
+      });
+      expect(embed.data.timestamp).toBeDefined();
+    });
+
+    it('includes Agent metadata field with value "Cortex"', () => {
+      const embed = buildReconciliationEmbed({
+        staleCount: 0,
+        newLinksCount: 0,
+        orphanCount: 0,
+        runAt: '2026-03-31T04:00:00Z',
+        durationMs: 5000,
+      });
+      const fields = embed.data.fields ?? [];
+      const agentField = fields.find((f) => f.name === 'Agent');
+      expect(agentField?.value).toBe('Cortex');
+    });
+
+    it('includes Type metadata field with value "progress"', () => {
+      const embed = buildReconciliationEmbed({
+        staleCount: 0,
+        newLinksCount: 0,
+        orphanCount: 0,
+        runAt: '2026-03-31T04:00:00Z',
+        durationMs: 5000,
+      });
+      const fields = embed.data.fields ?? [];
+      const typeField = fields.find((f) => f.name === 'Type');
+      expect(typeField?.value).toBe('progress');
+    });
+
+    it('description contains duration in seconds', () => {
+      const embed = buildReconciliationEmbed({
+        staleCount: 0,
+        newLinksCount: 0,
+        orphanCount: 0,
+        runAt: '2026-03-31T04:00:00Z',
+        durationMs: 12000,
+      });
+      expect(embed.data.description).toContain('Duration: 12s');
     });
   });
 

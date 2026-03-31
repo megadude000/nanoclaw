@@ -141,6 +141,36 @@ export function buildBlockerEmbed(params: {
  * Build an embed for when an agent hands off work to another agent.
  * Color: purple (0x9b59b6). Title: "Handoff -> {toAgent}".
  */
+/**
+ * Build an embed for Cortex reconciliation reports.
+ * Color: purple (0x9b59b6). Title: "Cortex Reconciliation".
+ * Shows stale/links/orphan counts and duration in description.
+ */
+export function buildReconciliationEmbed(params: {
+  staleCount: number;
+  newLinksCount: number;
+  orphanCount: number;
+  runAt: string;
+  durationMs: number;
+}): EmbedBuilder {
+  const embed = new EmbedBuilder()
+    .setColor(0x9b59b6)
+    .setTitle('Cortex Reconciliation')
+    .setDescription(
+      [
+        `Stale entries flagged: **${params.staleCount}**`,
+        `New CROSS_LINKs: **${params.newLinksCount}**`,
+        `Orphans found: **${params.orphanCount}**`,
+        `Duration: ${Math.round(params.durationMs / 1000)}s`,
+      ].join('\n'),
+    )
+    .setTimestamp(new Date(params.runAt));
+  return withAgentMeta(embed, {
+    agentName: 'Cortex',
+    messageType: 'progress',
+  });
+}
+
 export function buildHandoffEmbed(params: {
   toAgent: string;
   what: string;
