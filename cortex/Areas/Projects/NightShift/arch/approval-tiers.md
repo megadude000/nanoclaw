@@ -2,10 +2,19 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: Night Shift 3-tier approval system - auto-merge, flag for review, require approval + morning flow
+scope: >-
+  Night Shift 3-tier approval system - auto-merge, flag for review, require
+  approval + morning flow
 project: NightShift
-tags: [nightshift, approval, git, branch-isolation, morning-review]
-created: 2026-03-31
+tags:
+  - nightshift
+  - approval
+  - git
+  - branch-isolation
+  - morning-review
+created: 2026-03-31T00:00:00.000Z
+source_hash: 73c465df2967e132ce50ef13c0e9ac913bdbecd08d80c4529aea0ef30c11ed9c
+embedding_model: text-embedding-3-small
 ---
 
 # Night Shift — Approval Tiers

@@ -2,10 +2,22 @@
 cortex_level: L30
 confidence: high
 domain: nanoclaw
-scope: Full Cortex pipeline architecture - vault file change to Qdrant embedding, schema validation, source_hash skip, watcher
+scope: >-
+  Full Cortex pipeline architecture - vault file change to Qdrant embedding,
+  schema validation, source_hash skip, watcher
 project: nanoclaw
-tags: [nanoclaw, cortex, pipeline, embedding, qdrant, openai, watcher, schema]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - cortex
+  - pipeline
+  - embedding
+  - qdrant
+  - openai
+  - watcher
+  - schema
+created: 2026-03-31T00:00:00.000Z
+source_hash: cf3be6d21d57ea7f689d5982cd0810fc3b72da11bb099862f325b2ed0058b2d5
+embedding_model: text-embedding-3-small
 ---
 
 # Cortex Pipeline — Full Architecture

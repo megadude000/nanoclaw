@@ -16,7 +16,16 @@
 import { logger } from './logger.js';
 
 const EDIT_THROTTLE_MS = 4_000;
+const WORKING_REFRESH_MS = 30_000;  // update elapsed every 30s while Working
+const WORKING_TIMEOUT_MS = 20 * 60_000; // auto-reset after 20min stuck in Working
 const DB_KEY_PREFIX = 'bsp:';
+
+interface HistoryEntry {
+  groupFolder: string;
+  durationSec: number;
+  outcome: 'done' | 'error';
+  finishedAt: Date;
+}
 
 interface BotState {
   status: 'idle' | 'working' | 'error';
@@ -24,6 +33,7 @@ interface BotState {
   tool: string | null;
   startedAt: number | null;
   lastSeen: Date;
+  history: HistoryEntry[]; // last 3 completed tasks
 }
 
 type MsgId = string;
@@ -53,6 +63,7 @@ export class BotStatusPanel {
   private messageIds = new Map<string, string>(); // botName → Discord msgId
   private chatToBotMap = new Map<string, string>(); // chatJid → botName
   private editThrottle = new Map<string, boolean>(); // botName → throttled
+  private workingTimers = new Map<string, ReturnType<typeof setInterval>>(); // botName → live refresh timer
   private sendMsg: SendFn;
   private editMsg: EditFn;
   private getState: GetStateFn;
@@ -74,6 +85,7 @@ export class BotStatusPanel {
         tool: null,
         startedAt: null,
         lastSeen: new Date(),
+        history: [],
       });
     }
   }
@@ -81,8 +93,19 @@ export class BotStatusPanel {
   /**
    * On startup: ensure one persistent message per bot exists in the panel channel.
    * If a stored message ID is found, try to edit it (reclaim). Otherwise create new.
+   * Always resets all bots to Idle on startup (containers stopped on restart).
    */
   async initialize(): Promise<void> {
+    // Reset all bots to Idle on startup — containers were stopped during restart
+    for (const name of this.botNames) {
+      const state = this.states.get(name)!;
+      state.status = 'idle';
+      state.groupFolder = null;
+      state.tool = null;
+      state.startedAt = null;
+      this._clearWorkingTimer(name);
+    }
+
     for (const botName of this.botNames) {
       const storedId = this.getState(`${DB_KEY_PREFIX}${botName}`) ?? null;
       if (storedId) {
@@ -127,6 +150,8 @@ export class BotStatusPanel {
     state.lastSeen = new Date();
     this.chatToBotMap.set(chatJid, botName);
     this._forceEdit(botName);
+    // Start live refresh timer so elapsed time updates every 30s
+    this._startWorkingTimer(botName);
   }
 
   /** Called when a tool is used inside a container (from ProgressTracker). */
@@ -144,6 +169,12 @@ export class BotStatusPanel {
     const botName = this.chatToBotMap.get(chatJid) ?? this.defaultBot;
     const state = this.states.get(botName);
     if (!state) return;
+    this._clearWorkingTimer(botName);
+    if (state.groupFolder && state.startedAt) {
+      const durationSec = Math.round((Date.now() - state.startedAt) / 1000);
+      state.history.unshift({ groupFolder: state.groupFolder, durationSec, outcome: 'done', finishedAt: new Date() });
+      if (state.history.length > 3) state.history.pop();
+    }
     state.status = 'idle';
     state.groupFolder = null;
     state.tool = null;
@@ -157,9 +188,43 @@ export class BotStatusPanel {
     const botName = this.chatToBotMap.get(chatJid) ?? this.defaultBot;
     const state = this.states.get(botName);
     if (!state) return;
+    this._clearWorkingTimer(botName);
+    if (state.groupFolder && state.startedAt) {
+      const durationSec = Math.round((Date.now() - state.startedAt) / 1000);
+      state.history.unshift({ groupFolder: state.groupFolder, durationSec, outcome: 'error', finishedAt: new Date() });
+      if (state.history.length > 3) state.history.pop();
+    }
     state.status = 'error';
+    state.startedAt = null;
     state.lastSeen = new Date();
     this._forceEdit(botName);
+  }
+
+  private _startWorkingTimer(botName: string): void {
+    this._clearWorkingTimer(botName);
+    const timer = setInterval(() => {
+      const state = this.states.get(botName);
+      if (!state || state.status !== 'working') {
+        this._clearWorkingTimer(botName);
+        return;
+      }
+      // Auto-reset if stuck working for too long
+      if (state.startedAt && Date.now() - state.startedAt > WORKING_TIMEOUT_MS) {
+        logger.warn({ botName }, 'BotStatusPanel: auto-reset stuck Working state');
+        this._clearWorkingTimer(botName);
+        state.status = 'idle';
+        state.groupFolder = null;
+        state.tool = null;
+        state.startedAt = null;
+      }
+      this._forceEdit(botName);
+    }, WORKING_REFRESH_MS);
+    this.workingTimers.set(botName, timer);
+  }
+
+  private _clearWorkingTimer(botName: string): void {
+    const t = this.workingTimers.get(botName);
+    if (t) { clearInterval(t); this.workingTimers.delete(botName); }
   }
 
   private async _createMessage(botName: string): Promise<void> {
@@ -233,10 +298,21 @@ export class BotStatusPanel {
 
     const group = state.groupFolder ? ` | \`${state.groupFolder}\`` : '';
     const elapsed = elapsedStr ? ` | ${elapsedStr}` : '';
-    const tool = state.tool ? `\n└ ${state.tool}` : '';
+    const tool = state.tool ? `\n└ 🔧 ${state.tool}` : '';
     const lastSeen =
-      state.lastSeen.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+      state.lastSeen.toISOString().replace('T', ' ').slice(11, 19) + ' UTC';
 
-    return `🤖 **${botName}** — ${statusIcon} ${statusText}${group}${elapsed}${tool}\n_Last seen: ${lastSeen}_`;
+    const historyLines = state.history.map(h => {
+      const dur = h.durationSec < 60
+        ? `${h.durationSec}s`
+        : `${Math.floor(h.durationSec / 60)}m ${h.durationSec % 60}s`;
+      const icon = h.outcome === 'done' ? '✓' : '✗';
+      const t = h.finishedAt.toISOString().slice(11, 16) + ' UTC';
+      return `└ ${icon} \`${h.groupFolder}\` (${dur}) at ${t}`;
+    }).join('\n');
+
+    const history = historyLines ? `\n${historyLines}` : '';
+
+    return `🤖 **${botName}** — ${statusIcon} ${statusText}${group}${elapsed}${tool}${history}\n_Last seen: ${lastSeen}_`;
   }
 }

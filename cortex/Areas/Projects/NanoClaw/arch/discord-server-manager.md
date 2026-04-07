@@ -2,10 +2,20 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: NanoClaw Discord server manager - guild management, JID format, 2000-char chunking, group-to-channel mapping
+scope: >-
+  NanoClaw Discord server manager - guild management, JID format, 2000-char
+  chunking, group-to-channel mapping
 project: nanoclaw
-tags: [nanoclaw, discord, server-manager, channels, jid, chunking]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - discord
+  - server-manager
+  - channels
+  - jid
+  - chunking
+created: 2026-03-31T00:00:00.000Z
+source_hash: 111b2022c5039ab535088f7eabf617d97351e8b036c77c5fa117a9edc7bef2eb
+embedding_model: text-embedding-3-small
 ---
 
 # NanoClaw — Discord Server Manager

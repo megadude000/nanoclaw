@@ -6,9 +6,14 @@ domain: nanoclaw
 scope: Night Shift autonomous overnight work system hub
 project: NightShift
 status: active
-created: 2026-03-22
-updated: 2026-03-31
-tags: [automation, nightshift, jarvis]
+created: 2026-03-22T00:00:00.000Z
+updated: 2026-03-31T00:00:00.000Z
+tags:
+  - automation
+  - nightshift
+  - jarvis
+source_hash: 947274b88debdf1f9870b4bcfcc1867b8e91362568b7ffdb7ad74077700cc903
+embedding_model: text-embedding-3-small
 ---
 
 # Night Shift

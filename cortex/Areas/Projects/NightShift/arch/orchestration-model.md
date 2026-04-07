@@ -2,10 +2,19 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: Night Shift orchestration model - Jarvis as active orchestrator, 3-phase shift, two bots, circuit breakers
+scope: >-
+  Night Shift orchestration model - Jarvis as active orchestrator, 3-phase
+  shift, two bots, circuit breakers
 project: NightShift
-tags: [nightshift, orchestration, automation, wind-rose, circuit-breaker]
-created: 2026-03-31
+tags:
+  - nightshift
+  - orchestration
+  - automation
+  - wind-rose
+  - circuit-breaker
+created: 2026-03-31T00:00:00.000Z
+source_hash: 1f0b00109a903ace513c817bb3e7eb4c67817442eaa1ecf16241013ce5471935
+embedding_model: text-embedding-3-small
 ---
 
 # Night Shift — Orchestration Model

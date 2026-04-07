@@ -1,9 +1,16 @@
 ---
 type: session
-date: 2026-03-26
+date: 2026-03-26T00:00:00.000Z
 project: YourWave
-topics: [nightshift, ci-fixes, storybook, obsidian-research, gemini]
+topics:
+  - nightshift
+  - ci-fixes
+  - storybook
+  - obsidian-research
+  - gemini
 status: completed
+source_hash: 30e77d0f7c445bc31de2169bf6f673148a87e7be05f9ca484ad339e07706d98a
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-26 08:10 — nightshift-v7-review

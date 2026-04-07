@@ -2,10 +2,20 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: NanoClaw security model - IPC authorization, mount allowlist, sender allowlist, credential proxy, attack surface
+scope: >-
+  NanoClaw security model - IPC authorization, mount allowlist, sender
+  allowlist, credential proxy, attack surface
 project: nanoclaw
-tags: [nanoclaw, security, ipc-auth, mount-security, sender-allowlist, credential-proxy]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - security
+  - ipc-auth
+  - mount-security
+  - sender-allowlist
+  - credential-proxy
+created: 2026-03-31T00:00:00.000Z
+source_hash: 4728578dbd4b65429b049d1e0ce9ad602bfbb643498f20dc49e35223f3ed7d5b
+embedding_model: text-embedding-3-small
 ---
 
 # NanoClaw — Security Model

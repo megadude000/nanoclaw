@@ -114,6 +114,15 @@ function createSchema(database: Database.Database): void {
     /* column already exists */
   }
 
+  // Add silent column if it doesn't exist (migration for existing DBs)
+  try {
+    database.exec(
+      `ALTER TABLE scheduled_tasks ADD COLUMN silent INTEGER DEFAULT 0`,
+    );
+  } catch {
+    /* column already exists */
+  }
+
   // Backfill: tag the morning digest task for Discord #agents routing
   // Use broad OR conditions to catch various prompt phrasings
   database.exec(
@@ -413,8 +422,8 @@ export function createTask(
 ): void {
   db.prepare(
     `
-    INSERT INTO scheduled_tasks (id, group_folder, chat_jid, prompt, script, schedule_type, schedule_value, context_mode, model, routing_tag, next_run, status, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO scheduled_tasks (id, group_folder, chat_jid, prompt, script, schedule_type, schedule_value, context_mode, model, routing_tag, silent, next_run, status, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `,
   ).run(
     task.id,
@@ -427,6 +436,7 @@ export function createTask(
     task.context_mode || 'isolated',
     task.model || null,
     task.routing_tag || null,
+    task.silent ? 1 : 0,
     task.next_run,
     task.status,
     task.created_at,
@@ -466,6 +476,7 @@ export function updateTask(
       | 'status'
       | 'model'
       | 'routing_tag'
+      | 'silent'
     >
   >,
 ): void {
@@ -503,6 +514,10 @@ export function updateTask(
   if (updates.routing_tag !== undefined) {
     fields.push('routing_tag = ?');
     values.push(updates.routing_tag || null);
+  }
+  if (updates.silent !== undefined) {
+    fields.push('silent = ?');
+    values.push(updates.silent ? 1 : 0);
   }
 
   if (fields.length === 0) return;

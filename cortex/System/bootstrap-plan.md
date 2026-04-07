@@ -4,6 +4,8 @@ cortex_level: L10
 confidence: high
 domain: nanoclaw
 scope: cortex knowledge bootstrap tracking
+source_hash: edf9970a061152429dae6bdb4d240e604852114fb4f2d821eb7c0f2be94ec3e8
+embedding_model: text-embedding-3-small
 ---
 
 # Cortex Bootstrap Plan

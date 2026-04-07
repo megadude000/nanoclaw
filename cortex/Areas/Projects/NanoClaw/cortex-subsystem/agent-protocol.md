@@ -6,6 +6,8 @@ domain: nanoclaw
 scope: cortex agent operational protocol — rules for all agents
 created: '2026-03-31'
 updated: '2026-03-31'
+source_hash: 5020ba9cbfd39079ffcdcd1896303d25c7f6e0065dc42926fc206a432684361d
+embedding_model: text-embedding-3-small
 ---
 
 # Cortex Agent Protocol

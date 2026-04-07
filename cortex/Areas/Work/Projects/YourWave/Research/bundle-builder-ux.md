@@ -1,3 +1,7 @@
+---
+source_hash: 73a98b8518f8046ba6fb2d0d49129e644d7cf3a59206d98fa5d45861e817621d
+embedding_model: text-embedding-3-small
+---
 # Bundle Builder UX Research — YourWave Coffee
 
 **Date:** 2026-03-23

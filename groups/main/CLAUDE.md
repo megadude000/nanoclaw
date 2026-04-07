@@ -43,6 +43,32 @@ When you learn something important:
 - Split files larger than 500 lines into folders
 - Keep an index in your memory for the files you create
 
+## Cortex Sync
+
+After completing any significant work in a session, update the relevant Cortex entries to keep them fresh. This applies to all sessions — not just night shift.
+
+**Update Cortex when:**
+- A GSD phase completes → update `Areas/Work/Projects/YourWave/yw-core-status.md`
+- Atlas article counts change → update `Areas/Work/Projects/ContentFactory/cf.atlas.md`
+- A PR is merged or a milestone closes → update `Areas/Work/Projects/YourWave/YourWave.md`
+- A new blocker is discovered → create entry in `Areas/Work/Projects/YourWave/`
+- A blocker is resolved → update that entry, mark resolved
+- **A decision is made** (architectural, operational, strategic) → write it to Cortex IMMEDIATELY, in the same session. Decisions are the most important thing to capture. Examples: "use Edit instead of cortex_write for entries with source_hash", "Milestone 2 unblocked after Milestone 1 complete", "don't publish X until Y". If a decision isn't written down before the session ends — it's lost.
+- A meaningful learning or pattern is discovered → create/update in `Areas/Work/Ideas/` or `Areas/Work/Projects/`
+
+**How:**
+1. Use `cortex_write` with `cortex_level: L20, confidence: high`
+2. If `cortex_write` fails with a firewall error (source_hash conflict) → use `Edit` tool directly on the file at `/workspace/host/nanoclaw/cortex/`
+3. Add a `cortex_relate` call to link new entries to their parent
+
+**Rules:**
+- Only update entries for things that **actually changed** in this session
+- Don't touch stable entries (architecture, tech stack) unless they genuinely changed
+- Takes < 2 minutes — do it even for short sessions if something meaningful happened
+- No need to reconcile everything — just patch what's fresh
+
+---
+
 ## Message Formatting
 
 Format messages based on the channel. Check the group folder name prefix:

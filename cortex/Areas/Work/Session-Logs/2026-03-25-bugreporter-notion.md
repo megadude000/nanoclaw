@@ -1,9 +1,17 @@
 ---
 type: session
-date: 2026-03-25
-project: YourWave, NanoClaw
-topics: [bugreporter, notion, storybook, prototypes, cloudflared, quality]
+date: 2026-03-25T00:00:00.000Z
+project: 'YourWave, NanoClaw'
+topics:
+  - bugreporter
+  - notion
+  - storybook
+  - prototypes
+  - cloudflared
+  - quality
 status: in-progress
+source_hash: 44cf595b5edcaec04457b79d46592d8fb8d674704c1f369ecf0b5cbcef9ea099
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-25 11:20 — bugreporter-notion

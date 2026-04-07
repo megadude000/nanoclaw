@@ -1,3 +1,7 @@
+---
+source_hash: c1be6fc9d5e9cab6fe04144190e70f9e68d36eaa4bd2ced277aa36c0f00a6873
+embedding_model: text-embedding-3-small
+---
 # Sourcing Outreach Templates — YourWave
 
 *Compiled: March 2026*

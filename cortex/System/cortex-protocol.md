@@ -4,6 +4,8 @@ cortex_level: L10
 confidence: high
 domain: nanoclaw
 scope: cortex agent operational protocol
+source_hash: 1af36831bb25be6f400e210287c9d34f07d1dfa82ca25195470da369c00b5dcb
+embedding_model: text-embedding-3-small
 ---
 
 # Cortex Agent Protocol

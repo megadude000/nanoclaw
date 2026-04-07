@@ -2,10 +2,20 @@
 cortex_level: L30
 confidence: high
 domain: nanoclaw
-scope: GSD (Get Shit Done) phase-based development system overview - milestones, phases, artifact types, enforcement rule
+scope: >-
+  GSD (Get Shit Done) phase-based development system overview - milestones,
+  phases, artifact types, enforcement rule
 project: nanoclaw
-tags: [nanoclaw, gsd, workflow, phases, planning, development-process]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - gsd
+  - workflow
+  - phases
+  - planning
+  - development-process
+created: 2026-03-31T00:00:00.000Z
+source_hash: 11ca773010a8cc134b4082a0da2579d9001f9abd3dfb0b391052b32a274decac
+embedding_model: text-embedding-3-small
 ---
 
 # GSD — Phase-Based Development System

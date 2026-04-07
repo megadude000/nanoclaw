@@ -1,3 +1,7 @@
+---
+source_hash: 1b5fe93280bef6264a7f07ed0cf18ffe90a5058b8ce65b27b2c0c6c3aa4f532a
+embedding_model: text-embedding-3-small
+---
 # Project Memory
 
 <!-- ══════════════════════════════════════════════════════════

@@ -1,26 +1,43 @@
 ---
+cortex_level: L40
+confidence: high
+scope: automation-system
+domain: nightshift
 type: project
 status: active
-created: 2026-03-22
-updated: 2026-03-22
-tags: [automation, nightshift, jarvis]
+created: 2026-03-22T00:00:00.000Z
+updated: 2026-04-07T03:00:00.000Z
+tags:
+  - automation
+  - nightshift
+  - jarvis
+source_hash: c9ebcf5b750388b672bfdd5c3951771e9ccf95dcc25633b8d5306e65b1317a2b
+embedding_model: text-embedding-3-small
 ---
 
 # Night Shift
 
-Autonomous overnight work system. Jarvis executes tasks from 23:30 to 06:00 while the user sleeps, producing a summary report in the morning.
+Autonomous overnight work system. Jarvis executes tasks from 23:27 to 05:30 CET while the user sleeps.
 
 ## Quick Reference
 
-- Runtime: `/workspace/group/nightshift/`
-- Plans: `/workspace/group/nightshift/plans/YYYY-MM-DD.json`
-- Results: `/workspace/group/nightshift/results/YYYY-MM-DD/`
+- Plans: `/workspace/group/nightshift/plans/YYYY-MM-DD.md` (+ .json archive)
 - Logs: `/workspace/group/nightshift/logs/YYYY-MM-DD.md`
-- Learning data: `/workspace/group/nightshift/learning.json`
+- Learning: `/workspace/group/nightshift/learning.json`
 - Config: `/workspace/group/nightshift/config.json`
-- Planning cron: 21:03 daily
-- Execution cron: 23:27 daily
-- Health check: 12:00 daily (auto-reinstalls expired crons)
+
+### Cron Schedule (2026-04-01)
+| Task | Cron | ID | Status |
+|------|------|----|--------|
+| Morning Digest | 7:27 daily | `task-1774162939070-5jalv0` | ✅ active |
+| NightShift Planning | 21:03 daily | `task-1774208307200-ikra4w` | ✅ active |
+| NightShift Execution | 23:27 daily | `task-1774208273081-5cy9lt` | ✅ active |
+| NightShift Health | 12:00 daily | `task-1774208291143-izq9my` | ✅ active |
+| Gruppenführer | */2 21-05h | `nanoclaw-gruppenfuhrer-v1` | ✅ active |
+| Watchdog | 0-5h :17 | `task-1774345803544-9t2rse` | ❌ disabled |
+
+Planning task skips if today's `.md` plan already exists — user can pre-create plan to control tasks.
+Gruppenführer (every 2 min) effectively replaces the disabled Watchdog.
 
 ## How It Works
 
@@ -42,21 +59,33 @@ See [[nightshift.architecture]] for full technical spec (v2).
 - **Learning loop** — tracks actual vs estimated time, refines future estimates
 - **Rollback** — `git branch -D nightshift/YYYY-MM-DD` to undo entire shift
 
-## Current Status
+## Current Status (2026-04-05)
 
-- [x] Architecture v1 designed + first shift completed (2026-03-22)
-- [x] Architecture v2: continuous shift, 2 bots, 3 phases (2026-03-23)
-- [x] Runtime directories + config + learning.json created
-- [x] Project docs written (hub + architecture spec v2)
-- [x] All crons updated: planning, execution (v2), health check
-- [x] First shift completed: 23/23 articles, 0 failures
-- [x] v2.1: Orchestrator role, Wind Rose, Approval Tiers (2026-03-23)
-- [x] Morning Approval Flow — separate digest (7:35), expandable blocks, buttons per category
-- [x] Cloudflare Tunnel setup (storybook.yourwave.uk + dev.yourwave.uk) — tunnels not hosting
-- [x] Auto-merge for 🟢 safe tasks (translations, articles)
-- [x] Both bots write articles + prototypes + docs in Phase 2
-- [x] Cron: Night Shift Approval at 7:35 daily
-- [ ] First v2 shift (with Phase 2 autonomous work) — scheduled tonight 23:30
+- [x] Architecture v1–v7 — COMPLETE
+- [x] 10+ shifts executed since 2026-03-22
+- [x] First shift: 23 articles, 0 failures (2026-03-22)
+- [x] First v2 shift with Phase 2 autonomous work — DONE (2026-03-23)
+- [x] GSD Milestone 1: ALL 9 PHASES COMPLETE via night shifts
+- [x] GSD Milestone 2: ALL 6 PHASES COMPLETE (2026-04-05) — incl. PostHog + Observability/CI
+- [x] Atlas: 0 → 140 articles per locale (EN/CS/UK) as of 2026-04-07
+- [x] Gruppenführer covers watchdog role
+- [ ] Watchdog cron disabled — not critical (Gruppenführer covers)
+- [ ] PR for nightshift/2026-04-01 not yet created
+
+## Shift History (key milestones)
+
+| Date | Key Output |
+|------|------------|
+| 2026-03-22 | First shift — 23 articles, architecture v1 |
+| 2026-03-23 | v2: continuous shift, 2 bots, Phase 2 autonomous |
+| 2026-03-28 | Phase 04 CommandPalette |
+| 2026-03-31 | Phase 05 DataTable + Phase 06 FilterBar; EN→102, CS/UK→97 |
+| 2026-04-01 | Phase 07+08+09 complete; CS/UK→102; Cortex reconciliation |
+| 2026-04-02 | Phase 10–13 complete: Vercel adapter, Supabase schema+RLS, Auth pages, RBAC wiring; Atlas→114/locale; 299 tests passing |
+| 2026-04-03 | Atlas +3 articles/locale (→117): coffee-acidity-chemistry, green-coffee-storage, coffee-tasting-glossary; merged to main 09:05 |
+| 2026-04-05 | GSD M2 complete: Phase 14 (PostHog feature flags, 4/4 verified) + Phase 15 (Observability+CI/CD, 6/6 verified); Atlas +6/locale (→123); 371 tests passing |
+| 2026-04-06 | PR #18 (nightshift/2026-04-05) merged to main; +36 tests (Users module, useUsers hook, computeMetrics) |
+| 2026-04-07 | Atlas +17/locale (→140): 8 new articles (tasting-wheel, whole-bean, cleaning, certifications, aeropress, siphon, moka-pot, cold-brew) × 3 locales; CRM a11y fixes; 409 tests passing |
 
 ## Decisions Log
 

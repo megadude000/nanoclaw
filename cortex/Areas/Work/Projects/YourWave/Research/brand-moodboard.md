@@ -1,3 +1,7 @@
+---
+source_hash: 09b8d1a60dd102f3c59211875faf82c8aa2734ff56476826dfff30818b77c34a
+embedding_model: text-embedding-3-small
+---
 # Brand Identity Moodboard — Global Specialty Coffee DTC Brands
 
 ## Purpose

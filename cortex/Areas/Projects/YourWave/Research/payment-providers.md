@@ -1,3 +1,7 @@
+---
+source_hash: f3a4b46280a9df8fa19fa4ca3ccef961e46792aca06b3b27851c9030c7e509b5
+embedding_model: text-embedding-3-small
+---
 # Payment Providers Research — YourWave Coffee E-Commerce
 
 **Date:** 2026-03-23

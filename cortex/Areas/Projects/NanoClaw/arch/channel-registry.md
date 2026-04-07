@@ -2,10 +2,21 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: NanoClaw channel self-registration system - registerChannel pattern, Channel interface, JID formats
+scope: >-
+  NanoClaw channel self-registration system - registerChannel pattern, Channel
+  interface, JID formats
 project: nanoclaw
-tags: [nanoclaw, channels, registry, jid, telegram, discord, whatsapp]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - channels
+  - registry
+  - jid
+  - telegram
+  - discord
+  - whatsapp
+created: 2026-03-31T00:00:00.000Z
+source_hash: 7a8efae3ed6d1976484d79cfb2699dd780bd6e5235733bb9a6316639b653c156
+embedding_model: text-embedding-3-small
 ---
 
 # NanoClaw — Channel Registry

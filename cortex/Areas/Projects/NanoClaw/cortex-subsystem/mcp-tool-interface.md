@@ -2,10 +2,23 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: Cortex MCP tool interface - 4 tools, input/output schemas, container vs host paths, IPC integration
+scope: >-
+  Cortex MCP tool interface - 4 tools, input/output schemas, container vs host
+  paths, IPC integration
 project: nanoclaw
-tags: [nanoclaw, cortex, mcp, tools, ipc, search, write, relate, read]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - cortex
+  - mcp
+  - tools
+  - ipc
+  - search
+  - write
+  - relate
+  - read
+created: 2026-03-31T00:00:00.000Z
+source_hash: 2dced10b5bb82ff639c639d9709f8921b17811715e011b33697423f6b4c94aee
+embedding_model: text-embedding-3-small
 ---
 
 # Cortex — MCP Tool Interface

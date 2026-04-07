@@ -5,8 +5,16 @@ confidence: high
 domain: nanoclaw
 project: NanoClaw
 scope: internal
-date: 2026-03-31
-topics: [git, upstream-sync, build, security, whatsapp, stale-sessions]
+date: 2026-03-31T00:00:00.000Z
+topics:
+  - git
+  - upstream-sync
+  - build
+  - security
+  - whatsapp
+  - stale-sessions
+source_hash: 1a1bf1f98160674372a3dcb0f3b92e49c3b5cfeb9d6a1cbd892bb93654b578ad
+embedding_model: text-embedding-3-small
 ---
 
 # Curious Findings: Upstream Sync & Build Cleanup (2026-03-31)

@@ -1,9 +1,17 @@
 ---
 type: session
-date: 2026-03-18
-project: Nanoclaw, ContentFactory
-topics: [model-switch, opus-4-6, atlas-hosting, astro, cloudflare, webhook-debug]
+date: 2026-03-18T00:00:00.000Z
+project: 'Nanoclaw, ContentFactory'
+topics:
+  - model-switch
+  - opus-4-6
+  - atlas-hosting
+  - astro
+  - cloudflare
+  - webhook-debug
 status: completed
+source_hash: 4b83aea8df19234c88caba8e83f2a9b46f780ee2d8b79e76ddd592be32bdbcb3
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-18 13:00 — model-switch-atlas-planning

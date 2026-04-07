@@ -1,9 +1,19 @@
 ---
 type: session
-date: 2026-03-17
+date: 2026-03-17T00:00:00.000Z
 project: nanoclaw
-topics: [compress, resume, context, memory, skills, yourwave, notion, daily-digest]
+topics:
+  - compress
+  - resume
+  - context
+  - memory
+  - skills
+  - yourwave
+  - notion
+  - daily-digest
 status: completed
+source_hash: f27556630aaffefb2d752049c99cdf36563824bdc76c46ecf1cb6d4e4da2886a
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-17 08:00 — system-optimizations

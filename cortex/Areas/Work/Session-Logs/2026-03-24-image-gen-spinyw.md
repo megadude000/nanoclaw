@@ -1,9 +1,16 @@
 ---
 type: session
-date: 2026-03-24
-project: YourWave, NanoClaw
-topics: [imagen-4, image-generation, atlas-images, spin_yw, site-image-gen-skill]
+date: 2026-03-24T00:00:00.000Z
+project: 'YourWave, NanoClaw'
+topics:
+  - imagen-4
+  - image-generation
+  - atlas-images
+  - spin_yw
+  - site-image-gen-skill
 status: in-progress
+source_hash: d1a3cb9607afeb7ff7711284129fa3ec25eb80763056338b24a75179b61bae8f
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-24 18:00 — image-gen-spinyw

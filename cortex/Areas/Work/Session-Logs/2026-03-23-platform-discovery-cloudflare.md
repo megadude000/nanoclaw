@@ -1,9 +1,17 @@
 ---
 type: session
-date: 2026-03-23
+date: 2026-03-23T00:00:00.000Z
 project: YourWave
-topics: [platform-discovery, ywproject-v2, cloudflare, mcp, design-system, bundle-builder]
+topics:
+  - platform-discovery
+  - ywproject-v2
+  - cloudflare
+  - mcp
+  - design-system
+  - bundle-builder
 status: completed
+source_hash: 49629417405a74c7ade6890433982df2828ba136e6c2a6453f2a1d14eb6bd9c7
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-23 12:18 — platform-discovery-cloudflare

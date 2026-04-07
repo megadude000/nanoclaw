@@ -1,9 +1,17 @@
 ---
 type: session
-date: 2026-03-25
+date: 2026-03-25T00:00:00.000Z
 project: YourWave
-topics: [quality-gates, broken-links, storybook, nightshift, image-generation, development-principles]
+topics:
+  - quality-gates
+  - broken-links
+  - storybook
+  - nightshift
+  - image-generation
+  - development-principles
 status: completed
+source_hash: a9dd09cb5c8eae8ea1d33673c2b70cf974c2960122834b96b33f9c8458a521a9
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-25 06:56 — quality-gates

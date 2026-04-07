@@ -1,9 +1,16 @@
 ---
 type: session
-date: 2026-03-25
+date: 2026-03-25T00:00:00.000Z
 project: YourWave
-topics: [bugreporter, notion-webhook, e2e-testing, ci-failures, color-contrast]
+topics:
+  - bugreporter
+  - notion-webhook
+  - e2e-testing
+  - ci-failures
+  - color-contrast
 status: completed
+source_hash: 7e608bb5a0bafb9cf6f135f2a50e0157bcd0c567f9515758c679cc5062bb32bf
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-25 13:00 — bugreporter-e2e-verified

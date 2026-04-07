@@ -6,6 +6,8 @@ domain: nanoclaw
 scope: cortex staleness detection and stale marking implementation
 created: '2026-03-31'
 updated: '2026-03-31'
+source_hash: 38fff8bb24f44bfb88d1b4fb59435f345df046d464904e0a6f44c7712b05df71
+embedding_model: text-embedding-3-small
 ---
 
 # Cortex Stale Marking

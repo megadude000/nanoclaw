@@ -1,9 +1,16 @@
 ---
 type: session
-date: 2026-03-17
+date: 2026-03-17T00:00:00.000Z
 project: YourWave
-topics: [yourwave, founder-profile, backlog, notion, context-optimization]
+topics:
+  - yourwave
+  - founder-profile
+  - backlog
+  - notion
+  - context-optimization
 status: completed
+source_hash: 41e64f92200b6f5713d41afff7e1129bf1638109b9c0f740a82c018a6a036d7c
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-17 09:00 — yourwave-founder-profile

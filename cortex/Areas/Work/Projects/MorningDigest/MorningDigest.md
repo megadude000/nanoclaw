@@ -1,7 +1,9 @@
 ---
 type: project
-updated: 2026-03-23
+updated: 2026-03-23T00:00:00.000Z
 status: active
+source_hash: b198285d2c309798b22f437dbf60fb34c5e15445a0e2b64dc77aae34a591d20b
+embedding_model: text-embedding-3-small
 ---
 
 # Morning Digest — Ранковий Ритуал

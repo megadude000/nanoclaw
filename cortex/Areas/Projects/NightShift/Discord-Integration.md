@@ -1,3 +1,7 @@
+---
+source_hash: 88f45eeda7fd2c2917f8373e55d761121ab735671beb1defa222600e2296901a
+embedding_model: text-embedding-3-small
+---
 # Discord Integration — NanoClaw
 
 ## Overview

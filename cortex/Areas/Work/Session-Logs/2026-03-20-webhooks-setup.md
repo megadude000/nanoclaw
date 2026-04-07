@@ -1,9 +1,17 @@
 ---
 type: session
-date: 2026-03-20
+date: 2026-03-20T00:00:00.000Z
 project: NanoClaw
-topics: [webhooks, github, notion, ngrok, file-logging, ci-notifications]
+topics:
+  - webhooks
+  - github
+  - notion
+  - ngrok
+  - file-logging
+  - ci-notifications
 status: completed
+source_hash: 4ce803fa061d96a786ccced0271fe7ba7eb032c2b28ecdb1c23b308af50adcde
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-20 10:30 — webhooks-setup

@@ -1,3 +1,7 @@
+---
+source_hash: 9b8519a95957a536e8754ae553970eabda70134a0c594b1e518ca85a54d5b085
+embedding_model: text-embedding-3-small
+---
 # EIT Jumpstarter 2026 — Application Draft
 **Applicant:** Andrii Panasenko
 **Project:** YourWave — Specialty Coffee DTC

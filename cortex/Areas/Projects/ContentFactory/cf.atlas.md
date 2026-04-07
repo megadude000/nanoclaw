@@ -2,13 +2,28 @@
 type: project-note
 project: ContentFactory
 domain: atlas
-tags: [atlas, coffee, content-strategy, editorial]
-last_updated: 2026-03-17
+tags:
+  - atlas
+  - coffee
+  - content-strategy
+  - editorial
+last_updated: 2026-04-07T00:00:00.000Z
+embedding_model: text-embedding-3-small
+source_hash: a5c5967528be010d5de7efbc508e923f1d4a4aeb9deebc34ed89b535acce0a56
 ---
 
 # Content Factory — Coffee Atlas
 
 > See also: [[ContentFactory]] (hub), [[cf.pipeline]] (workflow)
+
+## Current Status (2026-04-07)
+
+- **140 articles per locale** — EN / CS / UK all at 140 ✅
+- Categories: Getting Started, Origins, Processing Methods, Equipment, Brewing Guides, Science, History, Specialty Culture, Glossary
+- Hero images generated for all articles via Imagen 4 Fast
+- Build passing: `nightshift/2026-04-07` branch, 409 tests green
+- Content generation: `node /workspace/group/nightshift/gen_remaining.mjs`
+- PR #18 (nightshift/2026-04-05) merged to main 2026-04-06
 
 ## Концепція
 
@@ -59,12 +74,12 @@ last_updated: 2026-03-17
 - Сильна розпізнаваність серед specialty любителів
 
 **Що робимо:**
-- [ ] Стаття Atlas: "Colombia Huila — звідки береться ця фруктова магія"
+- [x] Стаття Atlas: Colombia Huila — included in 140-article library
 - [ ] Instagram Reel: origin story (текстовий overlay або AI відео)
 - [ ] Instagram карусель: processing methods для Huila
 - [ ] Design brief: стиль цієї серії (кольори, типографіка, настрій)
 
-**Статус:** On hold — спочатку система (pipeline + dashboard)
+**Статус:** Atlas pipeline fully operational — 140 articles shipped. Social content generation next.
 
 ---
 

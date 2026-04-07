@@ -2,10 +2,20 @@
 cortex_level: L20
 confidence: high
 domain: yourwave
-scope: ContentFactory pipeline key decisions - why Claude over n8n, 3-stage approval model, image gen tiers, platform selection
+scope: >-
+  ContentFactory pipeline key decisions - why Claude over n8n, 3-stage approval
+  model, image gen tiers, platform selection
 project: ContentFactory
-tags: [contentfactory, pipeline, decisions, approval, image-generation, claude-orchestration]
-created: 2026-03-31
+tags:
+  - contentfactory
+  - pipeline
+  - decisions
+  - approval
+  - image-generation
+  - claude-orchestration
+created: 2026-03-31T00:00:00.000Z
+source_hash: 2116ffee2f2ae8dc2c8174e811953b002916049b44ca0f25729419e1ff298816
+embedding_model: text-embedding-3-small
 ---
 
 # ContentFactory — Pipeline Architecture Decisions

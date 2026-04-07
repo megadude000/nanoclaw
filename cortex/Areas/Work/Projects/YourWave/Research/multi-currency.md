@@ -1,3 +1,7 @@
+---
+source_hash: 2bd9a97b6b02b608f07bc50d6f6c02753ede2540df911732cfc0f53e95c17bfb
+embedding_model: text-embedding-3-small
+---
 # Multi-Currency Architecture Research
 
 **Date:** 2026-03-23

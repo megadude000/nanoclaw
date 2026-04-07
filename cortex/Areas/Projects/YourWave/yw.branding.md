@@ -2,7 +2,13 @@
 type: project-note
 project: YourWave
 domain: branding
-tags: [brand, identity, design, tone-of-voice]
+tags:
+  - brand
+  - identity
+  - design
+  - tone-of-voice
+source_hash: d5ef138a0593361cbc0058bdfc1bfab275abeac0d73589d8c0acf80b3936d283
+embedding_model: text-embedding-3-small
 ---
 
 # YourWave — Branding

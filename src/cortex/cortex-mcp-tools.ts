@@ -85,6 +85,17 @@ export async function checkConfidenceFirewall(
   const levelNum = parseInt(level.slice(1), 10);
   const parentLevel = `L${levelNum - 10}`;
 
+  // New domain bootstrapping: if no entries exist for this domain at all,
+  // allow the write so agents can seed a new domain without needing L10 first.
+  const domainCheck = await qdrant.scroll('cortex-entries', {
+    filter: { must: [{ key: 'domain', match: { value: domain } }] },
+    limit: 1,
+    with_payload: false,
+  });
+  if (domainCheck.points.length === 0) {
+    return false; // Brand-new domain — bootstrapping always allowed
+  }
+
   const result = await qdrant.scroll('cortex-entries', {
     filter: {
       must: [

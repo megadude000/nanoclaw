@@ -2,7 +2,15 @@
 type: project-note
 project: YourWave
 domain: operations
-tags: [legal, haccp, szpi, sro, logistics, roasters]
+tags:
+  - legal
+  - haccp
+  - szpi
+  - sro
+  - logistics
+  - roasters
+source_hash: faf01dab07d363c55e4f37f103c518d25a0a2e4e9cb09bd72609c11d68427183
+embedding_model: text-embedding-3-small
 ---
 
 # YourWave — Operations & Legal

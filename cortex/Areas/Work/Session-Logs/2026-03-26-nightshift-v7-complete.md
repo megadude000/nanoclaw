@@ -1,9 +1,19 @@
 ---
 type: session
-date: 2026-03-26
+date: 2026-03-26T00:00:00.000Z
 project: YourWave
-topics: [night-shift, CI, CZ-translations, storybook, prettier, eslint, GA4, email-capture]
+topics:
+  - night-shift
+  - CI
+  - CZ-translations
+  - storybook
+  - prettier
+  - eslint
+  - GA4
+  - email-capture
 status: completed
+source_hash: 40ad6e86aa6f36699e646243a6b587e924fb3b9ad1996638b68c01a35f7c29ea
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-26 00:00–06:00 — nightshift-v7-complete

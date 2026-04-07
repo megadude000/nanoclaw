@@ -3,6 +3,8 @@ type: project
 date: YYYY-MM-DD
 status: active
 tags: []
+source_hash: 6b0b3fc8c656b7010d5480c067b57968cbce74322bdd749cf1fa5dcb41851286
+embedding_model: text-embedding-3-small
 ---
 
 # {{Project Name}}

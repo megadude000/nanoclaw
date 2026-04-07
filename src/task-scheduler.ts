@@ -193,8 +193,10 @@ async function runTask(
     }, TASK_CLOSE_DELAY_MS);
   };
 
-  // Start progress tracking for this task
-  deps.progressTracker?.onMessageSent(task.chat_jid, task.group_folder);
+  // Start progress tracking for this task (skip for silent tasks)
+  if (!task.silent) {
+    deps.progressTracker?.onMessageSent(task.chat_jid, task.group_folder);
+  }
   deps.botStatusPanel?.onGroupStarted(task.chat_jid, task.group_folder);
 
   // ASTATUS-01: Report task picked up to #agents
@@ -216,6 +218,7 @@ async function runTask(
         chatJid: task.chat_jid,
         isMain,
         isScheduledTask: true,
+        silent: task.silent ?? false,
         assistantName: ASSISTANT_NAME,
         script: task.script || undefined,
         model: task.model || group.containerConfig?.model,
@@ -225,13 +228,19 @@ async function runTask(
       async (streamedOutput: ContainerOutput) => {
         if (streamedOutput.result) {
           result = streamedOutput.result;
-          // DIGEST-01/02: Route to configured targets, or fall back to original chatJid
-          if (isRouted) {
-            for (const target of routingTargets) {
-              await deps.sendMessage(target.jid, streamedOutput.result);
+          // Suppress rate limit errors — don't spam user with API quota messages
+          const isRateLimit = result.includes('hit your limit') || result.includes('rate_limit');
+          if (!isRateLimit) {
+            // DIGEST-01/02: Route to configured targets, or fall back to original chatJid
+            if (isRouted) {
+              for (const target of routingTargets) {
+                await deps.sendMessage(target.jid, streamedOutput.result);
+              }
+            } else {
+              await deps.sendMessage(task.chat_jid, streamedOutput.result);
             }
           } else {
-            await deps.sendMessage(task.chat_jid, streamedOutput.result);
+            logger.warn({ taskId: task.id }, 'Suppressed rate limit message from being sent to user');
           }
           scheduleClose();
         }
@@ -258,13 +267,17 @@ async function runTask(
       { taskId: task.id, durationMs: Date.now() - startTime },
       'Task completed',
     );
-    deps.progressTracker?.onResponseReceived(task.chat_jid);
+    if (!task.silent) {
+      deps.progressTracker?.onResponseReceived(task.chat_jid);
+    }
     deps.botStatusPanel?.onGroupDone(task.chat_jid);
   } catch (err) {
     if (closeTimer) clearTimeout(closeTimer);
     error = err instanceof Error ? err.message : String(err);
     logger.error({ taskId: task.id, error }, 'Task failed');
-    deps.progressTracker?.onContainerStopped(task.chat_jid, 1);
+    if (!task.silent) {
+      deps.progressTracker?.onContainerStopped(task.chat_jid, 1);
+    }
     deps.botStatusPanel?.onGroupError(task.chat_jid);
   }
 

@@ -2,7 +2,14 @@
 type: project-note
 project: YourWave
 domain: ecommerce
-tags: [shopify, tech, email, subscription, bundle]
+tags:
+  - shopify
+  - tech
+  - email
+  - subscription
+  - bundle
+source_hash: 54eb9ca836021e6b2e3cda9f01fa8bde2220bdee0b5dbdaef8a01e3a85a2937b
+embedding_model: text-embedding-3-small
 ---
 
 # YourWave — E-commerce & Tech

@@ -1,3 +1,7 @@
+---
+source_hash: 8d37fbdc0526e48a34d55f995be38a20c828f96a3587b7af4da95b0e4c828dad
+embedding_model: text-embedding-3-small
+---
 # Shipping & Delivery Providers Research
 
 > **Project:** YourWave (Coffee E-commerce)

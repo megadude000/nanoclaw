@@ -2,10 +2,20 @@
 cortex_level: L30
 confidence: high
 domain: nanoclaw
-scope: Full NanoClaw message lifecycle - inbound channel to container agent to IPC response and outbound routing
+scope: >-
+  Full NanoClaw message lifecycle - inbound channel to container agent to IPC
+  response and outbound routing
 project: nanoclaw
-tags: [nanoclaw, message-flow, architecture, container, ipc, channel]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - message-flow
+  - architecture
+  - container
+  - ipc
+  - channel
+created: 2026-03-31T00:00:00.000Z
+source_hash: fa24c4a595156fff72af1b750fbcc239b42ad20a32aa02c04afd348ba8b8ccd3
+embedding_model: text-embedding-3-small
 ---
 
 # NanoClaw — Full Message Flow

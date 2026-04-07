@@ -2,10 +2,16 @@
 type: architecture-spec
 project: YourWave
 domain: platform-v2
-created: 2026-03-23
-updated: 2026-03-23
+created: 2026-03-23T00:00:00.000Z
+updated: 2026-03-23T00:00:00.000Z
 status: draft
-tags: [platform, architecture, spec, ywproject-v2]
+tags:
+  - platform
+  - architecture
+  - spec
+  - ywproject-v2
+source_hash: 7a83719d8b1ffae9a46393a7820881913f1553d9c16a38ab3f35df7df587d9bd
+embedding_model: text-embedding-3-small
 ---
 
 # YourWave Platform v2 — Architecture Specification

@@ -3,12 +3,22 @@ type: project-hub
 cortex_level: L20
 confidence: high
 domain: yourwave
-scope: ContentFactory (Zavod) Claude-orchestrated content pipeline hub - approval flow, platforms, tech stack
+scope: >-
+  ContentFactory (Zavod) Claude-orchestrated content pipeline hub - approval
+  flow, platforms, tech stack
 project: ContentFactory
 status: planning
-tags: [content, pipeline, automation, claude, dashboard, approval]
-created: 2026-03-17
-last_updated: 2026-03-31
+tags:
+  - content
+  - pipeline
+  - automation
+  - claude
+  - dashboard
+  - approval
+created: 2026-03-17T00:00:00.000Z
+last_updated: 2026-04-06T00:00:00.000Z
+source_hash: b515fd876eb46c7aee26b2a4d320436ccc874aff6ec95f96794ec24360a54d3f
+embedding_model: text-embedding-3-small
 ---
 
 # Завод (Content Factory)
@@ -123,10 +133,10 @@ Board view by Status: `⏳ Waiting` → `👀 In Review` → `✅ Approved` / `�
 - [x] Вирішити платформи для старту — Instagram + atlas.yourwave.coffee
 - [x] Notion board створено — board view by Stage, demo card Colombia Huila з sub-board
 - [ ] Підключити Instagram Graph API
-- [ ] Atlas tech stack вибрати (Astro vs Next.js) + deploy atlas.yourwave.coffee
+- [x] Atlas tech stack вибрати — **Astro 6** (✅ 2026-04-05, via YW_Core rebuild)
 - [ ] Figma MCP — вирішити чи підключати
-- [ ] Atlas content strategy — спланувати стратегію наповнення (структура, рубрики, пріоритети)
-- [ ] Перший контент-сет через пайплайн (після стратегії Атласу)
+- [x] Atlas content strategy — 123 EN + 123 CS + 123 UK articles live (✅ 2026-04-05)
+- [ ] Перший контент-сет через пайплайн (після Instagram API)
 
 ### Phase 2 — Full
 - [ ] Web dashboard (Next.js або Retool)
@@ -152,3 +162,6 @@ Board view by Status: `⏳ Waiting` → `👀 In Review` → `✅ Approved` / `�
 | 2026-03-17 | Image gen: DALL-E cheap для concept, Flux/MJ для production |
 | 2026-03-17 | Coffee Atlas = перший контент-напрям для YourWave |
 | 2026-03-17 | Design: AI-generated, Figma тільки для фінальної polish |
+| 2026-04-05 | Atlas tech stack = Astro 6 + React Islands (via YW_Core) |
+| 2026-04-05 | Atlas live: 123 articles/locale (EN/CS/UK), hero images via Imagen 4 Fast |
+| 2026-04-05 | Image gen decision: Imagen 4 Fast (not DALL-E/Flux) for production assets |

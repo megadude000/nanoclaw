@@ -1,3 +1,7 @@
+---
+source_hash: dc5613560e5440f46b4670d552c5de34e12906fc143b1f62a33778607ea2d535
+embedding_model: text-embedding-3-small
+---
 # Marketing Channel Comparison — YourWave CZ Specialty Coffee DTC
 
 ## Overview

@@ -1,9 +1,16 @@
 ---
 type: session
-date: 2026-03-23
-project: YourWave, NightShift
-topics: [nightshift-v2, grants, notion, platform-discovery, ywproject]
+date: 2026-03-23T00:00:00.000Z
+project: 'YourWave, NightShift'
+topics:
+  - nightshift-v2
+  - grants
+  - notion
+  - platform-discovery
+  - ywproject
 status: completed
+source_hash: 5122b7f9730099fd2926daf05ccb916cbd2886bc5d03a70f24411c7e0482cf66
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-23 08:00 — nightshift-v2-grants-platform

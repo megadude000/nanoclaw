@@ -3,11 +3,19 @@ type: project
 cortex_level: L20
 confidence: high
 domain: yourwave
-scope: YourWave specialty coffee e-commerce platform hub - brand, stack, business model, decisions log
+scope: >-
+  YourWave specialty coffee e-commerce platform hub - brand, stack, business
+  model, decisions log
 project: YourWave
 status: active
-last_updated: 2026-03-31
-tags: [coffee, startup, prague, ecommerce]
+last_updated: 2026-04-03T10:30:00.000Z
+tags:
+  - coffee
+  - startup
+  - prague
+  - ecommerce
+source_hash: a3e8e6047efa28c16e6811662a009b2d25870e5fb30f8d0eb14d63b3c9f2c743
+embedding_model: text-embedding-3-small
 ---
 
 # ☕ YourWave — Project Summary
@@ -34,8 +42,11 @@ tags: [coffee, startup, prague, ecommerce]
 ---
 
 ## Quick Reference
-Status: Phase 1 planning — contract roasting
-Last merge: PR #1 merged 2026-03-26 — Night Shift v7 (38 CZ articles, GA4, sitemap, EmailCapture, 9 Storybook stories, 4 research docs)
+Status: Platform dev — GSD Milestone 2 in progress (phases 14–15 pending)
+GSD Milestone 1: ✅ COMPLETE (all 9 CRM phases shipped 2026-04-01)
+GSD Milestone 2: phases 10–13 ✅ (Vercel adapter, Supabase schema+RLS, Auth, RBAC)
+Atlas: 117 articles/locale (EN/CS/UK) as of 2026-04-03
+Last active branch: nightshift/2026-04-02 (35 commits ahead of main, PR pending)
 Location: Прага, Чехія
 Solo founder, budget €5–15k (still saving), timeline 6–12 міс to first sale
 Notion board: https://www.notion.so/3259e7f6c2ca815785c0f9d6f6c34142

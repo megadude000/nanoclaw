@@ -1,3 +1,7 @@
+---
+source_hash: fdde5d826024e16093718c7803feeefe0ff6f534bb2230dcfea457fa94dd548c
+embedding_model: text-embedding-3-small
+---
 # YourWave — Business Process Map & Operations Guide
 
 *Document type: Living operational reference*

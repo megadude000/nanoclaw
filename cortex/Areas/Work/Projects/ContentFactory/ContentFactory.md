@@ -1,10 +1,18 @@
 ---
 type: project-hub
 project: ContentFactory
-status: planning
-tags: [content, pipeline, automation, claude, dashboard, approval]
-created: 2026-03-17
-last_updated: 2026-03-17
+status: atlas-live
+tags:
+  - content
+  - pipeline
+  - automation
+  - claude
+  - dashboard
+  - approval
+created: 2026-03-17T00:00:00.000Z
+last_updated: 2026-04-04T10:00:00.000Z
+source_hash: 0ad29fec23f5d8e3cdb1cbc2812190703096ace4b97621994842279f34ab4f98
+embedding_model: text-embedding-3-small
 ---
 
 # Завод (Content Factory)
@@ -118,11 +126,11 @@ Board view by Status: `⏳ Waiting` → `👀 In Review` → `✅ Approved` / `�
 ### Phase 1 — MVP (в роботі)
 - [x] Вирішити платформи для старту — Instagram + atlas.yourwave.coffee
 - [x] Notion board створено — board view by Stage, demo card Colombia Huila з sub-board
+- [x] Atlas tech stack вибрати — Astro 6 + React Islands (YW_Core repo)
+- [x] Atlas content strategy — структура, рубрики, 117 статей × 3 локалі (EN/CS/UK) LIVE ✅
 - [ ] Підключити Instagram Graph API
-- [ ] Atlas tech stack вибрати (Astro vs Next.js) + deploy atlas.yourwave.coffee
 - [ ] Figma MCP — вирішити чи підключати
-- [ ] Atlas content strategy — спланувати стратегію наповнення (структура, рубрики, пріоритети)
-- [ ] Перший контент-сет через пайплайн (після стратегії Атласу)
+- [ ] Перший контент-сет через пайплайн (Instagram Reel/Carousel)
 
 ### Phase 2 — Full
 - [ ] Web dashboard (Next.js або Retool)

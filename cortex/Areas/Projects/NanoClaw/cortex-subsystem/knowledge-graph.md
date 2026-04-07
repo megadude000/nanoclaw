@@ -2,10 +2,21 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: Cortex knowledge graph - cortex-graph.json schema, edge types, graph-augmented search, cross-link discovery
+scope: >-
+  Cortex knowledge graph - cortex-graph.json schema, edge types, graph-augmented
+  search, cross-link discovery
 project: nanoclaw
-tags: [nanoclaw, cortex, knowledge-graph, graph, edges, cross-link, search]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - cortex
+  - knowledge-graph
+  - graph
+  - edges
+  - cross-link
+  - search
+created: 2026-03-31T00:00:00.000Z
+source_hash: c18a12e6c938f598ec138e4b8205ed654b9af4f6cf92174dba8d9fbee31f45d3
+embedding_model: text-embedding-3-small
 ---
 
 # Cortex — Knowledge Graph

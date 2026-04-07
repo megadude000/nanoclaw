@@ -1,3 +1,7 @@
+---
+source_hash: a5c763adb0c92a072a3493bbecaad63a5d723ee413958e96b98b7125de1a03d1
+embedding_model: text-embedding-3-small
+---
 # Contract / Toll Roasting Options in Czech Republic
 
 *Research compiled: 2026-03-23*

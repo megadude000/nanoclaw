@@ -2,8 +2,15 @@
 type: project-note
 project: YourWave
 domain: content-factory
-tags: [content, pipeline, automation, claude, dashboard, atlas]
-last_updated: 2026-03-17
+tags:
+  - content
+  - pipeline
+  - automation
+  - claude
+  - dashboard
+  - atlas
+last_updated: 2026-04-04T10:10:00.000Z
+embedding_model: text-embedding-3-small
 ---
 
 # YourWave — Content Factory
@@ -123,7 +130,7 @@ Claude сам вирішує cost/quality trade-offs і *пояснює*:
 | Video generation | Runway / Kling (via API) |
 | Multi-platform | TikTok API, Pinterest API |
 | Web dashboard | Next.js або Retool (швидко) |
-| Blog/Atlas | Shopify Blog або окремий CMS |
+| Blog/Atlas | Astro 6 (YW_Core) — LIVE ✅ |
 | Email trigger | Klaviyo (з конверсії на сайті) |
 
 ---
@@ -159,8 +166,8 @@ Figma — тільки для фінальної polish якщо AI дало 90%
 
 ## Pending / Next Steps
 
-- [ ] Вирішити з яких платформ стартуємо (Instagram first?)
-- [ ] Визначити MVP дашборд — Notion + Telegram (перед веб-версією)
+- [x] ~~Blog/Atlas~~ → **Coffee Atlas LIVE** — 117 articles × EN/CS/UK (as of 2026-04-03)
+- [ ] Instagram @yourwave.coffee — перший пост (platform not yet connected)
 - [ ] Підключити Instagram Graph API
 - [ ] Перший тестовий пост через пайплайн (Colombia origin)
 - [ ] Web dashboard — після першого місяця роботи пайплайну
@@ -176,3 +183,4 @@ Figma — тільки для фінальної polish якщо AI дало 90%
 | 2026-03-17 | Dashboard: Web (primary) + Notion + Telegram (interconnected) |
 | 2026-03-17 | Start from zero — no existing integrations |
 | 2026-03-17 | Coffee Atlas = content strategy поверх фабрики |
+| 2026-04-03 | Coffee Atlas LIVE — 117 articles × EN/CS/UK, hosted in Astro (YW_Core) |

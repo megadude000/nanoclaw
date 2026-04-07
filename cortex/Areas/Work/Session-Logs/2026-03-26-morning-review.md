@@ -1,9 +1,17 @@
 ---
 type: session
-date: 2026-03-26
+date: 2026-03-26T00:00:00.000Z
 project: YourWave
-topics: [nightshift-v7, merge, storybook, GA4, morning-review, nightshift-2023]
+topics:
+  - nightshift-v7
+  - merge
+  - storybook
+  - GA4
+  - morning-review
+  - nightshift-2023
 status: completed
+source_hash: 1454786ea7565fa947f725f5d9bea82ae86333a6adceb396cc7ec9d18ddd5ec2
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-26 07:00 — morning-review

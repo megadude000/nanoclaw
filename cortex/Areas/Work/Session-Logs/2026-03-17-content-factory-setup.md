@@ -1,9 +1,18 @@
 ---
 type: session
-date: 2026-03-17
+date: 2026-03-17T00:00:00.000Z
 project: ContentFactory
-topics: [content-factory, завод, notion, pipeline, approval, instagram, atlas]
+topics:
+  - content-factory
+  - завод
+  - notion
+  - pipeline
+  - approval
+  - instagram
+  - atlas
 status: completed
+source_hash: cf13e753c42d8fae39e35ef9e6df0d885c2a3d3fd7edb1e20eda7bfd80651e10
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-17 11:00 — content-factory-setup

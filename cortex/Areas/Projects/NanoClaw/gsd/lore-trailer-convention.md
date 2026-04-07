@@ -2,10 +2,22 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: GSD lore trailer convention - Constraint/Rejected/Directive keys, placement rules, forward-only, lore mining integration
+scope: >-
+  GSD lore trailer convention - Constraint/Rejected/Directive keys, placement
+  rules, forward-only, lore mining integration
 project: nanoclaw
-tags: [nanoclaw, gsd, lore, git-trailers, conventions, constraint, rejected, directive]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - gsd
+  - lore
+  - git-trailers
+  - conventions
+  - constraint
+  - rejected
+  - directive
+created: 2026-03-31T00:00:00.000Z
+source_hash: 267f915231508c7496580490be8358305ca293923a9861125bdcb7d1232d6397
+embedding_model: text-embedding-3-small
 ---
 
 # GSD — Lore Trailer Convention

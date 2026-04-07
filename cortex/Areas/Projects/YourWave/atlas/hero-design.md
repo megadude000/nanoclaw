@@ -4,7 +4,16 @@ confidence: high
 domain: yourwave
 scope: yourwave
 project: yourwave
-tags: [design, hero, atlas, mobile, desktop, tailwind, astro]
+tags:
+  - design
+  - hero
+  - atlas
+  - mobile
+  - desktop
+  - tailwind
+  - astro
+source_hash: 307d7737d5de499860f52751828c7665cb25d6a5cbd4f49bb57ab7324a571c51
+embedding_model: text-embedding-3-small
 ---
 
 # Atlas Article Hero Design — Decisions

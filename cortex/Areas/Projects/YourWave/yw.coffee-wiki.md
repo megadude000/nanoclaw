@@ -2,7 +2,14 @@
 type: project-note
 project: YourWave
 domain: coffee-knowledge
-tags: [coffee, origins, suppliers, roasting, sourcing]
+tags:
+  - coffee
+  - origins
+  - suppliers
+  - roasting
+  - sourcing
+source_hash: 5a08dafe2ed7e12d8970248d948ff188854cfa66b1ff0f0a670bff6374215466
+embedding_model: text-embedding-3-small
 ---
 
 # YourWave — Coffee Wiki

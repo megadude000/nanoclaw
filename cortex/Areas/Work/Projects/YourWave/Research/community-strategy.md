@@ -1,3 +1,7 @@
+---
+source_hash: ea16c2ff79542c281a333705ed490d71f93986277f935c9ff19b1b5b5755fd4f
+embedding_model: text-embedding-3-small
+---
 # YourWave Community Strategy
 **Status:** Score 0/100 — Starting from zero
 **Date:** 2026-03-30

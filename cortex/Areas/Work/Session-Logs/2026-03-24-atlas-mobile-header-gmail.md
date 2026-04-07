@@ -1,9 +1,18 @@
 ---
 type: session
-date: 2026-03-24
+date: 2026-03-24T00:00:00.000Z
 project: YourWave
-topics: [atlas, mobile-header, category-filter, gmail-mcp, cloudflare-rejection, theme, language]
+topics:
+  - atlas
+  - mobile-header
+  - category-filter
+  - gmail-mcp
+  - cloudflare-rejection
+  - theme
+  - language
 status: completed
+source_hash: 681021645afe8722856c9da5ba32fa39c441b43f09519d353070eb1e4b68580d
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-24 13:00–16:00 — atlas-mobile-header-gmail

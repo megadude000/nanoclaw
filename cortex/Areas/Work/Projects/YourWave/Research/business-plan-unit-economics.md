@@ -1,3 +1,7 @@
+---
+source_hash: d254affaf2588a277fd302f8beca92b8b6e902d02ee050fafe81afa5241e5a4c
+embedding_model: text-embedding-3-small
+---
 # YourWave — Business Plan & Unit Economics
 ## Specialty Coffee Subscription Startup, Czech Republic
 

@@ -1,3 +1,7 @@
+---
+source_hash: a7fe8efb4cbe91ee80ce41d991955608224507da33e16883489fefd19f2820e8
+embedding_model: text-embedding-3-small
+---
 # Czech Republic: Food Business Operations & Warehousing
 ### For Small/Micro Food Businesses — Coffee Storage & Packaging
 

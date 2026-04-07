@@ -1,7 +1,9 @@
 ---
 type: reference
 project: NightShift
-updated: 2026-03-28
+updated: 2026-03-28T00:00:00.000Z
+source_hash: f48ef2ed5ce58986ad96db4e80baabf311aa4aeadefdd09a7ddb0d89d73762a6
+embedding_model: text-embedding-3-small
 ---
 
 # Cron Registry

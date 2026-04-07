@@ -2,10 +2,20 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: GSD phase lifecycle - research, plan, execute, verify stages, PLAN.md structure, SUMMARY.md, goal-backward verification
+scope: >-
+  GSD phase lifecycle - research, plan, execute, verify stages, PLAN.md
+  structure, SUMMARY.md, goal-backward verification
 project: nanoclaw
-tags: [nanoclaw, gsd, phase-lifecycle, verification, planning, summary]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - gsd
+  - phase-lifecycle
+  - verification
+  - planning
+  - summary
+created: 2026-03-31T00:00:00.000Z
+source_hash: c5e42d69947d960bbc1a9f1e5970faf0b2fe8787c1bf5750ade2fa4631c2338b
+embedding_model: text-embedding-3-small
 ---
 
 # GSD — Phase Lifecycle

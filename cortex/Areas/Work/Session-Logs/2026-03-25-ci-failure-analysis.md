@@ -1,9 +1,20 @@
 ---
+cortex_level: L10
+confidence: medium
+domain: yourwave
+scope: yourwave
 type: session
-date: 2026-03-25
+date: 2026-03-25T00:00:00.000Z
 project: YW_Core
-topics: [ci-failure, e2e-tests, a11y, color-contrast, prettier]
+topics:
+  - ci-failure
+  - e2e-tests
+  - a11y
+  - color-contrast
+  - prettier
 status: in-progress
+source_hash: 60455219bf4ba399d13975e32acefa84ea339ebcb99b5407f9de9d75ee1b870c
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-25 12:15 — ci-failure-analysis

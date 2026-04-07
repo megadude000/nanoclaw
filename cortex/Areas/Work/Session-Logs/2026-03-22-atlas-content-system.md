@@ -1,9 +1,17 @@
 ---
 type: session
-date: 2026-03-22
+date: 2026-03-22T00:00:00.000Z
 project: YourWave
-topics: [content-system, interlinking, articles, external-references, photos, identity]
+topics:
+  - content-system
+  - interlinking
+  - articles
+  - external-references
+  - photos
+  - identity
 status: completed
+source_hash: 439c3fe240093a081b4c47b41d62bf1ab70560f6306e2d759f62ead82b1c5013
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-22 16:00 — atlas-content-system

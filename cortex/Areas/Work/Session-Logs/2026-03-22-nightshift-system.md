@@ -1,9 +1,16 @@
 ---
 type: session
-date: 2026-03-22
+date: 2026-03-22T00:00:00.000Z
 project: NightShift
-topics: [nightshift, automation, cron, supervisor-loop, jarvis-identity]
+topics:
+  - nightshift
+  - automation
+  - cron
+  - supervisor-loop
+  - jarvis-identity
 status: completed
+source_hash: 1a846d9cb2c23a77b0c1b6206b2de1bb44e1f80eb050d59026dec401a622def9
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-22 18:30 — nightshift-system

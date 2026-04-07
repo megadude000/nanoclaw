@@ -1,9 +1,17 @@
 ---
 type: session
-date: 2026-03-25
+date: 2026-03-25T00:00:00.000Z
 project: NanoClaw
-topics: [hooks.yourwave.uk, cloudflared, tunnels, notion-webhook, bugreport, host_claude]
+topics:
+  - hooks.yourwave.uk
+  - cloudflared
+  - tunnels
+  - notion-webhook
+  - bugreport
+  - host_claude
 status: completed
+source_hash: 64cccb13ee99e59ba07efd009895e203610151153c4775561c15acc1bc2801d8
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-25 14:00 — hooks-gateway-setup

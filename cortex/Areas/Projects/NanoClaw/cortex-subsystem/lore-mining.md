@@ -2,10 +2,23 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: Cortex lore mining - git trailer format, parseLoreFromGit, writeLoreAtom, indexLoreAtoms, vault naming
+scope: >-
+  Cortex lore mining - git trailer format, parseLoreFromGit, writeLoreAtom,
+  indexLoreAtoms, vault naming
 project: nanoclaw
-tags: [nanoclaw, cortex, lore, git-trailers, lore-atom, decisions, constraint, rejected, directive]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - cortex
+  - lore
+  - git-trailers
+  - lore-atom
+  - decisions
+  - constraint
+  - rejected
+  - directive
+created: 2026-03-31T00:00:00.000Z
+source_hash: 582a0feeea1fe6dcf94cf89887613b43eab6037847486b091a26ea69abb328fe
+embedding_model: text-embedding-3-small
 ---
 
 # Cortex — Lore Mining

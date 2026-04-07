@@ -4,6 +4,8 @@ cortex_level: L10
 confidence: high
 domain: nanoclaw
 scope: cortex schema specification
+source_hash: 6acaabe56100c26206b894380a7802200719d8254e66361107c19973aab32871
+embedding_model: text-embedding-3-small
 ---
 
 # Cortex Schema Standard

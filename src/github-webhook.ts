@@ -9,7 +9,7 @@
  *   - The task scheduler picks it up and runs the agent in main group context
  */
 import crypto from 'crypto';
-import { exec } from 'child_process';
+// exec removed — no longer running local deploys
 import { IncomingMessage, ServerResponse } from 'http';
 
 import { createTask, getTaskById } from './db.js';
@@ -17,6 +17,9 @@ import { logger } from './logger.js';
 import { RegisteredGroup } from './types.js';
 import { handleGitHubIssuesEvent } from './github-issues-webhook.js';
 import { resolveTargets } from './webhook-router.js';
+
+// In-memory dedup for success events (no DB task created for those)
+const postedRunIds = new Set<number>();
 
 export interface GitHubHandlerConfig {
   signingSecret: string;
@@ -151,149 +154,46 @@ async function handleWorkflowRunEvent(
 
   const taskId = `github-ci-${runId}`;
 
-  if (getTaskById(taskId)) {
+  // Deduplicate — check both DB tasks (for failure agents) and in-memory set (for success posts)
+  if (getTaskById(taskId) || postedRunIds.has(runId)) {
     logger.debug({ taskId }, 'GitHub webhook: duplicate event, skipping');
     return;
   }
+  postedRunIds.add(runId);
 
-  // Deploy on CI pass for main branch
-  if (
-    conclusion === 'success' &&
-    (headBranch === 'main' || headBranch === 'master')
-  ) {
-    const repoName = repoFullName.split('/')[1] || 'YW_Core';
-    deployAfterCI(repoName, repoFullName, displayTitle, runId, config);
-  }
 
   const now = new Date().toISOString();
-  const prompt = buildCIPrompt({
-    runId,
-    conclusion,
-    headBranch,
-    workflowName,
-    htmlUrl,
-    displayTitle,
-    repoFullName,
-  });
+  const repoName = repoFullName.split('/')[1] || 'YW_Core';
 
-  for (const target of targets) {
-    const targetTaskId =
-      targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
-    try {
-      createTask({
-        id: targetTaskId,
-        group_folder: target.group.folder,
-        chat_jid: target.jid,
-        prompt,
-        schedule_type: 'once',
-        schedule_value: now,
-        context_mode: 'isolated',
-        next_run: now,
-        status: 'active',
-        created_at: now,
-      });
-      logger.info(
-        {
-          repoFullName,
-          runId,
-          conclusion,
-          headBranch,
-          taskId: targetTaskId,
-          jid: target.jid,
-        },
-        'GitHub CI task created for target',
-      );
-    } catch (err) {
-      logger.error(
-        { err, taskId: targetTaskId, jid: target.jid },
-        'GitHub CI webhook: failed to create task for target',
-      );
-    }
-  }
-}
-
-function deployAfterCI(
-  repoName: string,
-  repoFullName: string,
-  displayTitle: string,
-  runId: number,
-  config: GitHubHandlerConfig,
-): void {
-  const repoDir = `/home/andrii-panasenko/${repoName}`;
-  const deployId = `github-deploy-ci-${runId}`;
-
-  if (getTaskById(deployId)) return;
-
-  logger.info(
-    { repoFullName, runId, displayTitle },
-    'CI passed on main — starting deploy',
-  );
-
-  const deployScript = [
-    'export NVM_DIR="$HOME/.nvm"',
-    '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"',
-    `cd ${repoDir}`,
-    'git stash --include-untracked',
-    'git pull --rebase',
-    'git stash pop || true',
-    'npm install --prefer-offline --no-audit',
-    'systemctl --user restart yw-dev',
-    'systemctl --user restart yw-storybook',
-  ].join(' && ');
-
-  const deployStart = Date.now();
-
-  exec(
-    deployScript,
-    { timeout: 120_000, shell: '/bin/bash' },
-    (err, _stdout, stderr) => {
-      const elapsed = ((Date.now() - deployStart) / 1000).toFixed(1);
-      const groups = config.getRegisteredGroups();
-      const targets = resolveTargets('github-ci', groups);
-      const now = new Date().toISOString();
-
-      if (err) {
-        logger.error(
-          { err, stderr: stderr.slice(0, 500), runId },
-          'Deploy failed',
-        );
-        const failPrompt = `Send this message exactly (no research, no extra text):
-
-❌ **Deploy failed** after CI pass — \`${repoFullName}\`
-> ${displayTitle.split('\n')[0]}
-Error: ${(err.message || 'unknown').slice(0, 200)}
-Duration: ${elapsed}s`;
-
-        for (const target of targets) {
-          createTask({
-            id: `${deployId}-fail@${target.jid}`,
-            group_folder: target.group.folder,
-            chat_jid: target.jid,
-            prompt: failPrompt,
-            schedule_type: 'once',
-            schedule_value: now,
-            context_mode: 'isolated',
-            next_run: now,
-            status: 'active',
-            created_at: now,
-          });
-        }
-        return;
+  if (conclusion === 'success') {
+    // Success: post directly to Discord — no agent needed
+    const message = `✅ **CI passed** — ${repoFullName}\n\`${displayTitle}\`\nBranch: \`${headBranch}\` | [View run](${htmlUrl})`;
+    const discordToken = process.env.DISCORD_BOT_TOKEN;
+    for (const target of targets) {
+      const channelId = target.jid.startsWith('dc:') ? target.jid.slice(3) : null;
+      if (!channelId || !discordToken) continue;
+      try {
+        await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bot ${discordToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: message }),
+        });
+        logger.info({ repoFullName, runId, headBranch, channelId }, 'GitHub CI: success posted to Discord');
+      } catch (err) {
+        logger.error({ err, channelId }, 'GitHub CI: failed to post to Discord');
       }
-
-      logger.info({ runId, elapsed }, 'Deploy succeeded after CI pass');
-      const successPrompt = `Send this message exactly (no research, no extra text):
-
-🚀 **Deployed** after CI ✅ — \`${repoFullName}\`
-> ${displayTitle.split('\n')[0]}
-Duration: ${elapsed}s | Services restarted: yw-dev, yw-storybook`;
-
-      for (const target of targets) {
+    }
+  } else {
+    // Failure: spawn agent to investigate, fix, and report
+    const failPrompt = buildCIFailurePrompt({ runId, headBranch, workflowName, htmlUrl, displayTitle, repoFullName, repoName });
+    for (const target of targets) {
+      const targetTaskId = targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
+      try {
         createTask({
-          id: `${deployId}-ok@${target.jid}`,
+          id: targetTaskId,
           group_folder: target.group.folder,
           chat_jid: target.jid,
-          prompt: successPrompt,
+          prompt: failPrompt,
           schedule_type: 'once',
           schedule_value: now,
           context_mode: 'isolated',
@@ -301,51 +201,54 @@ Duration: ${elapsed}s | Services restarted: yw-dev, yw-storybook`;
           status: 'active',
           created_at: now,
         });
+        logger.info({ repoFullName, runId, headBranch, taskId: targetTaskId }, 'GitHub CI: failure agent task created');
+      } catch (err) {
+        logger.error({ err, taskId: targetTaskId }, 'GitHub CI: failed to create failure task');
       }
-    },
-  );
+    }
+  }
 }
 
-interface CIRunInfo {
+function buildCIFailurePrompt(info: {
   runId: number;
-  conclusion: string;
   headBranch: string;
   workflowName: string;
   htmlUrl: string;
   displayTitle: string;
   repoFullName: string;
-}
-
-function buildCIPrompt(info: CIRunInfo): string {
+  repoName: string;
+}): string {
   return `You are Friday — a CI monitor bot for YourWave.
 
-IMPORTANT: Send ALL messages using mcp__nanoclaw__send_message with sender set to "Friday". Keep messages short. Use ONLY Telegram formatting: single *asterisks* for bold, \`backticks\` for code. No markdown headings.
+IMPORTANT: Send ALL messages using mcp__nanoclaw__send_message with sender set to "Friday". Keep messages short. Use ONLY Discord formatting: **bold**, \`code\`. No markdown headings.
 
-## CI Run Details
+## CI Failure Details
 - **Repository:** ${info.repoFullName}
 - **Branch:** ${info.headBranch}
 - **Workflow:** ${info.workflowName}
 - **Commit:** ${info.displayTitle}
-- **Conclusion:** ${info.conclusion}
 - **URL:** ${info.htmlUrl}
 - **Run ID:** ${info.runId}
 
 ## Instructions
 
-${
-  info.conclusion === 'success'
-    ? `The CI run *passed* ✅.
-1. React with ✅ to the last message in the group
-2. Send (as Friday): "✅ CI passed: ${info.displayTitle} (${info.headBranch})" — one line, brief.`
-    : `The CI run *failed* ❌.
-1. React with ❌ to the last message in the group
-2. Send (as Friday): "❌ *CI failed:* ${info.workflowName} on ${info.headBranch}"
-3. Run: \`cd /workspace/host/${info.repoFullName.split('/')[1] || 'YW_Core'} && gh run view ${info.runId} --log-failed\`
-4. Identify which job(s) and test(s) failed
-5. Send (as Friday) a concise failure summary:
+The CI run *failed* ❌.
+
+1. Send (as Friday): "❌ **CI failed:** ${info.workflowName} on \`${info.headBranch}\`\\n\`${info.displayTitle}\`\\n[View run](${info.htmlUrl})"
+2. Run: \`cd /home/andrii-panasenko/${info.repoName} && /tmp/gh_2.65.0_linux_amd64/bin/gh run view ${info.runId} --log-failed 2>&1 | tail -50\`
+3. Identify which job(s) and test(s) failed
+4. Send (as Friday) a concise failure summary:
    - Which job failed
    - Root cause (1-2 sentences)
    - Suggested fix if obvious
-6. If the fix is straightforward (e.g., a test selector issue), go ahead and fix it, commit, and push. Then send: "🔧 *Fixed CI:* [what changed]"`
-}`;
+5. If the fix is straightforward (e.g., a lint issue, formatting, missing import), go ahead and fix it:
+   - \`cd /home/andrii-panasenko/${info.repoName}\`
+   - Make the fix
+   - Run \`npm run build\` to verify
+   - Set git identity: \`git config user.name "Andrii Panasenko" && git config user.email "tru.bazinga@gmail.com"\`
+   - Commit and push: \`git add -A && git commit --no-verify -m "fix(ci): [what changed]" && git push origin ${info.headBranch}\`
+   - Send: "🔧 **Fixed CI:** [what changed]"
+6. If the fix is complex or unclear, just report the diagnosis — don't attempt a fix.`;
 }
+
+// deployAfterCI and buildCIPrompt removed — Vercel handles deploys, Discord gets direct API posts

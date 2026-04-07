@@ -1,9 +1,16 @@
 ---
 type: session
-date: 2026-03-23
-project: YourWave, NightShift
-topics: [nightshift, execution, articles, atlas, coffee]
+date: 2026-03-23T00:00:00.000Z
+project: 'YourWave, NightShift'
+topics:
+  - nightshift
+  - execution
+  - articles
+  - atlas
+  - coffee
 status: completed
+source_hash: e2053398c3570c3381e14d3cadf2db3b25735e6e9d883f4a7fcbe1dfbaaf2863
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-22 23:28 — nightshift-execution

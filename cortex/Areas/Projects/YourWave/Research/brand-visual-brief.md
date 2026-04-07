@@ -1,3 +1,7 @@
+---
+source_hash: d9a471214f5c55702e0e4feaa3579435690be4df94406184be406b2004ec81a0
+embedding_model: text-embedding-3-small
+---
 # Brand Visual Direction Brief — YourWave
 
 *Compiled: March 2026*

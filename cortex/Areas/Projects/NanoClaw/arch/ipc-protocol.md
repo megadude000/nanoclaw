@@ -2,10 +2,19 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: NanoClaw IPC protocol - all message types, JSON shapes, file-based transport, handler mapping
+scope: >-
+  NanoClaw IPC protocol - all message types, JSON shapes, file-based transport,
+  handler mapping
 project: nanoclaw
-tags: [nanoclaw, ipc, protocol, container, message-types]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - ipc
+  - protocol
+  - container
+  - message-types
+created: 2026-03-31T00:00:00.000Z
+source_hash: 5df58a38c76b1e80803b68a6d7d86122b4878964a7eecd7b027e334443a7d66b
+embedding_model: text-embedding-3-small
 ---
 
 # NanoClaw — IPC Protocol

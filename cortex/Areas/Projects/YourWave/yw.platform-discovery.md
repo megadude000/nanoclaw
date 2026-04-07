@@ -2,9 +2,15 @@
 type: project-note
 project: YourWave
 domain: platform
-created: 2026-03-23
-updated: 2026-03-23
-tags: [platform, discovery, architecture, ywproject-v2]
+created: 2026-03-23T00:00:00.000Z
+updated: 2026-03-23T00:00:00.000Z
+tags:
+  - platform
+  - discovery
+  - architecture
+  - ywproject-v2
+source_hash: 7704ae572c9affe676d658d3e4377d974449d755e43884289b229712bffbec34
+embedding_model: text-embedding-3-small
 ---
 
 # YourWave Platform — Discovery Q&A

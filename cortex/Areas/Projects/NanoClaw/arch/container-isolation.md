@@ -2,10 +2,21 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: NanoClaw container isolation model - per-group VMs, volume mounts, env injection, CLAUDE.md, lifecycle
+scope: >-
+  NanoClaw container isolation model - per-group VMs, volume mounts, env
+  injection, CLAUDE.md, lifecycle
 project: nanoclaw
-tags: [nanoclaw, container, isolation, security, mounts, onecli, claude-md]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - container
+  - isolation
+  - security
+  - mounts
+  - onecli
+  - claude-md
+created: 2026-03-31T00:00:00.000Z
+source_hash: 30a707a890da2f485628701554bd49a49aa021cf58490e1894c1f5b13afa931e
+embedding_model: text-embedding-3-small
 ---
 
 # NanoClaw — Container Isolation Model

@@ -4,7 +4,15 @@ confidence: high
 domain: yourwave
 scope: yourwave
 project: yourwave
-tags: [routing, astro, atlas, i18n, fallback, getStaticPaths]
+tags:
+  - routing
+  - astro
+  - atlas
+  - i18n
+  - fallback
+  - getStaticPaths
+source_hash: eb06201be5da36e2eb839f049a49be96d175243aed3f6eda793704899dfb81c6
+embedding_model: text-embedding-3-small
 ---
 
 # Atlas Article Routing — EN Fallback Strategy

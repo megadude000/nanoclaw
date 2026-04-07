@@ -1,9 +1,15 @@
 ---
 type: session
-date: 2026-03-25
+date: 2026-03-25T00:00:00.000Z
 project: YourWave
-topics: [notion-webhooks, bugreporter, webhook-routing, notion-integration]
+topics:
+  - notion-webhooks
+  - bugreporter
+  - webhook-routing
+  - notion-integration
 status: in-progress
+source_hash: 4387fb65cefe6cdf52055e64cb2fc5efcf01708471b03fe39c79c7e5e238c3f4
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-25 13:08 — notion-webhooks-discovery

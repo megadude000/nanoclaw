@@ -2,10 +2,21 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: Cortex reconciliation pipeline - 4 steps, TTLs, staleness detection, orphan detection, trigger mechanism
+scope: >-
+  Cortex reconciliation pipeline - 4 steps, TTLs, staleness detection, orphan
+  detection, trigger mechanism
 project: nanoclaw
-tags: [nanoclaw, cortex, reconciliation, staleness, orphan, nightshift, qdrant]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - cortex
+  - reconciliation
+  - staleness
+  - orphan
+  - nightshift
+  - qdrant
+created: 2026-03-31T00:00:00.000Z
+source_hash: af4450e4513bef0a0ca2e9e7eee04c3a14f61d8edee1ad4d880e022edbd5bda1
+embedding_model: text-embedding-3-small
 ---
 
 # Cortex — Reconciliation Pipeline

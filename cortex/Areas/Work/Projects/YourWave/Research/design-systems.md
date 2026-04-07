@@ -1,3 +1,7 @@
+---
+source_hash: 2f8c4def191ff31ea737575c23edd25dc8b044e33bccc929408eaaa4b702b4e4
+embedding_model: text-embedding-3-small
+---
 # Design Systems — Comprehensive Research for YourWave v2
 
 > **Context**: YourWave is a coffee e-commerce + CRM platform. This document covers design system fundamentals, real-world examples, and specific recommendations for building YourWave's DS on Tailwind + shadcn/ui with Storybook integration.

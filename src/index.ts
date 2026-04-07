@@ -327,7 +327,8 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
 
   await channel.setTyping?.(chatJid, false);
   if (idleTimer) clearTimeout(idleTimer);
-  progressTracker?.onContainerStopped(chatJid, output === 'error' ? 1 : 0);
+  // If no visible output was sent (e.g. all-internal response), delete ⏳ silently
+  progressTracker?.onContainerStopped(chatJid, (!outputSentToUser || output === 'error') ? 1 : 0);
   if (output === 'error') botStatusPanel?.onGroupError(chatJid);
 
   if (output === 'error' || hadError) {

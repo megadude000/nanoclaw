@@ -1,3 +1,7 @@
+---
+source_hash: d5b1b1fd4e79982c4f8dc1c9da95472d064f86dc0d20ae16dec7960a842b7f05
+embedding_model: text-embedding-3-small
+---
 # Audio Atlas Implementation Plan
 ## YourWave Coffee Atlas — Article Audio Versions
 

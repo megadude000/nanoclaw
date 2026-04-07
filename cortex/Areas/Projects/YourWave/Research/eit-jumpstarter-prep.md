@@ -1,3 +1,7 @@
+---
+source_hash: 3935b4772313615cc66e22c51efd88e82445d1010709fcb9bff7a7f328b8e94f
+embedding_model: text-embedding-3-small
+---
 # EIT Jumpstarter 2026 — Application Preparation for YourWave
 
 ## Program Overview

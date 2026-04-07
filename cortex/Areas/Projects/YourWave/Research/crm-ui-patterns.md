@@ -1,3 +1,7 @@
+---
+source_hash: b11dde4dfbcf08bd02e75d2f48bd378239354d2f6aa248fdcac94d2c19889795
+embedding_model: text-embedding-3-small
+---
 # CRM/Admin UI Patterns Research — YourWave v2
 
 > Compiled: 2026-03-23

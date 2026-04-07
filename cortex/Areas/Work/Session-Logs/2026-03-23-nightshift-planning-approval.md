@@ -1,9 +1,17 @@
 ---
 type: session
-date: 2026-03-23
-project: NightShift, YourWave
-topics: [nightshift-planning, approval-flow, cloudflare-tunnel, storybook, morning-digest, expandable-blocks]
+date: 2026-03-23T00:00:00.000Z
+project: 'NightShift, YourWave'
+topics:
+  - nightshift-planning
+  - approval-flow
+  - cloudflare-tunnel
+  - storybook
+  - morning-digest
+  - expandable-blocks
 status: completed
+source_hash: 1063b0948786645976f300bb23faff41204e3eebbaf37d51e24aefc5962aef80
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-23 21:25 — nightshift-planning-approval

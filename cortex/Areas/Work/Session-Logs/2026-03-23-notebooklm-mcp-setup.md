@@ -1,9 +1,15 @@
 ---
 type: session
-date: 2026-03-23
+date: 2026-03-23T00:00:00.000Z
 project: NanoClaw
-topics: [notebooklm-mcp, browser-auth, docker-mounts, chrome-profile]
+topics:
+  - notebooklm-mcp
+  - browser-auth
+  - docker-mounts
+  - chrome-profile
 status: in-progress
+source_hash: 5cb5229b89cf86824029b1ccce4f882bebea20c45cde679025777307a62a15c1
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-23 20:00 — notebooklm-mcp-setup

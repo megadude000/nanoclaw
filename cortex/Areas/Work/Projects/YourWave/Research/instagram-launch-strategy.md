@@ -1,3 +1,7 @@
+---
+source_hash: c7fc9e27c27045c663f68f22fe4cff3e3aeba807b9c8f2dbb86a8b17e9bf4ff8
+embedding_model: text-embedding-3-small
+---
 # YourWave — Instagram Launch Strategy
 ## English-First Specialty Coffee Subscription, Prague
 

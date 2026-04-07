@@ -1,9 +1,17 @@
 ---
 type: session
-date: 2026-03-25
+date: 2026-03-25T00:00:00.000Z
 project: YW_Core
-topics: [CI, accessibility, color-contrast, bugreporter, notion-webhook, heading-hierarchy]
+topics:
+  - CI
+  - accessibility
+  - color-contrast
+  - bugreporter
+  - notion-webhook
+  - heading-hierarchy
 status: in-progress
+source_hash: 0c66184318236fcd6c3d92537aa5ce4672b60c80ff62f1f1da560c84d9e219a1
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-25 12:00 — ci-a11y-bugreport

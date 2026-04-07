@@ -6,6 +6,8 @@ domain: nanoclaw
 scope: cortex L20/L30 knowledge bootstrap plan for all major systems
 created: '2026-03-31'
 updated: '2026-03-31'
+source_hash: cc095ab439bc3a8f84bd41cf7bcfa2d21659789a6d10e7e0809d5bf932bd73b7
+embedding_model: text-embedding-3-small
 ---
 
 # Cortex Bootstrap Plan Overview

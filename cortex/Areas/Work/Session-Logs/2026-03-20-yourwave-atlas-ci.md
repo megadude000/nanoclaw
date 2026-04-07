@@ -1,9 +1,18 @@
 ---
 type: session
-date: 2026-03-20
+date: 2026-03-20T00:00:00.000Z
 project: YourWave
-topics: [atlas, ci, storybook, e2e, accessibility, shadcn, github-actions]
+topics:
+  - atlas
+  - ci
+  - storybook
+  - e2e
+  - accessibility
+  - shadcn
+  - github-actions
 status: completed
+source_hash: 0ca9b15a8dcb9df70b44e927046a91d390b93e39b57060ebd25e3c7cd20c380d
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-20 07:00 — yourwave-atlas-ci

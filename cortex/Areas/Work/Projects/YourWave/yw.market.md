@@ -2,7 +2,14 @@
 type: project-note
 project: YourWave
 domain: market
-tags: [market, competitors, audience, prague, czech]
+tags:
+  - market
+  - competitors
+  - audience
+  - prague
+  - czech
+source_hash: 4924be28132a056c25b54c37d10de191f346ee63a7ba73dbf901415d175e70c1
+embedding_model: text-embedding-3-small
 ---
 
 # YourWave — Market & Audience

@@ -2,10 +2,20 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: NanoClaw task scheduler - cron/interval/once tasks, script gate, routing_tag, health check reinstall
+scope: >-
+  NanoClaw task scheduler - cron/interval/once tasks, script gate, routing_tag,
+  health check reinstall
 project: nanoclaw
-tags: [nanoclaw, scheduler, cron, tasks, routing, script-gate]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - scheduler
+  - cron
+  - tasks
+  - routing
+  - script-gate
+created: 2026-03-31T00:00:00.000Z
+source_hash: 6c3e62f8dbf893be0dafa4c2051a52a6cb4eff0741f2bb817b3f881aec7e882c
+embedding_model: text-embedding-3-small
 ---
 
 # NanoClaw — Task Scheduler

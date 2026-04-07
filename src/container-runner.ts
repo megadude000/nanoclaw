@@ -42,6 +42,7 @@ export interface ContainerInput {
   chatJid: string;
   isMain: boolean;
   isScheduledTask?: boolean;
+  silent?: boolean;
   assistantName?: string;
   triggerMessageId?: string;
   script?: string;
@@ -372,6 +373,14 @@ function buildContainerArgs(
   }
   // Qdrant is always at host.docker.internal:6333 for containers
   args.push('-e', 'QDRANT_URL=http://host.docker.internal:6333');
+
+  // Model fallback: pass through so agent-runner can retry on rate limits
+  const fallbackModel =
+    process.env.NANOCLAW_FALLBACK_MODEL ||
+    readEnvFile(['NANOCLAW_FALLBACK_MODEL']).NANOCLAW_FALLBACK_MODEL;
+  if (fallbackModel) {
+    args.push('-e', `NANOCLAW_FALLBACK_MODEL=${fallbackModel}`);
+  }
 
   // Run as host user so bind-mounted files are accessible.
   // Skip when running as root (uid 0), as the container's node user (uid 1000),

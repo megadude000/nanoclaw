@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Areas/Work/Projects/YourWave/Research/audio-atlas-implementation.md",
+                "file": "Areas/Projects/YourWave/YourWave.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "audio-atlas-implementation"
+              "title": "YourWave"
             }
           }
         ]
@@ -185,6 +185,15 @@
   },
   "active": "d0b9af63f15213b2",
   "lastOpenFiles": [
+    "Areas/Work/Projects/YourWave/YourWave.md",
+    "Areas/Work/Projects/YourWave/Research/audio-atlas-implementation.md",
+    "Areas/Projects/NanoClaw/arch/upstream-merge-wiring-loss-2026-03-31.md",
+    "Areas/Projects/NanoClaw/arch/upstream-merge-wiring-loss-2026-03-31.md.tmp.206052.1774991821448",
+    "Areas/Work/Projects/YourWave/Ideas/milestone-2-auth-infra.md",
+    "Areas/Work/Projects/YourWave/Ideas",
+    "Areas/Projects/NanoClaw/arch/upstream-sync-findings-2026-03-31.md",
+    "CLAUDE.md.tmp.206052.1774984870753",
+    "Areas/Work/Session-Logs/2026-03-25-hooks-gateway-setup.md.tmp.206052.1774984825650",
     "Areas/Projects/NanoClaw/gsd/lore-trailer-convention.md",
     "Areas/Projects/NanoClaw/gsd/phase-lifecycle.md",
     "Areas/Projects/NanoClaw/gsd/gsd-overview.md",
@@ -211,15 +220,6 @@
     "Areas/Projects/YourWave/arch/platform-decisions.md",
     "Areas/Projects/YourWave/arch",
     "Areas/Projects/NightShift/arch/approval-tiers.md",
-    "Areas/Projects/NightShift/arch/orchestration-model.md",
-    "Areas/Projects/NightShift/arch",
-    "Areas/Projects/NanoClaw/cortex-subsystem/bootstrap-plan-overview.md",
-    "Areas/Projects/NanoClaw/cortex-subsystem/bootstrap-plan-overview.md.tmp.206052.1774973919125",
-    "Areas/Projects/NanoClaw/cortex-subsystem/stale-marking.md",
-    "Areas/Projects/NanoClaw/cortex-subsystem/stale-marking.md.tmp.206052.1774973910105",
-    "Areas/Projects/NanoClaw/cortex-subsystem/agent-protocol.md",
-    "Areas/Projects/NanoClaw/cortex-subsystem",
-    "System/bootstrap-plan.md",
-    "System/cortex-protocol.md"
+    "Areas/Projects/NightShift/arch/orchestration-model.md"
   ]
 }

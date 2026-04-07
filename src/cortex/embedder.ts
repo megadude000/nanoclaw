@@ -165,11 +165,15 @@ export async function embedEntry(
       return { status: 'skipped', filePath, reason: 'content unchanged' };
     }
 
-    // Step 5: Embed via OpenAI
-    logger.debug({ filePath }, 'Embedding entry');
+    // Step 5: Embed via OpenAI — truncate to ~6000 chars to stay under 8192 token limit
+    const MAX_EMBED_CHARS = 24_000; // ~6000 tokens at ~4 chars/token, safe margin
+    const inputText = entry.content.length > MAX_EMBED_CHARS
+      ? entry.content.slice(0, MAX_EMBED_CHARS)
+      : entry.content;
+    logger.debug({ filePath, chars: inputText.length }, 'Embedding entry');
     const response = await openai.embeddings.create({
       model: EMBEDDING_MODEL,
-      input: entry.content,
+      input: inputText,
     });
     const vector: number[] = response.data[0].embedding;
 

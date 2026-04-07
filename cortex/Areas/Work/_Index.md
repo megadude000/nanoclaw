@@ -1,5 +1,7 @@
 ---
 type: index
+source_hash: 811ccf82efbed1b9de42a7ebfdd0ef1d5b389dec4a8feaf83d0f31f82e95c643
+embedding_model: text-embedding-3-small
 ---
 
 # Work Index

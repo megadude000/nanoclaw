@@ -526,6 +526,7 @@ export class DiscordChannel implements Channel {
       if (!channel || !('send' in channel)) return undefined;
       const textChannel = channel as TextChannel;
       const msg = await textChannel.send(text.slice(0, 2000));
+      logger.debug({ jid, message_id: msg.id }, 'sendMessageRaw sent');
       return { message_id: msg.id };
     } catch (err) {
       logger.debug({ jid, err }, 'sendMessageRaw failed');
@@ -787,8 +788,10 @@ export class DiscordChannel implements Channel {
     try {
       const channelId = jid.replace(/^dc:/, '');
       const channel = await this.client.channels.fetch(channelId);
+      logger.debug({ jid, hasChannel: !!channel, hasTyping: channel && 'sendTyping' in channel }, 'setTyping called');
       if (channel && 'sendTyping' in channel) {
         await (channel as TextChannel).sendTyping();
+        logger.debug({ jid }, 'sendTyping sent');
       }
     } catch (err) {
       logger.debug({ jid, err }, 'Failed to send Discord typing indicator');

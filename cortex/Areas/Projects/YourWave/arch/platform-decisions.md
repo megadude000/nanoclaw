@@ -2,10 +2,21 @@
 cortex_level: L20
 confidence: high
 domain: yourwave
-scope: YourWave platform v2 key technical decisions - stack choices, architecture patterns, rejected alternatives
+scope: >-
+  YourWave platform v2 key technical decisions - stack choices, architecture
+  patterns, rejected alternatives
 project: YourWave
-tags: [platform, architecture, decisions, stack, supabase, astro, multi-tenant]
-created: 2026-03-31
+tags:
+  - platform
+  - architecture
+  - decisions
+  - stack
+  - supabase
+  - astro
+  - multi-tenant
+created: 2026-03-31T00:00:00.000Z
+source_hash: d97446c245f0207ea2175aa5951375d8a63e815dc0208e428bb91298bb125c6c
+embedding_model: text-embedding-3-small
 ---
 
 # YourWave Platform v2 — Architecture Decisions

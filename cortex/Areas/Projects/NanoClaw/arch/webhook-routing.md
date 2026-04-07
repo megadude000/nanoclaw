@@ -2,10 +2,21 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: NanoClaw webhook routing - webhook-server to per-type handlers, routing_tag config, Discord vs Telegram targets
+scope: >-
+  NanoClaw webhook routing - webhook-server to per-type handlers, routing_tag
+  config, Discord vs Telegram targets
 project: nanoclaw
-tags: [nanoclaw, webhooks, routing, github, notion, bugreport, discord]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - webhooks
+  - routing
+  - github
+  - notion
+  - bugreport
+  - discord
+created: 2026-03-31T00:00:00.000Z
+source_hash: 1c36df310ce2bd50e22681c597f8f6e8a49ff336ad2a99bf55b90963c1b322e5
+embedding_model: text-embedding-3-small
 ---
 
 # NanoClaw — Webhook Routing

@@ -2,10 +2,19 @@
 cortex_level: L20
 confidence: high
 domain: nanoclaw
-scope: NanoClaw health monitor - systemctl checks, state transitions, Discord embeds, gaps
+scope: >-
+  NanoClaw health monitor - systemctl checks, state transitions, Discord embeds,
+  gaps
 project: nanoclaw
-tags: [nanoclaw, health-monitor, systemctl, discord, monitoring]
-created: 2026-03-31
+tags:
+  - nanoclaw
+  - health-monitor
+  - systemctl
+  - discord
+  - monitoring
+created: 2026-03-31T00:00:00.000Z
+source_hash: 5ea4defd0150a1caf05dffda2e8bea7f89190d80cbf908470f97c356048cf4cf
+embedding_model: text-embedding-3-small
 ---
 
 # NanoClaw — Health Monitor

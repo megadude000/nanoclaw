@@ -2,8 +2,16 @@
 type: research
 project: YourWave
 domain: competitive-benchmarking
-tags: [dtc, coffee, subscription, logistics, operations, customer-experience]
-created: 2026-03-28
+tags:
+  - dtc
+  - coffee
+  - subscription
+  - logistics
+  - operations
+  - customer-experience
+created: 2026-03-28T00:00:00.000Z
+source_hash: 512cb7924e4a3e2fcdfa39612533214b032f3c459e49ef7c09fbbf68982af784
+embedding_model: text-embedding-3-small
 ---
 
 # DTC Specialty Coffee Subscription — Benchmarking Report

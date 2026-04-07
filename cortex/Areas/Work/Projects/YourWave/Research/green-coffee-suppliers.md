@@ -1,3 +1,7 @@
+---
+source_hash: dc32827aa8d9a5645029c3ef991c772082f218cebb29cf116c34f1a03c595340
+embedding_model: text-embedding-3-small
+---
 # Green Coffee Suppliers — YourWave Research
 
 _Research compiled: 2026-03-23_

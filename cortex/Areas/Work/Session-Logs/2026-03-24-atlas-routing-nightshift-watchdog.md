@@ -1,9 +1,18 @@
 ---
 type: session
-date: 2026-03-24
+date: 2026-03-24T00:00:00.000Z
 project: YourWave
-topics: [atlas, i18n, routing, nightshift, watchdog, cloudflare-tunnel, email]
+topics:
+  - atlas
+  - i18n
+  - routing
+  - nightshift
+  - watchdog
+  - cloudflare-tunnel
+  - email
 status: completed
+source_hash: da972434c03d5201c7fe08fe03d0055b4e59df414a43e6f45c868f13814e2fe7
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-24 08:00–13:00 — atlas-routing-nightshift-watchdog

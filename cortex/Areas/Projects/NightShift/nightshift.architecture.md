@@ -3,11 +3,17 @@ type: spec
 cortex_level: L30
 confidence: high
 domain: nanoclaw
-scope: Night Shift full architecture spec v2 - phases, bots, state contract, approval tiers
+scope: >-
+  Night Shift full architecture spec v2 - phases, bots, state contract, approval
+  tiers
 project: NightShift
-created: 2026-03-22
-updated: 2026-03-31
-tags: [architecture, nightshift]
+created: 2026-03-22T00:00:00.000Z
+updated: 2026-03-31T00:00:00.000Z
+tags:
+  - architecture
+  - nightshift
+source_hash: ee52738122e78689fbb5e901b886630784cc27213ee17d4ee25a0022d73749de
+embedding_model: text-embedding-3-small
 ---
 
 # Night Shift — Architecture (v2)

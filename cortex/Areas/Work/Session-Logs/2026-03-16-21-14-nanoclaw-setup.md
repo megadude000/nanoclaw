@@ -1,11 +1,20 @@
 ---
 type: session
-date: 2026-03-16
-time: 21:14
+date: 2026-03-16T00:00:00.000Z
+time: 1274
 project: nanoclaw
-topics: [reactions, notion, gmail, swarm, session-lifecycle, preserve]
+topics:
+  - reactions
+  - notion
+  - gmail
+  - swarm
+  - session-lifecycle
+  - preserve
 status: archived
-tags: [session]
+tags:
+  - session
+source_hash: 0a959c8321e748109f0f8589f5be5ad18c50258814519aa999206657b9c9c332
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-16 21:14 — NanoClaw Setup & Communication Standards

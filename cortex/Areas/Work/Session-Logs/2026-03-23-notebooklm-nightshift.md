@@ -1,9 +1,15 @@
 ---
 type: session
-date: 2026-03-23
-project: YourWave, NanoClaw
-topics: [notebooklm-mcp, nightshift-planning, browser-automation, playwright]
+date: 2026-03-23T00:00:00.000Z
+project: 'YourWave, NanoClaw'
+topics:
+  - notebooklm-mcp
+  - nightshift-planning
+  - browser-automation
+  - playwright
 status: completed
+source_hash: c1dc18d793ffa9e6f1fa13bf404148b026756cae2cb23e913abc42e618560c6b
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-23 20:00 — notebooklm-nightshift

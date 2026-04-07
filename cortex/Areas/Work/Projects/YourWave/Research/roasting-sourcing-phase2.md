@@ -1,3 +1,7 @@
+---
+source_hash: be2160290fc501015776e89f3246e7e4914f51df2fdbc0b6e39b2c3d5a8ace35
+embedding_model: text-embedding-3-small
+---
 # YourWave Phase 2: Own Roastery & Sourcing Deep Dive
 **Status:** Roasting score 10/100 — contract roasting phase, own roastery as Phase 2
 **Date:** 2026-03-30

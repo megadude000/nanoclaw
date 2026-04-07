@@ -2,8 +2,16 @@
 type: project-note
 project: YourWave
 domain: content-factory
-tags: [content, pipeline, automation, claude, dashboard, atlas]
-last_updated: 2026-03-17
+tags:
+  - content
+  - pipeline
+  - automation
+  - claude
+  - dashboard
+  - atlas
+last_updated: 2026-03-17T00:00:00.000Z
+source_hash: 0ab0963074cd4bde11ae84a304bd5f43d019d28d3df0d8575f3d55d75b248184
+embedding_model: text-embedding-3-small
 ---
 
 # YourWave — Content Factory

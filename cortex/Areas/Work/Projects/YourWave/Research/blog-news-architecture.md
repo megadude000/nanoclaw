@@ -1,3 +1,7 @@
+---
+source_hash: 1c32cd6764ae512be83626376c28660360063d390b04efe646057cecfc28c5aa
+embedding_model: text-embedding-3-small
+---
 # YourWave — Blog/News Section + Morning Coffee News Cron (IDEA)
 
 *Status: Idea only — not yet implemented. Research before implementation.*

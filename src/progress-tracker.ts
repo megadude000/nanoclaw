@@ -82,7 +82,7 @@ export class ProgressTracker {
       discoverTimeout: null,
       jsonlPath: null,
       jsonlSize: 0,
-      discoverAfter: Date.now() - 1000,
+      discoverAfter: Date.now() - 300_000, // look back 5min — covers reused sessions from prior messages
       loggedDiscoverWarn: false,
     };
     this.states.set(chatJid, state);

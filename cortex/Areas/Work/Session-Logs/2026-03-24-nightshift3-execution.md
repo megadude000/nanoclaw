@@ -1,9 +1,17 @@
 ---
 type: session
-date: 2026-03-24
+date: 2026-03-24T00:00:00.000Z
 project: YourWave
-topics: [nightshift, storybook, prototypes, store, crm, design-tokens]
+topics:
+  - nightshift
+  - storybook
+  - prototypes
+  - store
+  - crm
+  - design-tokens
 status: completed
+source_hash: 9fdf9b44eece240885d641a62b810dc6497cdc4ab779927cda7111dc11c19a29
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-24 23:27 — nightshift3-execution

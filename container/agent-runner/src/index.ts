@@ -32,6 +32,7 @@ interface ContainerInput {
   chatJid: string;
   isMain: boolean;
   isScheduledTask?: boolean;
+  silent?: boolean;
   assistantName?: string;
   script?: string;
   imageAttachments?: ImageAttachment[];
@@ -440,6 +441,7 @@ async function runQuery(
       resume: sessionId,
       resumeSessionAt: resumeAt,
       model: containerInput.model,
+      fallbackModel: process.env.NANOCLAW_FALLBACK_MODEL || undefined,
       systemPrompt: globalClaudeMd
         ? { type: 'preset' as const, preset: 'claude_code' as const, append: globalClaudeMd }
         : undefined,
@@ -467,6 +469,7 @@ async function runQuery(
             NANOCLAW_CHAT_JID: containerInput.chatJid,
             NANOCLAW_GROUP_FOLDER: containerInput.groupFolder,
             NANOCLAW_IS_MAIN: containerInput.isMain ? '1' : '0',
+            NANOCLAW_TASK_SILENT: containerInput.silent ? '1' : '0',
             NANOCLAW_ASSISTANT_NAME: containerInput.assistantName || 'Agent',
           },
         },

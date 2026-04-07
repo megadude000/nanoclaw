@@ -3,10 +3,18 @@ type: project-note
 cortex_level: L20
 confidence: high
 domain: yourwave
-scope: ContentFactory full pipeline architecture - brief to publish flow, approval stages, image gen tiers, tech stack
+scope: >-
+  ContentFactory full pipeline architecture - brief to publish flow, approval
+  stages, image gen tiers, tech stack
 project: ContentFactory
-tags: [pipeline, approval, automation, claude]
-last_updated: 2026-03-31
+tags:
+  - pipeline
+  - approval
+  - automation
+  - claude
+last_updated: 2026-03-31T00:00:00.000Z
+source_hash: 067534cfd410d3f9e334c747c47f5fd53609b346be6f87ae4ddf725d93a8e831
+embedding_model: text-embedding-3-small
 ---
 
 # Content Factory — Pipeline Architecture

@@ -1,3 +1,7 @@
+---
+source_hash: d75f5d3c1d097cd825fa35a14caac9c175ed58c59fcff23f265c6f7b4c5dd3a1
+embedding_model: text-embedding-3-small
+---
 # Instagram Strategy for YourWave — CZ Specialty Coffee Brand
 
 ## Executive Summary

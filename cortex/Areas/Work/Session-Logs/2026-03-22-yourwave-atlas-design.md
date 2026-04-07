@@ -1,9 +1,16 @@
 ---
 type: session
-date: 2026-03-22
+date: 2026-03-22T00:00:00.000Z
 project: YourWave
-topics: [atlas-design, photos, icons, navigation, header-prototypes]
+topics:
+  - atlas-design
+  - photos
+  - icons
+  - navigation
+  - header-prototypes
 status: in-progress
+source_hash: e42a9c1f77fbc0c6f8057d7fee5fd469f0b63dfbcf0f2c175edcb2ba0b5a784c
+embedding_model: text-embedding-3-small
 ---
 
 # Session: 2026-03-22 12:00 — yourwave-atlas-design
