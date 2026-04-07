@@ -153,6 +153,7 @@ async function runTask(
     );
   }
 
+
   // Update tasks snapshot for container to read (filtered by group)
   const isMain = group.isMain === true;
   const tasks = getAllTasks();

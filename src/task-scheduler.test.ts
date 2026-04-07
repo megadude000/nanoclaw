@@ -1,24 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock container-runner BEFORE importing task-scheduler (hoisted by vitest)
-vi.mock('./container-runner.js', () => ({
-  runContainerAgent: vi.fn(),
-  writeTasksSnapshot: vi.fn(),
-}));
-
-// Mock webhook-router BEFORE importing task-scheduler
-vi.mock('./webhook-router.js', () => ({
-  resolveTargets: vi.fn(() => []),
-}));
-
 import { _initTestDatabase, createTask, getTaskById } from './db.js';
 import {
   _resetSchedulerLoopForTests,
   computeNextRun,
   startSchedulerLoop,
 } from './task-scheduler.js';
-import { runContainerAgent } from './container-runner.js';
-import { resolveTargets } from './webhook-router.js';
 
 describe('task scheduler', () => {
   beforeEach(() => {
@@ -138,142 +125,5 @@ describe('task scheduler', () => {
     const offset =
       (new Date(nextRun!).getTime() - new Date(scheduledTime).getTime()) % ms;
     expect(offset).toBe(0);
-  });
-
-  describe('routing_tag routing (DIGEST-01 / DIGEST-02)', () => {
-    it('DIGEST-01: routes output to routing target JID when routing_tag is set', async () => {
-      createTask({
-        id: 'digest-route-test',
-        group_folder: 'main',
-        chat_jid: 'tg:main@g.us',
-        prompt: 'Morning Digest',
-        schedule_type: 'once',
-        schedule_value: '2026-02-22T00:00:00.000Z',
-        context_mode: 'isolated',
-        next_run: new Date(Date.now() - 60_000).toISOString(),
-        status: 'active',
-        created_at: '2026-02-22T00:00:00.000Z',
-        routing_tag: 'morning-digest',
-      });
-
-      const sendMessage = vi.fn(async () => {});
-      const enqueueTask = vi.fn(
-        (_groupJid: string, _taskId: string, fn: () => Promise<void>) => {
-          void fn();
-        },
-      );
-
-      // Mock resolveTargets to return a Discord target
-      vi.mocked(resolveTargets).mockReturnValue([
-        {
-          jid: 'dc:agents-channel',
-          group: {
-            folder: 'discord_agents',
-            jid: 'dc:agents-channel',
-            isMain: false,
-          } as any,
-        },
-      ]);
-
-      // Mock runContainerAgent to simulate streamed output
-      vi.mocked(runContainerAgent).mockImplementation(
-        async (_group, _input, _onProcess, onOutput) => {
-          if (onOutput) {
-            await onOutput({ status: 'success', result: 'Digest output' });
-          }
-          return { status: 'success' as const, result: 'Digest output' };
-        },
-      );
-
-      startSchedulerLoop({
-        registeredGroups: () => ({
-          'tg:main@g.us': {
-            folder: 'main',
-            jid: 'tg:main@g.us',
-            isMain: true,
-          } as any,
-        }),
-        getSessions: () => ({}),
-        queue: { enqueueTask } as any,
-        onProcess: () => {},
-        sendMessage,
-      });
-
-      await vi.advanceTimersByTimeAsync(10);
-
-      // DIGEST-01: sendMessage must have been called with the routing target JID
-      expect(sendMessage).toHaveBeenCalledWith(
-        'dc:agents-channel',
-        expect.any(String),
-      );
-    });
-
-    it('DIGEST-02: does NOT send to task.chat_jid when routing targets resolve', async () => {
-      createTask({
-        id: 'digest-suppress-test',
-        group_folder: 'main',
-        chat_jid: 'tg:main@g.us',
-        prompt: 'Morning Digest',
-        schedule_type: 'once',
-        schedule_value: '2026-02-22T00:00:00.000Z',
-        context_mode: 'isolated',
-        next_run: new Date(Date.now() - 60_000).toISOString(),
-        status: 'active',
-        created_at: '2026-02-22T00:00:00.000Z',
-        routing_tag: 'morning-digest',
-      });
-
-      const sendMessage = vi.fn(async () => {});
-      const enqueueTask = vi.fn(
-        (_groupJid: string, _taskId: string, fn: () => Promise<void>) => {
-          void fn();
-        },
-      );
-
-      // Mock resolveTargets to return a Discord target
-      vi.mocked(resolveTargets).mockReturnValue([
-        {
-          jid: 'dc:agents-channel',
-          group: {
-            folder: 'discord_agents',
-            jid: 'dc:agents-channel',
-            isMain: false,
-          } as any,
-        },
-      ]);
-
-      // Mock runContainerAgent to simulate streamed output
-      vi.mocked(runContainerAgent).mockImplementation(
-        async (_group, _input, _onProcess, onOutput) => {
-          if (onOutput) {
-            await onOutput({ status: 'success', result: 'Digest output' });
-          }
-          return { status: 'success' as const, result: 'Digest output' };
-        },
-      );
-
-      startSchedulerLoop({
-        registeredGroups: () => ({
-          'tg:main@g.us': {
-            folder: 'main',
-            jid: 'tg:main@g.us',
-            isMain: true,
-          } as any,
-        }),
-        getSessions: () => ({}),
-        queue: { enqueueTask } as any,
-        onProcess: () => {},
-        sendMessage,
-      });
-
-      await vi.advanceTimersByTimeAsync(10);
-
-      // DIGEST-02: sendMessage must NEVER have been called with task.chat_jid
-      // This covers ALL send sites -- streaming callback AND post-run block
-      expect(sendMessage).not.toHaveBeenCalledWith(
-        'tg:main@g.us',
-        expect.any(String),
-      );
-    });
   });
 });

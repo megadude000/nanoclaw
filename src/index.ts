@@ -63,6 +63,7 @@ import {
   shouldDropMessage,
 } from './sender-allowlist.js';
 import { readEnvFile } from './env.js';
+import { startSessionCleanup } from './session-cleanup.js';
 import { startSchedulerLoop } from './task-scheduler.js';
 import { startCortexWatcher, stopCortexWatcher } from './cortex/watcher.js';
 import { ProgressTracker } from './progress-tracker.js';
@@ -542,6 +543,12 @@ async function startMessageLoop(): Promise<void> {
             saveState();
             // Restart progress tracking for the piped message (typing heartbeat + progress message)
             progressTracker?.onMessageSent(chatJid, group.folder);
+            // Show typing indicator while the container processes the piped message
+            channel
+              .setTyping?.(chatJid, true)
+              ?.catch((err) =>
+                logger.warn({ chatJid, err }, 'Failed to set typing indicator'),
+              );
           } else {
             // No active container — enqueue for a new one
             queue.enqueueMessageCheck(chatJid);
@@ -870,12 +877,12 @@ async function main(): Promise<void> {
     },
     sendToAgents,
   });
+  startSessionCleanup();
   // Start Cortex embedding watcher (best-effort, non-blocking)
   const cortexDir = path.join(process.cwd(), 'cortex');
   startCortexWatcher(cortexDir).catch((err) =>
     logger.warn({ err }, 'Cortex watcher failed to start'),
   );
-
   queue.setProcessMessagesFn(processGroupMessages);
   recoverPendingMessages();
   startMessageLoop().catch((err) => {

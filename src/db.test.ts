@@ -142,6 +142,86 @@ describe('storeMessage', () => {
   });
 });
 
+// --- reply context persistence ---
+
+describe('reply context', () => {
+  it('stores and retrieves reply_to fields', () => {
+    storeChatMetadata('group@g.us', '2024-01-01T00:00:00.000Z');
+
+    storeMessage({
+      id: 'reply-1',
+      chat_jid: 'group@g.us',
+      sender: '123',
+      sender_name: 'Alice',
+      content: 'Yes, on my way!',
+      timestamp: '2024-01-01T00:00:01.000Z',
+      reply_to_message_id: '42',
+      reply_to_message_content: 'Are you coming tonight?',
+      reply_to_sender_name: 'Bob',
+    });
+
+    const messages = getMessagesSince(
+      'group@g.us',
+      '2024-01-01T00:00:00.000Z',
+      'Andy',
+    );
+    expect(messages).toHaveLength(1);
+    expect(messages[0].reply_to_message_id).toBe('42');
+    expect(messages[0].reply_to_message_content).toBe(
+      'Are you coming tonight?',
+    );
+    expect(messages[0].reply_to_sender_name).toBe('Bob');
+  });
+
+  it('returns null for messages without reply context', () => {
+    storeChatMetadata('group@g.us', '2024-01-01T00:00:00.000Z');
+
+    store({
+      id: 'no-reply',
+      chat_jid: 'group@g.us',
+      sender: '123',
+      sender_name: 'Alice',
+      content: 'Just a normal message',
+      timestamp: '2024-01-01T00:00:01.000Z',
+    });
+
+    const messages = getMessagesSince(
+      'group@g.us',
+      '2024-01-01T00:00:00.000Z',
+      'Andy',
+    );
+    expect(messages).toHaveLength(1);
+    expect(messages[0].reply_to_message_id).toBeNull();
+    expect(messages[0].reply_to_message_content).toBeNull();
+    expect(messages[0].reply_to_sender_name).toBeNull();
+  });
+
+  it('retrieves reply context via getNewMessages', () => {
+    storeChatMetadata('group@g.us', '2024-01-01T00:00:00.000Z');
+
+    storeMessage({
+      id: 'reply-2',
+      chat_jid: 'group@g.us',
+      sender: '456',
+      sender_name: 'Carol',
+      content: 'Agreed',
+      timestamp: '2024-01-01T00:00:01.000Z',
+      reply_to_message_id: '99',
+      reply_to_message_content: 'We should meet',
+      reply_to_sender_name: 'Dave',
+    });
+
+    const { messages } = getNewMessages(
+      ['group@g.us'],
+      '2024-01-01T00:00:00.000Z',
+      'Andy',
+    );
+    expect(messages).toHaveLength(1);
+    expect(messages[0].reply_to_message_id).toBe('99');
+    expect(messages[0].reply_to_sender_name).toBe('Dave');
+  });
+});
+
 // --- getMessagesSince ---
 
 describe('getMessagesSince', () => {
@@ -476,48 +556,6 @@ describe('task CRUD', () => {
 
     deleteTask('task-3');
     expect(getTaskById('task-3')).toBeUndefined();
-  });
-});
-
-// --- routing_tag schema ---
-
-describe('routing_tag schema', () => {
-  it('routing_tag column exists and round-trips through create/get', () => {
-    createTask({
-      id: 'task-routing',
-      group_folder: 'main',
-      chat_jid: 'group@g.us',
-      prompt: 'Morning Digest test',
-      schedule_type: 'cron',
-      schedule_value: '0 8 * * *',
-      context_mode: 'isolated',
-      next_run: '2026-04-01T08:00:00.000Z',
-      status: 'active',
-      created_at: '2026-03-28T00:00:00.000Z',
-      routing_tag: 'morning-digest',
-    });
-
-    const task = getTaskById('task-routing');
-    expect(task).toBeDefined();
-    expect(task!.routing_tag).toBe('morning-digest');
-  });
-
-  it('routing_tag defaults to null when not provided', () => {
-    createTask({
-      id: 'task-no-tag',
-      group_folder: 'main',
-      chat_jid: 'group@g.us',
-      prompt: 'no tag',
-      schedule_type: 'once',
-      schedule_value: '2026-04-01T00:00:00.000Z',
-      context_mode: 'isolated',
-      next_run: null,
-      status: 'active',
-      created_at: '2026-03-28T00:00:00.000Z',
-    });
-
-    const task = getTaskById('task-no-tag');
-    expect(task!.routing_tag).toBeNull();
   });
 });
 

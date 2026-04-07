@@ -16,6 +16,7 @@ export const PROXY_BIND_HOST = process.env.PROXY_BIND_HOST || '0.0.0.0';
 /** Hostname containers use to reach the host machine. */
 export const CONTAINER_HOST_GATEWAY = 'host.docker.internal';
 
+
 /** CLI args needed for the container to resolve the host gateway. */
 export function hostGatewayArgs(): string[] {
   // On Linux, host.docker.internal isn't built-in — add it explicitly

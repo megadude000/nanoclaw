@@ -403,7 +403,10 @@ describe('checkConfidenceFirewall — SEARCH-02', () => {
   });
 
   it('returns true (blocked) when qdrant.scroll returns empty points for L20', async () => {
-    mockQdrantScroll.mockResolvedValue({ points: [] });
+    // First call: domain check (domain exists), second call: parent level check (no parents)
+    mockQdrantScroll
+      .mockResolvedValueOnce({ points: [{ id: 'existing' }] })
+      .mockResolvedValueOnce({ points: [] });
 
     const blocked = await checkConfidenceFirewall(
       'L20',
