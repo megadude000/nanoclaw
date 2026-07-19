@@ -742,20 +742,45 @@ async function main(): Promise<void> {
 
   // Query loop: run query → wait for IPC message → run new query → repeat
   let resumeAt: string | undefined;
+  let sessionRetried = false;
   try {
     while (true) {
       log(
         `Starting query (session: ${sessionId || 'new'}, resumeAt: ${resumeAt || 'latest'})...`,
       );
 
-      const queryResult = await runQuery(
-        prompt,
-        sessionId,
-        mcpServerPath,
-        containerInput,
-        sdkEnv,
-        resumeAt,
-      );
+      let queryResult;
+      try {
+        queryResult = await runQuery(
+          prompt,
+          sessionId,
+          mcpServerPath,
+          containerInput,
+          sdkEnv,
+          resumeAt,
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        // A stored session ID can point at a conversation the container's
+        // session store no longer has (cleared store, prior container's
+        // transcript never persisted). Resuming it fails forever and the
+        // host keeps handing back the same dead ID. Recover once by starting
+        // a fresh session instead of dying and re-poisoning the host state.
+        if (
+          !sessionRetried &&
+          sessionId &&
+          /No conversation found with session ID/i.test(msg)
+        ) {
+          log(
+            `Stored session ${sessionId} not found in container; starting a fresh session`,
+          );
+          sessionId = undefined;
+          resumeAt = undefined;
+          sessionRetried = true;
+          continue;
+        }
+        throw err;
+      }
       if (queryResult.newSessionId) {
         sessionId = queryResult.newSessionId;
       }

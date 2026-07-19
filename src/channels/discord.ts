@@ -497,10 +497,7 @@ export class DiscordChannel implements Channel {
       const message = await textChannel.messages.fetch(messageId);
       await message.delete();
     } catch (err) {
-      logger.debug(
-        { jid, messageId, err },
-        'Failed to delete Discord message',
-      );
+      logger.debug({ jid, messageId, err }, 'Failed to delete Discord message');
     }
   }
 

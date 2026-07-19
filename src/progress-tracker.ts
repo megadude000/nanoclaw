@@ -26,11 +26,7 @@ function isRateLimitError(err: any): boolean {
  * Telegram: error_code 400. Discord: HTTP 404 or error code 10008 (Unknown Message).
  */
 function isMessageGoneError(err: any): boolean {
-  return (
-    err?.error_code === 400 ||
-    err?.status === 404 ||
-    err?.code === 10008
-  );
+  return err?.error_code === 400 || err?.status === 404 || err?.code === 10008;
 }
 
 interface TrackerState {
