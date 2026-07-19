@@ -487,7 +487,10 @@ export class ProgressTracker {
   private _onActivityChanged(chatJid: string, state: TrackerState): void {
     if (!this.onActivity) return;
     const base =
-      state.forwardedActivity ?? state.lastTool ?? state.lastIntent ?? '💭 Thinking…';
+      state.forwardedActivity ??
+      state.lastTool ??
+      state.lastIntent ??
+      '💭 Thinking…';
     const activity =
       state.subagents.size > 0
         ? `${base} · ${state.subagents.size} subagent${state.subagents.size > 1 ? 's' : ''}`

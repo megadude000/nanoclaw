@@ -287,7 +287,8 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
     if (result.rateLimit) recordRateLimit(result.rateLimit);
     // SDK-native activity update (not a result) → feed the progress UI only.
     if (result.status === 'progress') {
-      if (result.activity) progressTracker?.setActivity(chatJid, result.activity);
+      if (result.activity)
+        progressTracker?.setActivity(chatJid, result.activity);
       return;
     }
     if (result.result) {
