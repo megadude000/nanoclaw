@@ -123,10 +123,7 @@ describe('handleEditFailure', () => {
   it('invokes onGone synchronously when the message is gone', () => {
     const onRetry = vi.fn();
     const onGone = vi.fn();
-    handleEditFailure(
-      { status: 404 },
-      { context: 'test', onRetry, onGone },
-    );
+    handleEditFailure({ status: 404 }, { context: 'test', onRetry, onGone });
     expect(onGone).toHaveBeenCalledTimes(1);
     vi.advanceTimersByTime(60_000);
     expect(onRetry).not.toHaveBeenCalled();
