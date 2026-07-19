@@ -39,10 +39,46 @@ export interface TelegramChannelOpts {
   onCriticalCommand?: (chatJid: string, command: string) => void;
 }
 
+const MAX_FLOOD_RETRIES = 2;
+const MAX_FLOOD_WAIT_MS = 60_000;
+
+/**
+ * Run a Telegram API call, retrying on 429 flood-wait errors.
+ * grammY surfaces the server-suggested delay as `error.parameters.retry_after`
+ * (seconds). Non-429 errors and retries beyond MAX_FLOOD_RETRIES are rethrown.
+ */
+export async function callWithFloodRetry<T>(
+  fn: () => Promise<T>,
+  context: string,
+): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err: unknown) {
+      const e = err as { error_code?: number; parameters?: { retry_after?: number } };
+      if (e?.error_code !== 429 || attempt >= MAX_FLOOD_RETRIES) throw err;
+      const retryAfterSec = e.parameters?.retry_after;
+      const waitMs = Math.min(
+        typeof retryAfterSec === 'number' && retryAfterSec > 0
+          ? retryAfterSec * 1000
+          : 5000,
+        MAX_FLOOD_WAIT_MS,
+      );
+      logger.warn(
+        { context, attempt, waitMs },
+        'Telegram flood-wait (429), retrying after delay',
+      );
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
+  }
+}
+
 /**
  * Send a message with Telegram Markdown parse mode, falling back to plain text.
  * Claude's output naturally matches Telegram's Markdown v1 format:
  *   *bold*, _italic_, `code`, ```code blocks```, [links](url)
+ * Each attempt is wrapped in flood-wait retry so a 429 does not trigger the
+ * plain-text fallback (which is reserved for Markdown parse failures).
  */
 async function sendTelegramMessage(
   api: { sendMessage: Api['sendMessage'] },
@@ -51,14 +87,19 @@ async function sendTelegramMessage(
   options: { message_thread_id?: number } = {},
 ): Promise<void> {
   try {
-    await api.sendMessage(chatId, text, {
-      ...options,
-      parse_mode: 'Markdown',
-    });
-  } catch (err) {
+    await callWithFloodRetry(
+      () => api.sendMessage(chatId, text, { ...options, parse_mode: 'Markdown' }),
+      'sendMessage:markdown',
+    );
+  } catch (err: unknown) {
+    // A 429 that exhausted retries should not be retried as plain text
+    if ((err as { error_code?: number })?.error_code === 429) throw err;
     // Fallback: send as plain text if Markdown parsing fails
     logger.debug({ err }, 'Markdown send failed, falling back to plain text');
-    await api.sendMessage(chatId, text, options);
+    await callWithFloodRetry(
+      () => api.sendMessage(chatId, text, options),
+      'sendMessage:plain',
+    );
   }
 }
 
@@ -836,10 +877,14 @@ disown
             .map((b) => ({ text: b.label, callback_data: b.data })),
         );
       }
-      await this.bot.api.sendMessage(numericId, text, {
-        parse_mode: 'Markdown',
-        reply_markup: { inline_keyboard: rows },
-      });
+      await callWithFloodRetry(
+        () =>
+          this.bot!.api.sendMessage(numericId, text, {
+            parse_mode: 'Markdown',
+            reply_markup: { inline_keyboard: rows },
+          }),
+        'sendWithButtons',
+      );
       logger.info(
         { jid, buttonCount: buttons.length },
         'Telegram message with buttons sent',
@@ -880,7 +925,9 @@ disown
   }
 
   isConnected(): boolean {
-    return this.bot !== null;
+    // isRunning() reflects grammY's polling loop state — false before start()
+    // completes and after stop() — rather than mere object existence.
+    return this.bot !== null && this.bot.isRunning();
   }
 
   ownsJid(jid: string): boolean {
