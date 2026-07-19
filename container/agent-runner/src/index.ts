@@ -41,6 +41,7 @@ interface ContainerInput {
   script?: string;
   imageAttachments?: ImageAttachment[];
   model?: string;
+  effort?: 'low' | 'medium' | 'high' | 'max';
 }
 
 interface ContainerOutput {
@@ -486,6 +487,15 @@ async function runQuery(
     log(`Additional directories: ${extraDirs.join(', ')}`);
   }
 
+  const resolvedModel =
+    containerInput.model || process.env.NANOCLAW_MODEL || 'default';
+  const resolvedEffort = resolveEffort(
+    containerInput.effort || process.env.NANOCLAW_EFFORT,
+  );
+  log(
+    `Model: ${resolvedModel}, effort: ${resolvedEffort}${containerInput.isScheduledTask ? ' (scheduled task)' : ''}`,
+  );
+
   for await (const message of query({
     prompt: stream,
     options: {
@@ -495,8 +505,9 @@ async function runQuery(
       resumeSessionAt: resumeAt,
       model: containerInput.model || process.env.NANOCLAW_MODEL || undefined,
       fallbackModel: process.env.NANOCLAW_FALLBACK_MODEL || undefined,
-      // Reasoning effort — guides thinking depth. Defaults to 'high'.
-      effort: resolveEffort(process.env.NANOCLAW_EFFORT),
+      // Reasoning effort — per-run value (set by the host for chat vs task)
+      // wins over the NANOCLAW_EFFORT env default; falls back to 'high'.
+      effort: resolvedEffort,
       systemPrompt: globalClaudeMd
         ? { type: 'preset' as const, preset: 'claude_code' as const, append: globalClaudeMd }
         : undefined,

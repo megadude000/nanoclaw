@@ -48,6 +48,7 @@ export interface ContainerInput {
   script?: string;
   imageAttachments?: Array<{ relativePath: string; mediaType: string }>;
   model?: string;
+  effort?: 'low' | 'medium' | 'high' | 'max';
 }
 
 export interface ContainerOutput {

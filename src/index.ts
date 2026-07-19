@@ -398,6 +398,8 @@ async function runAgent(
         chatJid,
         isMain,
         assistantName: ASSISTANT_NAME,
+        // Interactive chat: fast responses (Sonnet via default model, low effort)
+        effort: 'low',
       },
       (proc, containerName) =>
         queue.registerProcess(chatJid, proc, containerName, group.folder),

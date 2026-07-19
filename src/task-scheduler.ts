@@ -221,7 +221,11 @@ async function runTask(
         silent: task.silent ?? false,
         assistantName: ASSISTANT_NAME,
         script: task.script || undefined,
-        model: task.model || group.containerConfig?.model,
+        // Scheduled/background tasks: maximum reasoning. Default to Opus at
+        // 'max' effort; an explicit per-task/group model still wins.
+        model:
+          task.model || group.containerConfig?.model || 'claude-opus-4-8',
+        effort: 'max',
       },
       (proc, containerName) =>
         deps.onProcess(task.chat_jid, proc, containerName, task.group_folder),
