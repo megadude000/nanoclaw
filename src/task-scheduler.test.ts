@@ -182,7 +182,10 @@ describe('task model/effort selection', () => {
 
   it('honors an explicit per-task model at max effort', () => {
     const { model, effort } = chooseTaskModelEffort(
-      baseTask({ schedule_value: '0 */2 10-18 * * *', model: 'claude-haiku-4-5' }),
+      baseTask({
+        schedule_value: '0 */2 10-18 * * *',
+        model: 'claude-haiku-4-5',
+      }),
       group,
     );
     expect(model).toBe('claude-haiku-4-5');
