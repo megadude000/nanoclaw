@@ -66,6 +66,7 @@ import { readEnvFile } from './env.js';
 import { startSessionCleanup } from './session-cleanup.js';
 import { startSchedulerLoop } from './task-scheduler.js';
 import { startCortexWatcher, stopCortexWatcher } from './cortex/watcher.js';
+import { startHealthMonitor } from './health-monitor.js';
 import { ProgressTracker } from './progress-tracker.js';
 import { BotStatusPanel } from './bot-status-panel.js';
 import { EmbedBuilder } from 'discord.js';
@@ -89,6 +90,7 @@ const queue = new GroupQueue();
 let progressTracker: ProgressTracker | null = null;
 let botStatusPanel: BotStatusPanel | undefined;
 let sendToAgents: ((embed: EmbedBuilder) => Promise<void>) | undefined;
+let stopHealthMonitor: (() => void) | undefined;
 
 function loadState(): void {
   lastTimestamp = getRouterState('last_timestamp') || '';
@@ -614,6 +616,7 @@ async function main(): Promise<void> {
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'Shutdown signal received');
+    stopHealthMonitor?.();
     stopCortexWatcher();
     webhookServer.close();
     proxyServer.close();
@@ -748,6 +751,22 @@ async function main(): Promise<void> {
         if (ch?.sendEmbed) await ch.sendEmbed(agentsJid, embed).catch(() => {});
       }
     : undefined;
+
+  // Wire health monitor: posts service up/down/heartbeat embeds to #logs.
+  // Monitored services come from HEALTH_MONITOR_SERVICES (+ cloudflared/qdrant).
+  const sendHealthEmbed = dumpJid
+    ? async (embed: EmbedBuilder) => {
+        const ch = findChannel(channels, dumpJid);
+        if (ch?.sendEmbed) await ch.sendEmbed(dumpJid, embed).catch(() => {});
+      }
+    : undefined;
+  if (sendHealthEmbed) {
+    stopHealthMonitor = startHealthMonitor(sendHealthEmbed);
+  } else {
+    logger.warn(
+      'Health monitor not started: DISCORD_LOGS_CHANNEL_ID not configured',
+    );
+  }
 
   // Initialize progress tracker
   progressTracker = new ProgressTracker({
