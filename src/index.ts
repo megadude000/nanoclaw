@@ -329,7 +329,10 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
   await channel.setTyping?.(chatJid, false);
   if (idleTimer) clearTimeout(idleTimer);
   // If no visible output was sent (e.g. all-internal response), delete ⏳ silently
-  progressTracker?.onContainerStopped(chatJid, (!outputSentToUser || output === 'error') ? 1 : 0);
+  progressTracker?.onContainerStopped(
+    chatJid,
+    !outputSentToUser || output === 'error' ? 1 : 0,
+  );
   if (output === 'error') botStatusPanel?.onGroupError(chatJid);
 
   if (output === 'error' || hadError) {
@@ -741,13 +744,17 @@ async function main(): Promise<void> {
   // Wire #logs channel for startup notifications
   const logsEnv = readEnvFile(['DISCORD_LOGS_CHANNEL_ID']);
   const logsChannelId =
-    process.env.DISCORD_LOGS_CHANNEL_ID || logsEnv.DISCORD_LOGS_CHANNEL_ID || '';
+    process.env.DISCORD_LOGS_CHANNEL_ID ||
+    logsEnv.DISCORD_LOGS_CHANNEL_ID ||
+    '';
   const dumpJid = logsChannelId ? `dc:${logsChannelId}` : undefined;
 
   // Wire #agents channel for agent status embeds
   const agentsEnv = readEnvFile(['DISCORD_AGENTS_CHANNEL_ID']);
   const agentsChannelId =
-    process.env.DISCORD_AGENTS_CHANNEL_ID || agentsEnv.DISCORD_AGENTS_CHANNEL_ID || '';
+    process.env.DISCORD_AGENTS_CHANNEL_ID ||
+    agentsEnv.DISCORD_AGENTS_CHANNEL_ID ||
+    '';
   const agentsJid = agentsChannelId ? `dc:${agentsChannelId}` : undefined;
   sendToAgents = agentsJid
     ? async (embed: EmbedBuilder) => {

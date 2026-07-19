@@ -16,7 +16,7 @@
 import { logger } from './logger.js';
 
 const EDIT_THROTTLE_MS = 4_000;
-const WORKING_REFRESH_MS = 30_000;  // update elapsed every 30s while Working
+const WORKING_REFRESH_MS = 30_000; // update elapsed every 30s while Working
 const WORKING_TIMEOUT_MS = 20 * 60_000; // auto-reset after 20min stuck in Working
 const DB_KEY_PREFIX = 'bsp:';
 
@@ -172,7 +172,12 @@ export class BotStatusPanel {
     this._clearWorkingTimer(botName);
     if (state.groupFolder && state.startedAt) {
       const durationSec = Math.round((Date.now() - state.startedAt) / 1000);
-      state.history.unshift({ groupFolder: state.groupFolder, durationSec, outcome: 'done', finishedAt: new Date() });
+      state.history.unshift({
+        groupFolder: state.groupFolder,
+        durationSec,
+        outcome: 'done',
+        finishedAt: new Date(),
+      });
       if (state.history.length > 3) state.history.pop();
     }
     state.status = 'idle';
@@ -191,7 +196,12 @@ export class BotStatusPanel {
     this._clearWorkingTimer(botName);
     if (state.groupFolder && state.startedAt) {
       const durationSec = Math.round((Date.now() - state.startedAt) / 1000);
-      state.history.unshift({ groupFolder: state.groupFolder, durationSec, outcome: 'error', finishedAt: new Date() });
+      state.history.unshift({
+        groupFolder: state.groupFolder,
+        durationSec,
+        outcome: 'error',
+        finishedAt: new Date(),
+      });
       if (state.history.length > 3) state.history.pop();
     }
     state.status = 'error';
@@ -209,8 +219,14 @@ export class BotStatusPanel {
         return;
       }
       // Auto-reset if stuck working for too long
-      if (state.startedAt && Date.now() - state.startedAt > WORKING_TIMEOUT_MS) {
-        logger.warn({ botName }, 'BotStatusPanel: auto-reset stuck Working state');
+      if (
+        state.startedAt &&
+        Date.now() - state.startedAt > WORKING_TIMEOUT_MS
+      ) {
+        logger.warn(
+          { botName },
+          'BotStatusPanel: auto-reset stuck Working state',
+        );
         this._clearWorkingTimer(botName);
         state.status = 'idle';
         state.groupFolder = null;
@@ -224,7 +240,10 @@ export class BotStatusPanel {
 
   private _clearWorkingTimer(botName: string): void {
     const t = this.workingTimers.get(botName);
-    if (t) { clearInterval(t); this.workingTimers.delete(botName); }
+    if (t) {
+      clearInterval(t);
+      this.workingTimers.delete(botName);
+    }
   }
 
   private async _createMessage(botName: string): Promise<void> {
@@ -302,14 +321,17 @@ export class BotStatusPanel {
     const lastSeen =
       state.lastSeen.toISOString().replace('T', ' ').slice(11, 19) + ' UTC';
 
-    const historyLines = state.history.map(h => {
-      const dur = h.durationSec < 60
-        ? `${h.durationSec}s`
-        : `${Math.floor(h.durationSec / 60)}m ${h.durationSec % 60}s`;
-      const icon = h.outcome === 'done' ? '✓' : '✗';
-      const t = h.finishedAt.toISOString().slice(11, 16) + ' UTC';
-      return `└ ${icon} \`${h.groupFolder}\` (${dur}) at ${t}`;
-    }).join('\n');
+    const historyLines = state.history
+      .map((h) => {
+        const dur =
+          h.durationSec < 60
+            ? `${h.durationSec}s`
+            : `${Math.floor(h.durationSec / 60)}m ${h.durationSec % 60}s`;
+        const icon = h.outcome === 'done' ? '✓' : '✗';
+        const t = h.finishedAt.toISOString().slice(11, 16) + ' UTC';
+        return `└ ${icon} \`${h.groupFolder}\` (${dur}) at ${t}`;
+      })
+      .join('\n');
 
     const history = historyLines ? `\n${historyLines}` : '';
 

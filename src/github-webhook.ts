@@ -161,7 +161,6 @@ async function handleWorkflowRunEvent(
   }
   postedRunIds.add(runId);
 
-
   const now = new Date().toISOString();
   const repoName = repoFullName.split('/')[1] || 'YW_Core';
 
@@ -170,24 +169,47 @@ async function handleWorkflowRunEvent(
     const message = `✅ **CI passed** — ${repoFullName}\n\`${displayTitle}\`\nBranch: \`${headBranch}\` | [View run](${htmlUrl})`;
     const discordToken = process.env.DISCORD_BOT_TOKEN;
     for (const target of targets) {
-      const channelId = target.jid.startsWith('dc:') ? target.jid.slice(3) : null;
+      const channelId = target.jid.startsWith('dc:')
+        ? target.jid.slice(3)
+        : null;
       if (!channelId || !discordToken) continue;
       try {
-        await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bot ${discordToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: message }),
-        });
-        logger.info({ repoFullName, runId, headBranch, channelId }, 'GitHub CI: success posted to Discord');
+        await fetch(
+          `https://discord.com/api/v10/channels/${channelId}/messages`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bot ${discordToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ content: message }),
+          },
+        );
+        logger.info(
+          { repoFullName, runId, headBranch, channelId },
+          'GitHub CI: success posted to Discord',
+        );
       } catch (err) {
-        logger.error({ err, channelId }, 'GitHub CI: failed to post to Discord');
+        logger.error(
+          { err, channelId },
+          'GitHub CI: failed to post to Discord',
+        );
       }
     }
   } else {
     // Failure: spawn agent to investigate, fix, and report
-    const failPrompt = buildCIFailurePrompt({ runId, headBranch, workflowName, htmlUrl, displayTitle, repoFullName, repoName });
+    const failPrompt = buildCIFailurePrompt({
+      runId,
+      headBranch,
+      workflowName,
+      htmlUrl,
+      displayTitle,
+      repoFullName,
+      repoName,
+    });
     for (const target of targets) {
-      const targetTaskId = targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
+      const targetTaskId =
+        targets.length === 1 ? taskId : `${taskId}@${target.jid}`;
       try {
         createTask({
           id: targetTaskId,
@@ -201,9 +223,15 @@ async function handleWorkflowRunEvent(
           status: 'active',
           created_at: now,
         });
-        logger.info({ repoFullName, runId, headBranch, taskId: targetTaskId }, 'GitHub CI: failure agent task created');
+        logger.info(
+          { repoFullName, runId, headBranch, taskId: targetTaskId },
+          'GitHub CI: failure agent task created',
+        );
       } catch (err) {
-        logger.error({ err, taskId: targetTaskId }, 'GitHub CI: failed to create failure task');
+        logger.error(
+          { err, taskId: targetTaskId },
+          'GitHub CI: failed to create failure task',
+        );
       }
     }
   }

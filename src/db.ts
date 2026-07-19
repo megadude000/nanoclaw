@@ -129,7 +129,6 @@ function createSchema(database: Database.Database): void {
     `UPDATE scheduled_tasks SET routing_tag = 'morning-digest' WHERE (prompt LIKE '%morning%' OR prompt LIKE '%digest%') AND routing_tag IS NULL`,
   );
 
-
   // Add is_bot_message column if it doesn't exist (migration for existing DBs)
   try {
     database.exec(

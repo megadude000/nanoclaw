@@ -153,7 +153,6 @@ async function runTask(
     );
   }
 
-
   // Update tasks snapshot for container to read (filtered by group)
   const isMain = group.isMain === true;
   const tasks = getAllTasks();
@@ -230,7 +229,8 @@ async function runTask(
         if (streamedOutput.result) {
           result = streamedOutput.result;
           // Suppress rate limit errors — don't spam user with API quota messages
-          const isRateLimit = result.includes('hit your limit') || result.includes('rate_limit');
+          const isRateLimit =
+            result.includes('hit your limit') || result.includes('rate_limit');
           if (!isRateLimit) {
             // DIGEST-01/02: Route to configured targets, or fall back to original chatJid
             if (isRouted) {
@@ -241,7 +241,10 @@ async function runTask(
               await deps.sendMessage(task.chat_jid, streamedOutput.result);
             }
           } else {
-            logger.warn({ taskId: task.id }, 'Suppressed rate limit message from being sent to user');
+            logger.warn(
+              { taskId: task.id },
+              'Suppressed rate limit message from being sent to user',
+            );
           }
           scheduleClose();
         }

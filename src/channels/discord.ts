@@ -788,7 +788,14 @@ export class DiscordChannel implements Channel {
     try {
       const channelId = jid.replace(/^dc:/, '');
       const channel = await this.client.channels.fetch(channelId);
-      logger.debug({ jid, hasChannel: !!channel, hasTyping: channel && 'sendTyping' in channel }, 'setTyping called');
+      logger.debug(
+        {
+          jid,
+          hasChannel: !!channel,
+          hasTyping: channel && 'sendTyping' in channel,
+        },
+        'setTyping called',
+      );
       if (channel && 'sendTyping' in channel) {
         await (channel as TextChannel).sendTyping();
         logger.debug({ jid }, 'sendTyping sent');
