@@ -163,8 +163,12 @@ All four remaining audit items were completed in a follow-up session
   `tool_result` lands — host-side only, no container round-trip. Chat progress
   shows `🤖 reviewer, tester working`.
 - **Richer chat progress:** top-level tool calls counted as steps →
-  `⏳ 2m 14s · 12 steps` + current-tool line; done message carries elapsed +
-  steps, not a bare `Done in Ns`.
+  `⏳ 2m 14s · 12 steps` + current-tool line. The **done** line now summarizes
+  *what was done* by category — `✅ Done in 1m 4s · 3 edits, 1 command, 2
+  searches · 2 subagents · 12 steps` — not a bare `Done in Ns`.
+  `onResponseReceived` does a final flush-poll of the transcript first so fast
+  runs (finishing between 2s polls) still report their work; a pure text reply
+  stays short.
 - **Noise cut:** first progress message held back `INITIAL_SHOW_MS` (7s). Quick
   replies (common now at low chat effort) finish first and post **no** ⏳/✅ —
   just the answer. `_parseLine` doesn't reschedule the initial-show timer until
