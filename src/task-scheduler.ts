@@ -78,7 +78,9 @@ export interface SchedulerDependencies {
     containerName: string,
     groupFolder: string,
   ) => void;
-  sendMessage: (jid: string, text: string) => Promise<void>;
+  // Returns false (or resolves void on legacy impls) when delivery failed —
+  // task runs record the failure instead of logging success for lost output.
+  sendMessage: (jid: string, text: string) => Promise<boolean | void>;
   progressTracker?: ProgressTracker;
   botStatusPanel?: BotStatusPanel;
   sendToAgents?: (embed: EmbedBuilder) => Promise<void>;
@@ -223,8 +225,7 @@ async function runTask(
         script: task.script || undefined,
         // Scheduled/background tasks: maximum reasoning. Default to Opus at
         // 'max' effort; an explicit per-task/group model still wins.
-        model:
-          task.model || group.containerConfig?.model || 'claude-opus-4-8',
+        model: task.model || group.containerConfig?.model || 'claude-opus-4-8',
         effort: 'max',
       },
       (proc, containerName) =>
@@ -239,10 +240,30 @@ async function runTask(
             // DIGEST-01/02: Route to configured targets, or fall back to original chatJid
             if (isRouted) {
               for (const target of routingTargets) {
-                await deps.sendMessage(target.jid, streamedOutput.result);
+                const delivered = await deps.sendMessage(
+                  target.jid,
+                  streamedOutput.result,
+                );
+                if (delivered === false) {
+                  error = `Failed to deliver task output to ${target.jid}`;
+                  logger.error(
+                    { taskId: task.id, jid: target.jid },
+                    'Task output delivery failed (routed target)',
+                  );
+                }
               }
             } else {
-              await deps.sendMessage(task.chat_jid, streamedOutput.result);
+              const delivered = await deps.sendMessage(
+                task.chat_jid,
+                streamedOutput.result,
+              );
+              if (delivered === false) {
+                error = `Failed to deliver task output to ${task.chat_jid}`;
+                logger.error(
+                  { taskId: task.id, jid: task.chat_jid },
+                  'Task output delivery failed',
+                );
+              }
             }
           } else {
             logger.warn(

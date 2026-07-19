@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { _initTestDatabase, storeChatMetadata } from './db.js';
 import { getAvailableGroups, _setRegisteredGroups } from './index.js';
+import { sendOutbound } from './router.js';
+import type { Channel } from './types.js';
 
 beforeEach(() => {
   _initTestDatabase();
@@ -166,5 +168,57 @@ describe('getAvailableGroups', () => {
   it('returns empty array when no chats exist', () => {
     const groups = getAvailableGroups();
     expect(groups).toHaveLength(0);
+  });
+});
+
+// --- sendOutbound ---
+
+describe('sendOutbound', () => {
+  function makeChannel(overrides: Partial<Channel> = {}): Channel {
+    return {
+      name: 'test',
+      connect: async () => {},
+      sendMessage: async () => true,
+      isConnected: () => true,
+      ownsJid: (jid: string) => jid.startsWith('tc:'),
+      disconnect: async () => {},
+      ...overrides,
+    };
+  }
+
+  it('delivers via the owning connected channel and returns true', async () => {
+    const sent: Array<{ jid: string; text: string; sender?: string }> = [];
+    const channel = makeChannel({
+      sendMessage: async (jid, text, sender) => {
+        sent.push({ jid, text, sender });
+        return true;
+      },
+    });
+    const ok = await sendOutbound([channel], 'tc:123', 'hello', 'Friday');
+    expect(ok).toBe(true);
+    expect(sent).toEqual([{ jid: 'tc:123', text: 'hello', sender: 'Friday' }]);
+  });
+
+  it('returns false when no channel owns the JID', async () => {
+    const channel = makeChannel();
+    const ok = await sendOutbound([channel], 'xx:999', 'hello');
+    expect(ok).toBe(false);
+  });
+
+  it('returns false without sending when the channel is disconnected', async () => {
+    const sendMessage = vi.fn(async () => true);
+    const channel = makeChannel({
+      isConnected: () => false,
+      sendMessage,
+    });
+    const ok = await sendOutbound([channel], 'tc:123', 'hello');
+    expect(ok).toBe(false);
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('propagates a false delivery result from the channel', async () => {
+    const channel = makeChannel({ sendMessage: async () => false });
+    const ok = await sendOutbound([channel], 'tc:123', 'hello');
+    expect(ok).toBe(false);
   });
 });

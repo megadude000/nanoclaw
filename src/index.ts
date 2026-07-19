@@ -50,7 +50,12 @@ import {
 import { GroupQueue } from './group-queue.js';
 import { resolveGroupFolderPath } from './group-folder.js';
 import { startIpcWatcher } from './ipc.js';
-import { findChannel, formatMessages, formatOutbound } from './router.js';
+import {
+  findChannel,
+  formatMessages,
+  formatOutbound,
+  sendOutbound,
+} from './router.js';
 import {
   restoreRemoteControl,
   startRemoteControl,
@@ -826,13 +831,9 @@ async function main(): Promise<void> {
     onProcess: (groupJid, proc, containerName, groupFolder) =>
       queue.registerProcess(groupJid, proc, containerName, groupFolder),
     sendMessage: async (jid, rawText) => {
-      const channel = findChannel(channels, jid);
-      if (!channel) {
-        logger.warn({ jid }, 'No channel owns JID, cannot send message');
-        return;
-      }
       const text = formatOutbound(rawText);
-      if (text) await channel.sendMessage(jid, text);
+      if (!text) return true; // nothing visible to deliver
+      return sendOutbound(channels, jid, text);
     },
     progressTracker: progressTracker ?? undefined,
     botStatusPanel,
@@ -840,10 +841,8 @@ async function main(): Promise<void> {
   });
   startIpcWatcher({
     sendMessage: (jid, text, sender) => {
-      const channel = findChannel(channels, jid);
-      if (!channel) throw new Error(`No channel for JID: ${jid}`);
       if (sender) botStatusPanel?.onBotSeen(sender, jid);
-      return channel.sendMessage(jid, text, sender);
+      return sendOutbound(channels, jid, text, sender);
     },
     reactToMessage: async (jid, messageId, emoji) => {
       const channel = findChannel(channels, jid);

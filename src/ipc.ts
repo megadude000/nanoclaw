@@ -120,7 +120,32 @@ export function startIpcWatcher(deps: IpcDeps): void {
                   isMain ||
                   (targetGroup && targetGroup.folder === sourceGroup)
                 ) {
-                  await deps.sendMessage(data.chatJid, data.text, data.sender);
+                  const delivered = await deps.sendMessage(
+                    data.chatJid,
+                    data.text,
+                    data.sender,
+                  );
+                  if (delivered === false) {
+                    // Origin-error-notify: tell the group that requested the
+                    // send (if it differs from the target) that delivery failed.
+                    const originJid = Object.entries(registeredGroups).find(
+                      ([, g]) => g.folder === sourceGroup,
+                    )?.[0];
+                    if (originJid && originJid !== data.chatJid) {
+                      try {
+                        await deps.sendMessage(
+                          originJid,
+                          `[Error] Failed to deliver message to ${data.chatJid}: channel not connected`,
+                        );
+                      } catch {
+                        // Best-effort only — avoid error loops
+                      }
+                    }
+                    // Throw so the payload is preserved in errors/ for replay
+                    throw new Error(
+                      `IPC message delivery failed for ${data.chatJid}`,
+                    );
+                  }
                   logger.info(
                     { chatJid: data.chatJid, sourceGroup },
                     'IPC message sent',

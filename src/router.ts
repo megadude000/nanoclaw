@@ -1,5 +1,6 @@
 import { Channel, NewMessage } from './types.js';
 import { formatLocalTime } from './timezone.js';
+import { logger } from './logger.js';
 
 export function escapeXml(s: string): string {
   if (!s) return '';
@@ -41,48 +42,32 @@ export function formatOutbound(rawText: string): string {
   return text;
 }
 
-export async function routeOutbound(
+/**
+ * Send text to whichever channel owns `jid`, verifying connection state first.
+ *
+ * This is the single outbound path for fire-and-forget sends (scheduled tasks,
+ * IPC messages). Returns true only when the channel confirmed delivery, so
+ * callers can surface or persist failures instead of silently losing output.
+ */
+export async function sendOutbound(
   channels: Channel[],
   jid: string,
   text: string,
-  originJid?: string,
-): Promise<void> {
-  const channel = channels.find((c) => c.ownsJid(jid) && c.isConnected());
+  sender?: string,
+): Promise<boolean> {
+  const channel = findChannel(channels, jid);
   if (!channel) {
-    // If we know where the request came from, notify that channel about the failure
-    if (originJid && originJid !== jid) {
-      const originChannel = channels.find(
-        (c) => c.ownsJid(originJid) && c.isConnected(),
-      );
-      if (originChannel) {
-        await originChannel.sendMessage(
-          originJid,
-          `[Error] Failed to deliver message to ${jid}: no connected channel found`,
-        );
-      }
-    }
-    throw new Error(`No channel for JID: ${jid}`);
+    logger.warn({ jid }, 'sendOutbound: no channel owns JID');
+    return false;
   }
-  try {
-    await channel.sendMessage(jid, text);
-  } catch (err) {
-    if (originJid && originJid !== jid) {
-      const originChannel = channels.find(
-        (c) => c.ownsJid(originJid) && c.isConnected(),
-      );
-      if (originChannel) {
-        try {
-          await originChannel.sendMessage(
-            originJid,
-            `[Error] Failed to send message to ${jid}: ${err instanceof Error ? err.message : 'unknown error'}`,
-          );
-        } catch {
-          // Avoid infinite error loops
-        }
-      }
-    }
-    throw err;
+  if (!channel.isConnected()) {
+    logger.warn(
+      { jid, channel: channel.name },
+      'sendOutbound: channel not connected, refusing send',
+    );
+    return false;
   }
+  return channel.sendMessage(jid, text, sender);
 }
 
 export function findChannel(
