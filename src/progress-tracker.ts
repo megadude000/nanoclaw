@@ -6,6 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import { logger } from './logger.js';
 import { DATA_DIR } from './config.js';
+import { EditThrottler, handleEditFailure } from './edit-throttle.js';
 
 const TYPING_INTERVAL_MS = 4_000;
 const SILENCE_THRESHOLD_MS = 30_000;
@@ -13,32 +14,20 @@ const EDIT_THROTTLE_MS = 3_000;
 const JSONL_POLL_MS = 2_000;
 const JSONL_DISCOVER_TIMEOUT_MS = 30_000;
 
-/**
- * Rate-limit detection across both channel libraries:
- * grammY (Telegram) surfaces `error_code`; discord.js surfaces HTTP `status`.
- */
-function isRateLimitError(err: any): boolean {
-  return err?.error_code === 429 || err?.status === 429;
-}
-
-/**
- * "Message no longer editable" — deleted/unknown message.
- * Telegram: error_code 400. Discord: HTTP 404 or error code 10008 (Unknown Message).
- */
-function isMessageGoneError(err: any): boolean {
-  return err?.error_code === 400 || err?.status === 404 || err?.code === 10008;
-}
-
 interface TrackerState {
   chatJid: string;
   groupFolder: string;
   startTime: number;
   lastActivityTime: number;
   lastTool: string | null;
+  // Count of top-level (main-agent) tool calls — a proxy for work done.
+  stepCount: number;
+  // Active subagents: Task tool_use id → short label. Added when the agent
+  // spawns a Task subagent, removed when that Task's tool_result lands.
+  subagents: Map<string, string>;
   progressMsgId: string | number | null;
   logsMsgId: string | number | null;
   sendPending: boolean;
-  editThrottle: boolean;
   typingTimer: ReturnType<typeof setInterval> | null;
   silenceTimer: ReturnType<typeof setTimeout> | null;
   pollTimer: ReturnType<typeof setInterval> | null;
@@ -57,13 +46,18 @@ type SendFn = (
 type EditFn = (jid: string, msgId: MsgId, text: string) => Promise<void>;
 type DeleteFn = (jid: string, msgId: MsgId) => Promise<void>;
 type TypingFn = (jid: string, typing: boolean) => Promise<void>;
+// Fired whenever the agent's current activity changes (tool / subagent).
+// Used to feed the BotStatusPanel's live-activity line.
+type ActivityFn = (jid: string, activity: string) => void;
 
 export class ProgressTracker {
   private states = new Map<string, TrackerState>();
+  private editThrottler = new EditThrottler(EDIT_THROTTLE_MS);
   private sendMsg: SendFn;
   private editMsg: EditFn;
   private deleteMsg: DeleteFn;
   private setTyping: TypingFn;
+  private onActivity: ActivityFn | null;
   private dumpJid: string | null;
 
   constructor(deps: {
@@ -71,12 +65,14 @@ export class ProgressTracker {
     editMsg: EditFn;
     deleteMsg: DeleteFn;
     setTyping: TypingFn;
+    onActivity?: ActivityFn;
     dumpJid?: string;
   }) {
     this.sendMsg = deps.sendMsg;
     this.editMsg = deps.editMsg;
     this.deleteMsg = deps.deleteMsg;
     this.setTyping = deps.setTyping;
+    this.onActivity = deps.onActivity ?? null;
     this.dumpJid = deps.dumpJid ?? null;
   }
 
@@ -88,10 +84,11 @@ export class ProgressTracker {
       startTime: Date.now(),
       lastActivityTime: Date.now(),
       lastTool: null,
+      stepCount: 0,
+      subagents: new Map(),
       progressMsgId: null,
       logsMsgId: null,
       sendPending: false,
-      editThrottle: false,
       typingTimer: null,
       silenceTimer: null,
       pollTimer: null,
@@ -133,12 +130,12 @@ export class ProgressTracker {
     const elapsed = state
       ? Math.round((Date.now() - state.startTime) / 1000)
       : 0;
+    const doneText = this._formatDone(state, elapsed);
     if (state) {
       state.progressMsgId = null;
       state.logsMsgId = null;
     }
     this._cleanup(chatJid);
-    const doneText = `✅ Done in ${elapsed}s`;
     if (msgId) {
       this.editMsg(chatJid, msgId, doneText).catch(() => {});
     }
@@ -220,14 +217,27 @@ export class ProgressTracker {
       }
       if (stat.size <= state.jsonlSize) return;
 
-      const readSize = Math.min(stat.size - state.jsonlSize, 4096);
+      // Read the new bytes, but only advance the cursor to the last complete
+      // line. A single big tool_use (e.g. a large Write) can exceed one read;
+      // capping at 4096 mid-line used to silently drop the rest of that entry.
+      const MAX_READ = 262_144; // 256KB/poll ceiling
+      const readSize = Math.min(stat.size - state.jsonlSize, MAX_READ);
       const buf = Buffer.alloc(readSize);
       const fd = fs.openSync(state.jsonlPath, 'r');
       fs.readSync(fd, buf, 0, readSize, state.jsonlSize);
       fs.closeSync(fd);
-      state.jsonlSize = stat.size;
 
-      for (const line of buf.toString('utf8').split('\n').filter(Boolean)) {
+      const chunk = buf.toString('utf8');
+      const lastNl = chunk.lastIndexOf('\n');
+      if (lastNl === -1) {
+        // No complete line yet; wait for more bytes unless we hit the ceiling.
+        if (readSize >= MAX_READ) state.jsonlSize += readSize;
+        return;
+      }
+      // Advance only past the last newline actually consumed.
+      state.jsonlSize += Buffer.byteLength(chunk.slice(0, lastNl + 1), 'utf8');
+
+      for (const line of chunk.slice(0, lastNl).split('\n').filter(Boolean)) {
         this._parseLine(chatJid, line);
       }
     } catch (err) {
@@ -244,28 +254,60 @@ export class ProgressTracker {
     } catch {
       return;
     }
+
+    let changed = false;
+
+    // User messages carry tool_result blocks — used to detect when a spawned
+    // subagent (Task tool) has finished, so we can drop it from the live list.
+    if (obj?.type === 'user' && state.subagents.size > 0) {
+      const content: any[] = Array.isArray(obj?.message?.content)
+        ? obj.message.content
+        : [];
+      for (const block of content) {
+        if (
+          block?.type === 'tool_result' &&
+          block.tool_use_id &&
+          state.subagents.delete(block.tool_use_id)
+        ) {
+          changed = true;
+        }
+      }
+      if (changed) this._onActivityChanged(chatJid, state);
+      return;
+    }
+
     if (obj?.type !== 'assistant') return;
     const content: any[] = obj?.message?.content ?? [];
-    const toolUse = content.find((b: any) => b?.type === 'tool_use');
-    if (!toolUse) return;
+    // A non-null parent_tool_use_id means this assistant turn belongs to a
+    // subagent, not the top-level agent — don't count it as a main step.
+    const isSubagentTurn = !!obj?.parent_tool_use_id;
 
-    const name: string = toolUse.name ?? 'Tool';
-    const input = toolUse.input ?? {};
-    let arg = '';
-    if (name === 'Bash') arg = String(input.command ?? '').slice(0, 60);
-    else if (['Read', 'Write', 'Edit'].includes(name))
-      arg = path.basename(String(input.file_path ?? ''));
-    else if (['WebSearch', 'WebFetch'].includes(name)) {
-      const raw = String(input.query ?? input.url ?? '');
-      try {
-        arg = new URL(raw).hostname;
-      } catch {
-        arg = raw.slice(0, 40);
+    for (const block of content) {
+      if (block?.type !== 'tool_use') continue;
+      const name: string = block.name ?? 'Tool';
+
+      if (name === 'Task' && block.id) {
+        // Spawning a subagent — track it until its tool_result lands.
+        const input = block.input ?? {};
+        const label = String(
+          input.subagent_type || input.description || 'subagent',
+        )
+          .replace(/[\n\r]+/g, ' ')
+          .slice(0, 32);
+        state.subagents.set(block.id, label);
+        state.lastTool = `🤖 delegating → ${label}`;
+        changed = true;
+        continue;
       }
+
+      state.lastTool = this._formatToolLabel(name, block.input ?? {});
+      if (!isSubagentTurn) state.stepCount++;
+      changed = true;
     }
-    const formatted = arg ? `🔧 ${name} → ${arg}` : `🔧 ${name}`;
-    state.lastTool = formatted.slice(0, 80);
+
+    if (!changed) return;
     state.lastActivityTime = Date.now();
+    this._onActivityChanged(chatJid, state);
 
     if (state.silenceTimer) clearTimeout(state.silenceTimer);
     state.silenceTimer = setTimeout(
@@ -273,9 +315,42 @@ export class ProgressTracker {
       SILENCE_THRESHOLD_MS,
     );
 
-    if (state.progressMsgId && !state.editThrottle) {
-      state.editThrottle = true;
-      setTimeout(() => this._flushEdit(chatJid), EDIT_THROTTLE_MS);
+    if (state.progressMsgId) {
+      this.editThrottler.schedule(chatJid, () => this._flushEdit(chatJid));
+    }
+  }
+
+  /** Human-readable single-line label for a tool call. */
+  private _formatToolLabel(name: string, input: any): string {
+    let arg = '';
+    if (name === 'Bash') arg = String(input.command ?? '').slice(0, 60);
+    else if (['Read', 'Write', 'Edit', 'NotebookEdit'].includes(name))
+      arg = path.basename(String(input.file_path ?? input.notebook_path ?? ''));
+    else if (['WebSearch', 'WebFetch'].includes(name)) {
+      const raw = String(input.query ?? input.url ?? '');
+      try {
+        arg = new URL(raw).hostname;
+      } catch {
+        arg = raw.slice(0, 40);
+      }
+    } else if (name === 'Skill') arg = String(input.command ?? input.skill ?? '');
+    else if (name === 'Grep' || name === 'Glob')
+      arg = String(input.pattern ?? '').slice(0, 40);
+    const formatted = arg ? `🔧 ${name} → ${arg}` : `🔧 ${name}`;
+    return formatted.slice(0, 80);
+  }
+
+  /** Push the current activity to the status-panel bridge (if wired). */
+  private _onActivityChanged(chatJid: string, state: TrackerState): void {
+    if (!this.onActivity) return;
+    const activity =
+      state.subagents.size > 0
+        ? `${state.lastTool ?? '🤔 thinking'} · ${state.subagents.size} subagent${state.subagents.size > 1 ? 's' : ''}`
+        : (state.lastTool ?? '🤔 thinking');
+    try {
+      this.onActivity(chatJid, activity);
+    } catch {
+      /* best-effort */
     }
   }
 
@@ -330,13 +405,13 @@ export class ProgressTracker {
   private _flushEdit(chatJid: string): void {
     const state = this.states.get(chatJid);
     if (!state) return;
-    state.editThrottle = false;
     if (!state.progressMsgId) return;
     const text = this._formatProgress(state);
     // Edit source channel
-    this.editMsg(chatJid, state.progressMsgId, text).catch((err: any) => {
-      if (isRateLimitError(err)) {
-        setTimeout(() => {
+    this.editMsg(chatJid, state.progressMsgId, text).catch((err: unknown) => {
+      handleEditFailure(err, {
+        context: `progress-tracker:${chatJid}`,
+        onRetry: () => {
           const s = this.states.get(chatJid);
           if (s?.progressMsgId)
             this.editMsg(
@@ -344,25 +419,54 @@ export class ProgressTracker {
               s.progressMsgId,
               this._formatProgress(s),
             ).catch(() => {});
-        }, 5000);
-      } else if (isMessageGoneError(err)) {
-        if (state) state.progressMsgId = null;
-      }
+        },
+        onGone: () => {
+          const s = this.states.get(chatJid);
+          if (s) s.progressMsgId = null;
+        },
+      });
     });
     // Edit logs channel
     if (state.logsMsgId && this.dumpJid && this.dumpJid !== chatJid) {
       const logsText = `[${state.groupFolder}] ${text}`;
       this.editMsg(this.dumpJid, state.logsMsgId, logsText).catch(
-        (err: any) => {
-          if (isMessageGoneError(err)) state.logsMsgId = null;
+        (err: unknown) => {
+          handleEditFailure(err, {
+            context: `progress-tracker:logs:${chatJid}`,
+            onGone: () => {
+              state.logsMsgId = null;
+            },
+          });
         },
       );
     }
   }
 
+  private _humanDuration(sec: number): string {
+    if (sec < 60) return `${sec}s`;
+    return `${Math.floor(sec / 60)}m ${sec % 60}s`;
+  }
+
   private _formatProgress(state: TrackerState): string {
-    const elapsed = Math.round((Date.now() - state.startTime) / 1000);
-    const tool = state.lastTool ?? '🤔 thinking...';
-    return `⏳ ${elapsed}s — ${tool}`;
+    const elapsed = this._humanDuration(
+      Math.round((Date.now() - state.startTime) / 1000),
+    );
+    const steps = state.stepCount > 0 ? ` · ${state.stepCount} steps` : '';
+    const head = `⏳ ${elapsed}${steps}`;
+    const lines: string[] = [`└ ${state.lastTool ?? '🤔 thinking...'}`];
+    if (state.subagents.size > 0) {
+      const names = [...state.subagents.values()];
+      const shown = names.slice(0, 3).join(', ');
+      const more = names.length > 3 ? ` +${names.length - 3}` : '';
+      lines.push(`└ 🤖 ${shown}${more} working`);
+    }
+    return `${head}\n${lines.join('\n')}`;
+  }
+
+  /** Compact one-line done summary: elapsed, steps, subagents used. */
+  private _formatDone(state: TrackerState | undefined, elapsedSec: number): string {
+    const elapsed = this._humanDuration(elapsedSec);
+    const steps = state && state.stepCount > 0 ? ` · ${state.stepCount} steps` : '';
+    return `✅ Done in ${elapsed}${steps}`;
   }
 }

@@ -14,6 +14,7 @@
  */
 
 import { logger } from './logger.js';
+import { EditThrottler, handleEditFailure } from './edit-throttle.js';
 
 const EDIT_THROTTLE_MS = 4_000;
 const WORKING_REFRESH_MS = 30_000; // update elapsed every 30s while Working
@@ -62,7 +63,7 @@ export class BotStatusPanel {
   private states = new Map<string, BotState>();
   private messageIds = new Map<string, string>(); // botName → Discord msgId
   private chatToBotMap = new Map<string, string>(); // chatJid → botName
-  private editThrottle = new Map<string, boolean>(); // botName → throttled
+  private editThrottler = new EditThrottler(EDIT_THROTTLE_MS); // botName-keyed
   private workingTimers = new Map<string, ReturnType<typeof setInterval>>(); // botName → live refresh timer
   private sendMsg: SendFn;
   private editMsg: EditFn;
@@ -272,12 +273,7 @@ export class BotStatusPanel {
   }
 
   private _scheduleEdit(botName: string): void {
-    if (this.editThrottle.get(botName)) return;
-    this.editThrottle.set(botName, true);
-    setTimeout(() => {
-      this.editThrottle.delete(botName);
-      this._forceEdit(botName);
-    }, EDIT_THROTTLE_MS);
+    this.editThrottler.schedule(botName, () => this._forceEdit(botName));
   }
 
   private _forceEdit(botName: string): void {
@@ -285,6 +281,26 @@ export class BotStatusPanel {
     if (!msgId) return;
     this.editMsg(this.channelJid, msgId, this._format(botName)).catch((err) => {
       logger.debug({ botName, err }, 'BotStatusPanel: edit failed');
+      handleEditFailure(err, {
+        context: `bot-status-panel:${botName}`,
+        onRetry: () => {
+          // Single retry with fresh state after the rate-limit window
+          const id = this.messageIds.get(botName);
+          if (id)
+            this.editMsg(this.channelJid, id, this._format(botName)).catch(
+              () => {},
+            );
+        },
+        onGone: () => {
+          // Panel message was deleted — recreate it so status keeps flowing
+          logger.info(
+            { botName },
+            'BotStatusPanel: panel message gone, recreating',
+          );
+          this.messageIds.delete(botName);
+          void this._createMessage(botName);
+        },
+      });
     });
   }
 

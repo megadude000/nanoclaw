@@ -532,6 +532,9 @@ export class DiscordChannel implements Channel {
       await message.edit(text);
     } catch (err) {
       logger.debug({ jid, messageId, err }, 'Failed to edit Discord message');
+      // Rethrow so callers (edit-throttle helper, BotStatusPanel reclaim)
+      // can detect rate limits and deleted messages.
+      throw err;
     }
   }
 

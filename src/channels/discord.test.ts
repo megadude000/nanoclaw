@@ -1006,18 +1006,20 @@ describe('DiscordChannel', () => {
       // No error thrown
     });
 
-    it('handles edit failure gracefully', async () => {
+    it('rethrows edit failures so callers can detect 429/deleted messages', async () => {
       const opts = createTestOpts();
       const channel = new DiscordChannel('test-token', 'main-channel-id', opts);
       await channel.connect();
 
-      currentClient().channels.fetch.mockRejectedValueOnce(
-        new Error('Not found'),
-      );
+      const err = Object.assign(new Error('Unknown Message'), {
+        status: 404,
+        code: 10008,
+      });
+      currentClient().channels.fetch.mockRejectedValueOnce(err);
 
       await expect(
         channel.editMessage('dc:1234567890123456', 'msg_123', 'text'),
-      ).resolves.toBeUndefined();
+      ).rejects.toBe(err);
     });
   });
 

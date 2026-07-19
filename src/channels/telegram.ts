@@ -55,7 +55,10 @@ export async function callWithFloodRetry<T>(
     try {
       return await fn();
     } catch (err: unknown) {
-      const e = err as { error_code?: number; parameters?: { retry_after?: number } };
+      const e = err as {
+        error_code?: number;
+        parameters?: { retry_after?: number };
+      };
       if (e?.error_code !== 429 || attempt >= MAX_FLOOD_RETRIES) throw err;
       const retryAfterSec = e.parameters?.retry_after;
       const waitMs = Math.min(
@@ -88,7 +91,8 @@ async function sendTelegramMessage(
 ): Promise<void> {
   try {
     await callWithFloodRetry(
-      () => api.sendMessage(chatId, text, { ...options, parse_mode: 'Markdown' }),
+      () =>
+        api.sendMessage(chatId, text, { ...options, parse_mode: 'Markdown' }),
       'sendMessage:markdown',
     );
   } catch (err: unknown) {
@@ -970,13 +974,18 @@ disown
     try {
       const numericId = Number(jid.replace(/^tg:/, ''));
       await this.bot.api.editMessageText(numericId, Number(messageId), text);
-    } catch (err: any) {
-      if (err?.error_code !== 400) {
-        logger.debug(
-          { jid, messageId, err },
-          'Failed to edit Telegram message',
-        );
+    } catch (err: unknown) {
+      const e = err as { error_code?: number; description?: string };
+      // "message is not modified" — benign no-op when text is unchanged
+      if (
+        e?.error_code === 400 &&
+        /message is not modified/i.test(String(e?.description ?? ''))
+      ) {
+        return;
       }
+      logger.debug({ jid, messageId, err }, 'Failed to edit Telegram message');
+      // Rethrow so callers (edit-throttle helper) can detect 429 / gone
+      throw err;
     }
   }
 
