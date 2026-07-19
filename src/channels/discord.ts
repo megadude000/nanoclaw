@@ -425,10 +425,14 @@ export class DiscordChannel implements Channel {
     });
   }
 
-  async sendMessage(jid: string, text: string, sender?: string): Promise<void> {
-    if (!this.client) {
-      logger.warn('Discord client not initialized');
-      return;
+  async sendMessage(
+    jid: string,
+    text: string,
+    sender?: string,
+  ): Promise<boolean> {
+    if (!this.client || !this.client.isReady()) {
+      logger.warn({ jid }, 'Discord client not ready, cannot send');
+      return false;
     }
 
     // Swarm identity routing (D-13): check sender before normal send
@@ -444,7 +448,7 @@ export class DiscordChannel implements Channel {
               { jid, sender, length: text.length },
               'Discord swarm message sent via webhook',
             );
-            return;
+            return true;
           }
           // Fallback: prefix message with sender name (D-11)
           logger.warn({ jid, sender }, 'Swarm webhook fallback to main bot');
@@ -465,7 +469,7 @@ export class DiscordChannel implements Channel {
 
       if (!channel || !('send' in channel)) {
         logger.warn({ jid }, 'Discord channel not found or not text-based');
-        return;
+        return false;
       }
 
       const textChannel = channel as TextChannel;
@@ -476,8 +480,27 @@ export class DiscordChannel implements Channel {
         await textChannel.send(chunk);
       }
       logger.info({ jid, length: text.length }, 'Discord message sent');
+      return true;
     } catch (err) {
       logger.error({ jid, err }, 'Failed to send Discord message');
+      return false;
+    }
+  }
+
+  async deleteMessage(jid: string, messageId: string): Promise<void> {
+    if (!this.client) return;
+    try {
+      const channelId = jid.replace(/^dc:/, '');
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel || !('messages' in channel)) return;
+      const textChannel = channel as TextChannel;
+      const message = await textChannel.messages.fetch(messageId);
+      await message.delete();
+    } catch (err) {
+      logger.debug(
+        { jid, messageId, err },
+        'Failed to delete Discord message',
+      );
     }
   }
 

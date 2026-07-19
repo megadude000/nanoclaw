@@ -757,10 +757,10 @@ disown
     });
   }
 
-  async sendMessage(jid: string, text: string): Promise<void> {
+  async sendMessage(jid: string, text: string): Promise<boolean> {
     if (!this.bot) {
       logger.warn('Telegram bot not initialized');
-      return;
+      return false;
     }
 
     try {
@@ -780,8 +780,10 @@ disown
         }
       }
       logger.info({ jid, length: text.length }, 'Telegram message sent');
+      return true;
     } catch (err) {
       logger.error({ jid, err }, 'Failed to send Telegram message');
+      return false;
     }
   }
 

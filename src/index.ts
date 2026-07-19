@@ -284,8 +284,16 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
       const text = raw.replace(/<internal>[\s\S]*?<\/internal>/g, '').trim();
       logger.info({ group: group.name }, `Agent output: ${raw.length} chars`);
       if (text) {
-        await channel.sendMessage(chatJid, text);
-        outputSentToUser = true;
+        const delivered = await channel.sendMessage(chatJid, text);
+        if (delivered) {
+          outputSentToUser = true;
+        } else {
+          hadError = true;
+          logger.error(
+            { group: group.name, chatJid },
+            'Agent output failed to deliver; cursor will roll back for retry',
+          );
+        }
       }
       // Only reset idle timer on actual results, not session-update markers (result: null)
       resetIdleTimer();

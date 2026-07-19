@@ -13,13 +13,29 @@ import crypto from 'crypto';
 import { IncomingMessage, ServerResponse } from 'http';
 
 import { createTask, getTaskById } from './db.js';
+import { readEnvFile } from './env.js';
 import { logger } from './logger.js';
 import { RegisteredGroup } from './types.js';
 import { handleGitHubIssuesEvent } from './github-issues-webhook.js';
 import { resolveTargets } from './webhook-router.js';
 
-// In-memory dedup for success events (no DB task created for those)
+// In-memory dedup for success events (no DB task created for those).
+// Bounded so a long-running process doesn't accumulate run IDs forever.
 const postedRunIds = new Set<number>();
+const MAX_POSTED_RUN_IDS = 2_000;
+
+function rememberRunId(runId: number): void {
+  postedRunIds.add(runId);
+  if (postedRunIds.size > MAX_POSTED_RUN_IDS) {
+    // Drop the oldest ~10% (insertion order) to cap memory growth.
+    const drop = Math.ceil(MAX_POSTED_RUN_IDS * 0.1);
+    let i = 0;
+    for (const id of postedRunIds) {
+      if (i++ >= drop) break;
+      postedRunIds.delete(id);
+    }
+  }
+}
 
 export interface GitHubHandlerConfig {
   signingSecret: string;
@@ -159,7 +175,7 @@ async function handleWorkflowRunEvent(
     logger.debug({ taskId }, 'GitHub webhook: duplicate event, skipping');
     return;
   }
-  postedRunIds.add(runId);
+  rememberRunId(runId);
 
   const now = new Date().toISOString();
   const repoName = repoFullName.split('/')[1] || 'YW_Core';
@@ -167,14 +183,16 @@ async function handleWorkflowRunEvent(
   if (conclusion === 'success') {
     // Success: post directly to Discord — no agent needed
     const message = `✅ **CI passed** — ${repoFullName}\n\`${displayTitle}\`\nBranch: \`${headBranch}\` | [View run](${htmlUrl})`;
-    const discordToken = process.env.DISCORD_BOT_TOKEN;
+    const discordToken =
+      process.env.DISCORD_BOT_TOKEN ||
+      readEnvFile(['DISCORD_BOT_TOKEN']).DISCORD_BOT_TOKEN;
     for (const target of targets) {
       const channelId = target.jid.startsWith('dc:')
         ? target.jid.slice(3)
         : null;
       if (!channelId || !discordToken) continue;
       try {
-        await fetch(
+        const resp = await fetch(
           `https://discord.com/api/v10/channels/${channelId}/messages`,
           {
             method: 'POST',
@@ -182,9 +200,18 @@ async function handleWorkflowRunEvent(
               Authorization: `Bot ${discordToken}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ content: message }),
+            // Discord hard-caps message content at 2000 chars.
+            body: JSON.stringify({ content: message.slice(0, 2000) }),
           },
         );
+        if (!resp.ok) {
+          const detail = await resp.text().catch(() => '');
+          logger.error(
+            { repoFullName, runId, channelId, status: resp.status, detail },
+            'GitHub CI: Discord API rejected success post',
+          );
+          continue;
+        }
         logger.info(
           { repoFullName, runId, headBranch, channelId },
           'GitHub CI: success posted to Discord',

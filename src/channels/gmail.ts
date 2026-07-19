@@ -112,10 +112,10 @@ export class GmailChannel implements Channel {
     schedulePoll();
   }
 
-  async sendMessage(jid: string, text: string): Promise<void> {
+  async sendMessage(jid: string, text: string): Promise<boolean> {
     if (!this.gmail) {
       logger.warn('Gmail not initialized');
-      return;
+      return false;
     }
 
     const threadId = jid.replace(/^gmail:/, '');
@@ -123,7 +123,7 @@ export class GmailChannel implements Channel {
 
     if (!meta) {
       logger.warn({ jid }, 'No thread metadata for reply, cannot send');
-      return;
+      return false;
     }
 
     const subject = meta.subject.startsWith('Re:')
@@ -156,8 +156,10 @@ export class GmailChannel implements Channel {
         },
       });
       logger.info({ to: meta.sender, threadId }, 'Gmail reply sent');
+      return true;
     } catch (err) {
       logger.error({ jid, err }, 'Failed to send Gmail reply');
+      return false;
     }
   }
 

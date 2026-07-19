@@ -123,6 +123,28 @@ export class SwarmWebhookManager {
     // Get or create webhook
     let webhook = this.cache.get(cacheKey);
     if (!webhook) {
+      // Lazy hydration: reuse an existing NanoClaw- webhook on this channel
+      // before creating a new one. Without this, every process restart (which
+      // empties the cache) creates a fresh webhook and eventually hits Discord's
+      // ~15-per-channel cap, breaking swarm-identity sends.
+      const wanted = this.webhookName(senderName);
+      try {
+        const existing = await channel.fetchWebhooks();
+        for (const [, wh] of existing) {
+          if (wh.name === wanted && wh.token) {
+            webhook = wh as Webhook;
+            this.cache.set(cacheKey, webhook);
+            break;
+          }
+        }
+      } catch (err) {
+        logger.debug(
+          { channel: channel.id, sender: senderName, err },
+          'Could not fetch existing webhooks before create',
+        );
+      }
+    }
+    if (!webhook) {
       try {
         webhook = (await channel.createWebhook({
           name: this.webhookName(senderName),

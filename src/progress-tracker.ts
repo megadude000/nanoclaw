@@ -13,6 +13,26 @@ const EDIT_THROTTLE_MS = 3_000;
 const JSONL_POLL_MS = 2_000;
 const JSONL_DISCOVER_TIMEOUT_MS = 30_000;
 
+/**
+ * Rate-limit detection across both channel libraries:
+ * grammY (Telegram) surfaces `error_code`; discord.js surfaces HTTP `status`.
+ */
+function isRateLimitError(err: any): boolean {
+  return err?.error_code === 429 || err?.status === 429;
+}
+
+/**
+ * "Message no longer editable" — deleted/unknown message.
+ * Telegram: error_code 400. Discord: HTTP 404 or error code 10008 (Unknown Message).
+ */
+function isMessageGoneError(err: any): boolean {
+  return (
+    err?.error_code === 400 ||
+    err?.status === 404 ||
+    err?.code === 10008
+  );
+}
+
 interface TrackerState {
   chatJid: string;
   groupFolder: string;
@@ -302,6 +322,9 @@ export class ProgressTracker {
     } else {
       this._flushEdit(chatJid);
     }
+    // Clear any prior silence timer before rescheduling to avoid leaking a
+    // timer set by _parseLine (which would fire a duplicate _onSilence).
+    if (state.silenceTimer) clearTimeout(state.silenceTimer);
     state.silenceTimer = setTimeout(
       () => this._onSilence(chatJid),
       SILENCE_THRESHOLD_MS,
@@ -316,7 +339,7 @@ export class ProgressTracker {
     const text = this._formatProgress(state);
     // Edit source channel
     this.editMsg(chatJid, state.progressMsgId, text).catch((err: any) => {
-      if (err?.error_code === 429) {
+      if (isRateLimitError(err)) {
         setTimeout(() => {
           const s = this.states.get(chatJid);
           if (s?.progressMsgId)
@@ -326,7 +349,7 @@ export class ProgressTracker {
               this._formatProgress(s),
             ).catch(() => {});
         }, 5000);
-      } else if (err?.error_code === 400) {
+      } else if (isMessageGoneError(err)) {
         if (state) state.progressMsgId = null;
       }
     });
@@ -335,7 +358,7 @@ export class ProgressTracker {
       const logsText = `[${state.groupFolder}] ${text}`;
       this.editMsg(this.dumpJid, state.logsMsgId, logsText).catch(
         (err: any) => {
-          if (err?.error_code === 400) state.logsMsgId = null;
+          if (isMessageGoneError(err)) state.logsMsgId = null;
         },
       );
     }

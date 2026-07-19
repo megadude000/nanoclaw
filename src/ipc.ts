@@ -23,7 +23,11 @@ import { logger } from './logger.js';
 import { RegisteredGroup } from './types.js';
 
 export interface IpcDeps {
-  sendMessage: (jid: string, text: string, sender?: string) => Promise<void>;
+  sendMessage: (
+    jid: string,
+    text: string,
+    sender?: string,
+  ) => Promise<boolean | void>;
   registeredGroups: () => Record<string, RegisteredGroup>;
   registerGroup: (jid: string, group: RegisteredGroup) => void;
   syncGroups: (force: boolean) => Promise<void>;

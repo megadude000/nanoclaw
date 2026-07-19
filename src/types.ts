@@ -91,7 +91,9 @@ export interface TaskRunLog {
 export interface Channel {
   name: string;
   connect(): Promise<void>;
-  sendMessage(jid: string, text: string, sender?: string): Promise<void>;
+  // Returns true when the message was delivered, false when it failed.
+  // Callers use this to avoid advancing message cursors on a failed send.
+  sendMessage(jid: string, text: string, sender?: string): Promise<boolean>;
   isConnected(): boolean;
   ownsJid(jid: string): boolean;
   disconnect(): Promise<void>;
@@ -112,6 +114,8 @@ export interface Channel {
   ): Promise<void>;
   // Optional: edit a previously sent message (for progress tracker updates).
   editMessage?(jid: string, messageId: string, text: string): Promise<void>;
+  // Optional: delete a previously sent message (progress-tracker cleanup).
+  deleteMessage?(jid: string, messageId: string): Promise<void>;
   // Optional: send a message and return its ID (for edit/button tracking).
   sendMessageRaw?(
     jid: string,
