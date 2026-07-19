@@ -153,11 +153,43 @@ All four remaining audit items were completed in a follow-up session
   (grammY's long-poll self-heals), so `isConnected()` reflects "polling
   started and not stopped", not socket liveness.
 
+## Progress-messaging refactor (third pass — subagent-aware, less noisy)
+
+`progress-tracker.ts`, `agent-status-embeds.ts`, `task-scheduler.ts`, `index.ts`:
+
+- **Subagent visibility (was the biggest gap; matters for Friday/Alfred +
+  Night Shift):** ProgressTracker tracks spawned subagents by watching `Task`
+  tool_use ids in the session transcript and clearing them when the matching
+  `tool_result` lands — host-side only, no container round-trip. Chat progress
+  shows `🤖 reviewer, tester working`.
+- **Richer chat progress:** top-level tool calls counted as steps →
+  `⏳ 2m 14s · 12 steps` + current-tool line; done message carries elapsed +
+  steps, not a bare `Done in Ns`.
+- **Noise cut:** first progress message held back `INITIAL_SHOW_MS` (7s). Quick
+  replies (common now at low chat effort) finish first and post **no** ⏳/✅ —
+  just the answer. `_parseLine` doesn't reschedule the initial-show timer until
+  the message exists, so tool activity can't push the first show past its window.
+- **Dead line revived:** new `onActivity` hook wires ProgressTracker →
+  `BotStatusPanel.onGroupTool` (which had **no caller** — the panel's live tool
+  line was permanently blank).
+- **Line-safe JSONL read:** a large single tool_use no longer drops the rest of
+  that entry at the old 4KB read cap.
+- **#agents terminal state:** new `buildFailedEmbed` (red; new `failed` message
+  type + color) on scheduled-task error — a task that posts `Took` always gets a
+  matching `Closed`/`Failed` (failed tasks previously looked hung).
+- Added `progress-tracker.test.ts` (none existed).
+- Deferred deliberately: forwarding SDK `task_notification` subagent lifecycle
+  to #agents (chat+panel already show subagents; forwarding risks noise);
+  GitHub-CI-success webhook noise (ops risk, already run-id deduped).
+
 ## Verification
 
 - First pass: `npm run build` clean; full `npm test` = **722 passed**.
 - Second pass (audit items): build clean; **751 passed** (+29: sendOutbound,
   Telegram flood retry, edit-throttle suites).
+- Third pass (progress refactor): build clean; **759 passed** (+8 progress-tracker
+  + failed-embed). Service restarted clean; panel reclaimed all bot messages;
+  no progress/panel runtime errors.
 - Service restarted via `systemctl --user restart nanoclaw`: credential proxy
   `oauth` on `172.17.0.1:3001`; Discord/Telegram/Gmail all connected.
 
