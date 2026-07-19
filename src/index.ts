@@ -791,6 +791,9 @@ async function main(): Promise<void> {
       const ch = findChannel(channels, jid);
       await ch?.setTyping?.(jid, typing);
     },
+    // Bridge live tool/subagent activity into the #bot-management panel
+    // (its per-bot "current activity" line was previously never populated).
+    onActivity: (jid, activity) => botStatusPanel?.onGroupTool(jid, activity),
     dumpJid,
   });
 

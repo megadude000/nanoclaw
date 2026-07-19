@@ -3,6 +3,7 @@ import { EmbedBuilder } from 'discord.js';
 import {
   buildTookEmbed,
   buildClosedEmbed,
+  buildFailedEmbed,
   buildProgressEmbed,
   buildBlockerEmbed,
   buildHandoffEmbed,
@@ -201,6 +202,22 @@ describe('agent-status-embeds', () => {
         agentName: 'Friday',
       });
       expect(embed.data.title!.length).toBeLessThanOrEqual(256);
+    });
+  });
+
+  describe('buildFailedEmbed', () => {
+    it('returns a red embed titled "Failed:" with the error field', () => {
+      const embed = buildFailedEmbed({
+        title: 'Nightly digest',
+        taskId: 'task-9',
+        agentName: 'Jarvis',
+        error: 'container exited 1',
+      });
+      expect(embed).toBeInstanceOf(EmbedBuilder);
+      expect(embed.data.color).toBe(0xed4245);
+      expect(embed.data.title).toBe('Failed: Nightly digest');
+      const errField = embed.data.fields?.find((f) => f.name === 'Error');
+      expect(errField?.value).toBe('container exited 1');
     });
   });
 

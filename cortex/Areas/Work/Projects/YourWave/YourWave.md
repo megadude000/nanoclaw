@@ -6,13 +6,13 @@ scope: project-hub
 type: project
 project: YourWave
 status: active
-last_updated: 2026-04-07T03:00:00.000Z
+last_updated: 2026-07-19T09:30:00.000Z
 tags:
   - coffee
   - startup
   - prague
   - ecommerce
-source_hash: 4bd5c03bd5b300319ede2f1f2dd4cc69b6ba4147d233c4eb425af912a2493584
+source_hash: 899c9a7232c8918463ecd0b8f6355a315ce2f636cf0eeed757b6ea80fc589b04
 embedding_model: text-embedding-3-small
 ---
 
@@ -30,9 +30,10 @@ embedding_model: text-embedding-3-small
 - [[gemini-api-key-status]] — ✅ Gemini API key resolved (working)
 
 ## Platform v2 (YWProject rebuild)
-- Stack: Astro 6 + React 19 Islands + Supabase + Cloudflare Pages
+- Stack: Astro 6 + React 19 Islands + Supabase + Vercel adapter (SSR). Dev hosting: VPS + Cloudflare Tunnel (Pages/Workers explicitly rejected)
+- CRM routing: TanStack Router island at `/crm/*`
 - Domain: yourwave.uk (dev), yourwave.coffee (prod)
-- Repo: `megadude000/YW_Core` (GitHub)
+- Repo: `megadude000/YW_Core` (GitHub) — ⚠️ 34 commits unpushed as of 2026-07-19
 
 ## Related Projects
 - [[ContentFactory]] — Content Factory. Claude-orchestrated pipeline для публікації контенту. YourWave = перший клієнт.
@@ -41,8 +42,9 @@ embedding_model: text-embedding-3-small
 
 ## Quick Reference
 Status (business): Phase 1 planning — contract roasting
-Status (platform): GSD Milestone 2 ✅ COMPLETE — all 6 phases done (2026-04-05)
-Last active branch: nightshift/2026-04-07 (140 articles/locale + CRM a11y + gen_remaining fix)
+Status (platform): GSD Milestone 4 (CRM Inventory) verifying; Phase 24 (Products) merged. ⚠️ Supabase cloud PAUSED, inventory render bug open — see [[yw-core-status]]
+Next focus (2026-07-19): frontend architecture refactor → Atlas engagement + Shop + Bundle Builder + working CRM
+Last active branch: main @ d1ad708 (Phase 24 products module)
 Location: Прага, Чехія
 Solo founder, budget €5–15k (still saving), timeline 6–12 міс to first sale
 Notion board: https://www.notion.so/3259e7f6c2ca815785c0f9d6f6c34142
@@ -52,6 +54,9 @@ Notion board: https://www.notion.so/3259e7f6c2ca815785c0f9d6f6c34142
   - 01 Astro Foundation, 02 Shell Layout, 03 Sidebar RBAC, 04 CommandPalette
   - 05 DataTable, 06 FilterBar, 07 UI Primitives, 08 Module Registry, 09 Storybook
 - **Milestone 2:** ✅ COMPLETE (2026-04-05) — Phases 10 (Vercel) ✅, 11 (Supabase Schema) ✅, 12 (Auth Pages) ✅, 13 (CRM RBAC) ✅, 14 (PostHog Feature Flags) ✅, 15 (Observability+CI/CD) ✅
+- **Milestone 3 (Stripe, phases 16–19):** ⚠️ abandoned mid-flight — planning docs removed, but payments code shipped (orphaned half-build)
+- **Milestone 4 (CRM Inventory, phases 20–23):** 4/4 phases complete, status `verifying` (inventory infinite-render bug still open)
+- **Phase 24 (CRM Products):** merged to main via worktree (chunks 1–3)
 
 ## Coffee Atlas Status (2026-04-07)
 - EN: **140 articles** ✅
@@ -168,3 +173,4 @@ Notion board: https://www.notion.so/3259e7f6c2ca815785c0f9d6f6c34142
 | 2026-04-07 | Atlas: 140 articles per locale (+17 batch: tasting-wheel, whole-bean, cleaning, certifications, aeropress, siphon, moka-pot, cold-brew × 3 locales) |
 | 2026-04-07 | Test suite: 409 passing / 0 failing — branch nightshift/2026-04-07 |
 | 2026-04-07 | CRM a11y fixes; gen_remaining.mjs (Node.js, no pip) preferred over .py wrapper |
+| 2026-07-19 | Docs refreshed after 3.5-month gap. Verified: Supabase cloud paused, local stack adopted for dev; Milestone 3 payments = orphaned; Milestone 4 verifying; Phase 24 merged. New goal set: frontend refactor → Atlas+Shop+Bundle Builder+CRM |

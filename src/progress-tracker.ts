@@ -13,6 +13,10 @@ const SILENCE_THRESHOLD_MS = 30_000;
 const EDIT_THROTTLE_MS = 3_000;
 const JSONL_POLL_MS = 2_000;
 const JSONL_DISCOVER_TIMEOUT_MS = 30_000;
+// Hold the first "⏳" message back this long. Quick replies (the common case
+// now that chat runs at low effort) finish first and never post progress at
+// all — the user just gets the answer. Only genuinely slow runs show progress.
+const INITIAL_SHOW_MS = 7_000;
 
 interface TrackerState {
   chatJid: string;
@@ -105,8 +109,14 @@ export class ProgressTracker {
       () => this.setTyping(chatJid, true).catch(() => {}),
       TYPING_INTERVAL_MS,
     );
-    // Send initial progress message immediately
-    this._onSilence(chatJid);
+    // Hold the first progress message back so quick replies stay clean.
+    // If a tool arrives before this fires, the message still appears at
+    // INITIAL_SHOW_MS reflecting the accumulated activity (see _parseLine,
+    // which does not reschedule this timer until the message exists).
+    state.silenceTimer = setTimeout(
+      () => this._onSilence(chatJid),
+      INITIAL_SHOW_MS,
+    );
     state.pollTimer = setInterval(
       () => this._pollJSONL(chatJid),
       JSONL_POLL_MS,
@@ -309,13 +319,16 @@ export class ProgressTracker {
     state.lastActivityTime = Date.now();
     this._onActivityChanged(chatJid, state);
 
-    if (state.silenceTimer) clearTimeout(state.silenceTimer);
-    state.silenceTimer = setTimeout(
-      () => this._onSilence(chatJid),
-      SILENCE_THRESHOLD_MS,
-    );
-
+    // Before the first message exists, leave the INITIAL_SHOW_MS timer alone —
+    // accumulated activity just updates state and appears when it fires. Once
+    // the message is live, keep it fresh (throttled edit) and push the silence
+    // re-show timer out so the "still working" refresh cadence applies.
     if (state.progressMsgId) {
+      if (state.silenceTimer) clearTimeout(state.silenceTimer);
+      state.silenceTimer = setTimeout(
+        () => this._onSilence(chatJid),
+        SILENCE_THRESHOLD_MS,
+      );
       this.editThrottler.schedule(chatJid, () => this._flushEdit(chatJid));
     }
   }
@@ -333,7 +346,8 @@ export class ProgressTracker {
       } catch {
         arg = raw.slice(0, 40);
       }
-    } else if (name === 'Skill') arg = String(input.command ?? input.skill ?? '');
+    } else if (name === 'Skill')
+      arg = String(input.command ?? input.skill ?? '');
     else if (name === 'Grep' || name === 'Glob')
       arg = String(input.pattern ?? '').slice(0, 40);
     const formatted = arg ? `🔧 ${name} → ${arg}` : `🔧 ${name}`;
@@ -464,9 +478,13 @@ export class ProgressTracker {
   }
 
   /** Compact one-line done summary: elapsed, steps, subagents used. */
-  private _formatDone(state: TrackerState | undefined, elapsedSec: number): string {
+  private _formatDone(
+    state: TrackerState | undefined,
+    elapsedSec: number,
+  ): string {
     const elapsed = this._humanDuration(elapsedSec);
-    const steps = state && state.stepCount > 0 ? ` · ${state.stepCount} steps` : '';
+    const steps =
+      state && state.stepCount > 0 ? ` · ${state.stepCount} steps` : '';
     return `✅ Done in ${elapsed}${steps}`;
   }
 }

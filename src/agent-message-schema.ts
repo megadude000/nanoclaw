@@ -18,6 +18,7 @@ import { EmbedBuilder } from 'discord.js';
 export const AgentMessageTypeSchema = z.enum([
   'took',
   'closed',
+  'failed',
   'progress',
   'blocker-perm',
   'blocker-service',
@@ -86,6 +87,7 @@ export function withAgentMeta(
 export const AGENT_COLORS: Record<AgentMessageType, number> = {
   took: 0x5865f2, // Blurple — active/in-progress
   closed: 0x57f287, // Green — success
+  failed: 0xed4245, // Red — task ended in error
   progress: 0xfeb932, // Orange — in-flight
   'blocker-perm': 0xed4245, // Red — permission error
   'blocker-service': 0xed4245, // Red — service unavailable

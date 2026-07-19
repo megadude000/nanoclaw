@@ -5,7 +5,11 @@ import fs from 'fs';
 import { EmbedBuilder } from 'discord.js';
 
 import { ASSISTANT_NAME, SCHEDULER_POLL_INTERVAL, TIMEZONE } from './config.js';
-import { buildTookEmbed, buildClosedEmbed } from './agent-status-embeds.js';
+import {
+  buildTookEmbed,
+  buildClosedEmbed,
+  buildFailedEmbed,
+} from './agent-status-embeds.js';
 import { BotStatusPanel } from './bot-status-panel.js';
 import {
   ContainerOutput,
@@ -310,7 +314,8 @@ async function runTask(
     deps.botStatusPanel?.onGroupError(task.chat_jid);
   }
 
-  // ASTATUS-02: Report task closed to #agents (success only)
+  // ASTATUS-02: Report a terminal state to #agents so every "Took" gets a
+  // matching close — green "Closed" on success, red "Failed" on error.
   if (!error) {
     deps.sendToAgents?.(
       buildClosedEmbed({
@@ -318,6 +323,15 @@ async function runTask(
         taskId: task.id,
         agentName: ASSISTANT_NAME,
         summary: result?.slice(0, 200) ?? undefined,
+      }),
+    );
+  } else {
+    deps.sendToAgents?.(
+      buildFailedEmbed({
+        title: task.prompt.slice(0, 80),
+        taskId: task.id,
+        agentName: ASSISTANT_NAME,
+        error,
       }),
     );
   }

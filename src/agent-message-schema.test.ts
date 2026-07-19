@@ -8,10 +8,11 @@ import {
 } from './agent-message-schema.js';
 
 describe('AgentMessageTypeSchema', () => {
-  it('validates all 8 enum values', () => {
+  it('validates all 9 enum values', () => {
     const validTypes = [
       'took',
       'closed',
+      'failed',
       'progress',
       'blocker-perm',
       'blocker-service',
@@ -151,6 +152,7 @@ describe('AGENT_COLORS', () => {
     const expectedKeys = [
       'took',
       'closed',
+      'failed',
       'progress',
       'blocker-perm',
       'blocker-service',
@@ -165,7 +167,7 @@ describe('AGENT_COLORS', () => {
     }
   });
 
-  it('has exactly 8 entries', () => {
-    expect(Object.keys(AGENT_COLORS)).toHaveLength(8);
+  it('has exactly 9 entries', () => {
+    expect(Object.keys(AGENT_COLORS)).toHaveLength(9);
   });
 });

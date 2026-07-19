@@ -6,128 +6,82 @@ scope: yw_core
 tags:
   - yw-core
   - gsd
-  - milestone-2
+  - milestone-4
   - crm
   - atlas
-  - auth
   - status
 created: 2026-04-01T00:00:00.000Z
-updated: 2026-04-07T03:00:00.000Z
-status: milestone-2-complete
-source_hash: ca1846592f62f84908a11d3aff8fdab8d6337b426bb99047c2343cbd7ff33f71
+updated: 2026-07-19T09:30:00.000Z
+status: milestone-4-verifying
+source_hash: 140ffa0f0d20726c588ba0b8b4e6f83599d82c3f9b1bf79f2f9c8a0cbc7a9f51
 embedding_model: text-embedding-3-small
 ---
 
-# YW Core — Current State (2026-04-07)
+# YW Core — Current State (2026-07-19)
 
-## GSD Milestone 1: ✅ COMPLETE
+> Full refresh after a ~3.5-month documentation gap (previous update 2026-04-07).
+> Verified against the live repo `~/YW_Core` (main @ d1ad708) and running infrastructure.
 
-All 9 CRM phases shipped as of 2026-04-01.
+## Stack (verified)
 
-## GSD Milestone 2: Backend Foundation — ✅ COMPLETE (2026-04-05)
+- **Astro 6** (`^6.0.7`, NOT 5) + React 19 islands + Tailwind 4 + shadcn/ui
+- CRM: TanStack Router (NOT React Router) inside a single `client:only` island at `/crm/*`
+- Adapter: `@astrojs/vercel` v10, per-route SSR (`prerender = false` on crm/profile/api)
+- Supabase (`@supabase/ssr`), Stripe v22, PostHog, Faro, zustand (7 stores)
+- Dev infra on host: systemd user services `yw-dev` (:4321) + `yw-storybook` (:6006), Cloudflare tunnel (`dev.yourwave.uk`, `storybook.yourwave.uk`). The orphan `cloudflared-tunnel.service` (405 bug) is disabled — fixed.
 
-| Phase | Name | Status |
-|-------|------|--------|
-| 10 | Vercel Adapter + Hybrid Output | ✅ |
-| 11 | Supabase Schema + RLS | ✅ |
-| 12 | Authentication Pages + Session Wiring | ✅ nightshift/2026-04-02 |
-| 13 | CRM RBAC Wiring (useCrmAuthStore removal) | ✅ nightshift/2026-04-02 |
-| 14 | Feature Flags (PostHog) | ✅ nightshift/2026-04-05 — 4/4 verified |
-| 15 | Observability + CI/CD | ✅ nightshift/2026-04-05 — 6/6 verified |
+## GSD Progress
 
-### Phase 12 — what shipped (2026-04-02)
+| Milestone | Scope | Status |
+|-----------|-------|--------|
+| 1 | CRM shell (9 phases) | ✅ complete 2026-04-01 |
+| 2 | Backend foundation (phases 10–15: Vercel, Supabase, Auth, RBAC, PostHog, Observability) | ✅ complete 2026-04-05 |
+| 3 | Stripe payments (phases 16–19) | ⚠️ **abandoned mid-flight** — planning docs deleted (uncommitted), but payments CODE shipped and remains: `20260406000000_payments.sql`, `api/create-checkout.ts`, `api/webhooks/stripe.ts`, `usePayments.ts`. Orphaned/half-built. |
+| 4 | CRM Inventory module (phases 20–23) | ROADMAP says 4/4 phases complete, `status: verifying`, stopped at Phase 23 verification |
+| — | Phase 24 CRM Products module | Merged to main (chunks 1–3) via `.worktrees/phase-24-products` |
 
-- `@supabase/ssr` installed; `createSupabaseBrowserClient` + `createSupabaseServerClient` factories
-- `src/lib/auth/session.ts` — `getSession()` + `requireAuth()` server helpers
-- Middleware with real `getUser()` JWT validation + session refresh; CRM role gate
-- `/api/auth/callback.ts` — `exchangeCodeForSession()` for Google OAuth
-- Four auth pages: login, signup, forgot-password, reset-password (split-layout dark brand)
-- React form islands: LoginForm, SignupForm, ForgotPasswordForm, ResetPasswordForm
-- shadcn/ui added: input, label, card, separator, alert
-- `src/lib/auth.ts` — `useAuth()` hook; MockAuthProvider test helper
-- Middleware tests updated (9 cases)
-- Branch: `nightshift/2026-04-02`, commit `0bef394`
+## What's Broken (as of 2026-07-19)
 
-### Key decisions (Phase 12)
-- Auth forms are client-side React — cookie sync via `@supabase/ssr`
-- No email confirmation on sign-up (Supabase dashboard toggle disabled)
-- Forgot-password: success copy shown regardless of email existence (anti-enumeration)
-- Apple Sign-In deferred (needs Apple Developer account)
-- Sign-out CRM → `/auth/login`; Atlas → referring page or `/`
+1. **Supabase cloud project `hixcggaidadmzekrkkrx` is PAUSED** — subdomain no longer resolves, SQL times out via MCP. Every `/crm` request does an unguarded server-side `getUser()` in `src/middleware.ts:44-50`, so CRM cannot render against a dead project. Unpause requires the Supabase dashboard.
+2. **`.env.local` points to local Supabase (`127.0.0.1:54321`)** that was never started. Also defines `SUPABASE_URL` while code only reads `PUBLIC_SUPABASE_URL` — env-name mismatch risk on Vercel too.
+3. **Inventory page infinite-render bug** — `InventoryPage.tsx:38-49` ships committed debug instrumentation (render counter, bail at 50 renders). Untracked diagnostic specs `e2e/inventory-hang.spec.ts` + `e2e/inventory-debug.spec.ts` target it. Root cause suspected: unstable zustand selectors. NOT fixed.
+4. **34 unpushed commits on main** — origin/main is far behind (everything incl. Phase 24 is local only). Prod on Vercel (`yw-core.vercel.app`) is stale.
+5. Host Node version friction — `~/fix-astro.sh` forces Node 22 via nvm (`engines >=22.12.0`).
 
-### Phase 13 — what shipped (2026-04-02)
-- `useCrmAuthStore` removed, `usePermissions` hook in place
-- UserMenu connected to real Supabase session
-- Sidebar RBAC tests updated
+## Product Area Reality Check
 
-## Coffee Atlas
-
-| Locale | Articles | Last updated |
-|--------|----------|-------------|
-| EN | 140 | 2026-04-07 |
-| CS | 140 | 2026-04-07 |
-| UK | 140 | 2026-04-07 |
-
-### Categories in Atlas
-- Getting Started (25+: tasting wheel, whole bean vs ground, equipment cleaning, certifications)
-- Origins (incl. Prague cafe guide), Processing Methods, Equipment, Brewing Guides, Science, History, Specialty Culture, Glossary
-
-### Nightshift additions (nightshift/2026-04-07)
-- ✅ coffee-tasting-wheel.mdx (EN+CS+UK) — SCA flavour wheel guide
-- ✅ buying-whole-bean-vs-pre-ground.mdx (EN+CS+UK)
-- ✅ cleaning-your-coffee-equipment.mdx (EN+CS+UK)
-- ✅ understanding-coffee-certifications.mdx (EN+CS+UK) — organic/Fair Trade/RA/direct trade
-- ✅ aeropress-guide.mdx (EN+CS+UK) — complete brewing guide
-- ✅ siphon-coffee-brewing.mdx (EN+CS+UK)
-- ✅ moka-pot-guide.mdx (EN+CS+UK)
-- ✅ cold-brew-complete-guide.mdx (EN+CS+UK)
-- ✅ Hero images for all 8 via Imagen 4 Fast
-- ✅ PR #18 (nightshift/2026-04-06) merged to main before this batch
-
-### gen_remaining.mjs (preferred) / gen_remaining.py
-- ✅ Node.js version at `/workspace/group/nightshift/gen_remaining.mjs` — no pip needed, uses fetch()
-- ✅ Python version at `/workspace/group/nightshift/gen_remaining.py` — now a thin wrapper calling gen_remaining.mjs (no google-genai pip required)
-- Preferred: `node /workspace/group/nightshift/gen_remaining.mjs` (always works in container)
-- Dry run: `DRY_RUN=1 node /workspace/group/nightshift/gen_remaining.mjs`
-- Both scan all EN articles for missing heroImages, generate via Imagen 4 Fast
-
-## Test Coverage (as of 2026-04-07)
-
-- **409 passing / 0 failing** — branch `nightshift/2026-04-07`
-- No regressions; all suites green after CRM a11y fixes
-- +36 new tests (nightshift/2026-04-06): Users module types (15), useUsers hook (14), computeMetrics (7)
-- +25 new tests: CommandPalette (11) + FilterBar (14) — nightshift/2026-04-05
-- +4 new tests: Faro lib (faro.ts) — Phase 15
-- +18 new tests: PostHog identify/gate components — Phase 14
-
-### New test files added 2026-04-03
-
-| File | Tests |
+| Area | State |
 |------|-------|
-| `src/modules/crm/components/layout/nav/__tests__/NavPinButton.test.tsx` | 8 |
-| `src/lib/auth/__tests__/session.test.ts` | 7 |
-| `src/modules/crm/components/filter-bar/__tests__/FilterBar.test.tsx` | 16 |
-| `src/modules/crm/components/__tests__/CrmErrorBoundary.test.tsx` | 8 |
-| `src/modules/crm/components/ui/__tests__/ConfirmDialog.test.tsx` | 10 |
-| `src/components/auth/__tests__/ResetPasswordForm.test.tsx` | 12 |
+| Coffee Atlas | ✅ Mature. 140 MDX articles × EN/CS/UK. But: article route is TRIPLE-duplicated (~891 lines × 3 locales) |
+| Shop | ❌ Does not exist. Only commerce = $4.99 podcast-unlock Stripe checkout |
+| Bundle Builder | ❌ Does not exist (zero feature code) despite being "core UX" in spec |
+| CRM | 🟡 Scaffolded. Inventory (52 files) + Products biggest; payments/users hit real Supabase; **products/inventory/locations are 100% mock-data**; orders/analytics thin; router-level RBAC stubbed to always-allow (`CrmApp.tsx:19-21`) |
 
-### Testing patterns (decisions)
+## Frontend Architecture Debt (refactor targets, priority order)
 
-- RTL tests without `@testing-library/jest-dom` global setup must use `afterEach(() => cleanup())` explicitly
-- Mock path depth from a `__tests__/` subdirectory is always one level deeper than from the component file itself (e.g., `../../ComponentName` becomes `../../../ComponentName` inside `__tests__/`)
+1. **Atlas route triplication** — `pages/atlas/[...slug].astro`, `uk/…`, `cs/…` are ~891-line near-copies (~2.7k duplicated lines); same for atlas index + homepage per locale. Extract shared renderer, single locale-driven route.
+2. **Two disconnected design-token systems** — shadcn tokens in `global.css` vs `--crm-*` in `crm-tokens.css`; CRM uses hand-written inline `style={{}}` (42 blocks in UsersPage alone) while site uses Tailwind. No shared primitives (`components/ui/` vs `modules/crm/components/ui/`).
+3. **Data layer split-brain** — mock zustand stores (products/inventory/locations, ~1,200 lines of mock-data imported by live stores) vs ad-hoc Supabase hooks (payments/users). No query-cache layer (no TanStack Query). No repository layer.
+4. **God components** — `Header.astro` 1,357 lines (+ 1,289-line scratch copy at `pages/prototypes/header.astro`), StockMovementDialog 816, RoastBatchDialog 776, DataTable 701, UsersPage 687.
+5. **Dead code shipped as routes** — `prototype-a/b/c.astro`, `prototypes/header.astro`, `test-catch/`; dead `useCrmAuthStore` test + cleanup shims.
+6. **`cs` locale missing from `astro.config.mjs` i18n/sitemap** despite 140 CS articles.
 
-## Build Status
-- ✅ `ASTRO_TELEMETRY_DISABLED=1 npm run build` passing as of 2026-04-07
-- Branch: `nightshift/2026-04-07` — 140 EN + 140 CS + 140 UK articles
-- Note: always use `ASTRO_TELEMETRY_DISABLED=1` prefix in container (no write access to `/home/node/.config/astro`)
+## Cortex Vault Hygiene
 
-## GSD Milestone 3: Stripe Payments — ⚠️ BLOCKED
+- **Duplicate YourWave doc tree**: `Areas/Work/Projects/YourWave/` (canonical, per CLAUDE.md) vs `Areas/Projects/YourWave/` (divergent fork). Fork's `yw.platform-spec.md` is NEWER (2026-03-31) than canonical (2026-03-23); everything else is same or older. Fork also holds `arch/`, `atlas/`, `bootstrap/` subdirs not present in canonical.
+- **Known-stale docs**: `yw.ecommerce.md` (still describes Shopify platform — superseded by custom build; unit economics still valid), `yw.platform-spec.md` (Astro 5, Cloudflare Pages hosting — actual is Vercel adapter + VPS/tunnel dev; "5–10 articles" vs 140 shipped), `yw.ops.md` ("Shopify store setup" timeline row), `yw.branding.md` ("visual direction TBD" — Atlas visual style exists).
+- **Hosting decision (resolved)**: VPS + Cloudflare Tunnel for dev, Vercel adapter in code. CLAUDE.md records user explicitly rejected Cloudflare Pages/Workers. Spec's "Cloudflare Pages + Workers" section is obsolete.
+- No session logs or daily notes touch YourWave between 2026-04-07 and 2026-07-19 — that period is undocumented.
 
-| Phase | Name | Status |
-|-------|------|--------|
-| 17 | Stripe Integration | ⚠️ BLOCKED — waiting for STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET + STRIPE_PRICE_ID |
+## Local Dev DB (working since 2026-07-19)
 
-Phase 17 cannot proceed until Stripe API keys are provided by Andrii.
+- `supabase start` in `~/YW_Core` — all 5 migrations auto-applied (profiles, addresses, payments, article_reads, article_progress). Custom access token hook registered in `config.toml` and firing.
+- `.env.local` rewritten with the fresh local keys (backup: `.env.local.bak-2026-07-19`); `yw-dev.service` restarted.
+- Test user: `claude.test@gmail.com` (local-only), role `owner` set in BOTH `profiles.role` and `auth.users.raw_app_meta_data`.
+- ⚠️ **RBAC bug found**: `src/middleware.ts:60` reads `getUser().app_metadata.role`, which comes from `raw_app_meta_data` in the DB — NOT from the JWT claim the `custom_access_token_hook` injects. The hook is effectively dead code for the middleware path; role gating only works if role is ALSO manually mirrored into `raw_app_meta_data`. Fix: read the claim from the validated JWT (or sync role → `raw_app_meta_data` via trigger).
+- E2E verified via Playwright: login → `/crm` renders → Inventory renders (mock data). Inventory infinite-render did NOT reproduce on direct navigation; suspected to need in-app sidebar navigation path.
+- Visible UI bugs from screenshot: literal `·` strings in Inventory "Origin · Variety" column (double-escaped unicode in mock data); breadcrumb shows "Dashboard > Dashboard > Inventory".
 
-## Active Branches
-- `nightshift/2026-04-07` — current active branch (8 new articles + CRM a11y + gen_remaining.py fix)
+## Next Goals (stated 2026-07-19 by Andrii)
+
+Refactor frontend structure/architecture problem areas, then deliver: working **Atlas** (+ engagement/sales features), **Shop**, **Bundle Builder**, and a **working CRM** to manage it all. DB strategy: local Supabase stack for dev (started 2026-07-19), cloud project needs unpause or re-creation.

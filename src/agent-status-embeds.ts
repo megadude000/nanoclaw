@@ -79,6 +79,41 @@ export function buildClosedEmbed(params: {
 }
 
 /**
+ * Build an embed for when a task ends in error.
+ * Color: red (0xed4245). Title: "Failed: {title}".
+ * Ensures a task that emitted a "Took" also gets a visible terminal state,
+ * instead of appearing to start and never finish in #agents.
+ */
+export function buildFailedEmbed(params: {
+  title: string;
+  taskId: string;
+  agentName: string;
+  error?: string;
+}): EmbedBuilder {
+  const embed = new EmbedBuilder()
+    .setColor(AGENT_COLORS.failed)
+    .setTitle(truncate('Failed: ' + params.title, 256))
+    .setTimestamp();
+
+  embed.addFields({ name: 'Task ID', value: params.taskId, inline: true });
+
+  if (params.error) {
+    embed.addFields({
+      name: 'Error',
+      value: truncate(params.error, 1024),
+      inline: false,
+    });
+  }
+
+  return withAgentMeta(embed, {
+    agentName: params.agentName,
+    messageType: 'failed',
+    taskId: params.taskId,
+    summary: params.error,
+  });
+}
+
+/**
  * Build an embed for agent progress updates.
  * Color: orange (0xfeb932). Title: "Progress: {title}".
  */
