@@ -26,6 +26,7 @@ function seedState(tracker: ProgressTracker, jid: string) {
     startTime: Date.now(),
     lastActivityTime: Date.now(),
     lastTool: null,
+    lastIntent: null,
     stepCount: 0,
     toolCounts: new Map<string, number>(),
     subagentsSpawned: 0,
@@ -115,6 +116,46 @@ describe('ProgressTracker _parseLine', () => {
     expect(activity.length).toBeGreaterThanOrEqual(2);
   });
 
+  it('shows a thinking intent from a thinking block', () => {
+    const { tracker } = makeTracker();
+    const state = seedState(tracker, JID);
+    (tracker as any)._parseLine(
+      JID,
+      JSON.stringify({
+        type: 'assistant',
+        parent_tool_use_id: null,
+        message: { content: [{ type: 'thinking', thinking: 'hmm...' }] },
+      }),
+    );
+    expect(state.lastIntent).toContain('Thinking');
+    expect((tracker as any)._formatProgress(state)).toContain('💭');
+  });
+
+  it("captures the agent's narration as the intent line", () => {
+    const { tracker } = makeTracker();
+    const state = seedState(tracker, JID);
+    (tracker as any)._parseLine(
+      JID,
+      JSON.stringify({
+        type: 'assistant',
+        parent_tool_use_id: null,
+        message: {
+          content: [
+            {
+              type: 'text',
+              text: 'Let me check the config and run the tests. Then I will fix it.',
+            },
+          ],
+        },
+      }),
+    );
+    expect(state.lastIntent).toContain('Let me check the config and run the tests.');
+    const line = (tracker as any)._formatProgress(state);
+    expect(line).toContain('💬');
+    // narration alone doesn't count as a tool step
+    expect(state.stepCount).toBe(0);
+  });
+
   it('formats the progress line with steps and active subagents', () => {
     const { tracker } = makeTracker();
     const state = seedState(tracker, JID);
@@ -164,7 +205,10 @@ describe('ProgressTracker _parseLine', () => {
       JID,
       assistantToolLine('Write', { file_path: '/a/y.ts' }),
     );
-    (tracker as any)._parseLine(JID, assistantToolLine('Bash', { command: 'ls' }));
+    (tracker as any)._parseLine(
+      JID,
+      assistantToolLine('Bash', { command: 'ls' }),
+    );
     expect(state.toolCounts.get('edit|edits')).toBe(2);
     expect(state.toolCounts.get('command|commands')).toBe(1);
     const done = (tracker as any)._formatDone(state, 3);

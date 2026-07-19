@@ -45,6 +45,23 @@ function categorizeTool(name: string): string {
   }
 }
 
+/**
+ * Extract a short "what I'm doing" phrase from the agent's narration: the first
+ * sentence, stripped of markdown/internal tags, capped for a progress line.
+ */
+function firstSentence(text: string): string {
+  const cleaned = text
+    .replace(/<internal>[\s\S]*?<\/internal>/g, '')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/[#*_`>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!cleaned) return '';
+  const m = cleaned.match(/^.*?[.!?](\s|$)/);
+  const sentence = (m ? m[0] : cleaned).trim();
+  return sentence.length > 80 ? sentence.slice(0, 79) + '…' : sentence;
+}
+
 /** Render a category tally as "3 edits, 1 command, 2 searches". */
 function summarizeToolCounts(counts: Map<string, number>): string {
   const parts: string[] = [];
@@ -73,6 +90,9 @@ interface TrackerState {
   startTime: number;
   lastActivityTime: number;
   lastTool: string | null;
+  // Human "what I'm doing" line derived from the agent's own thinking/narration
+  // in the transcript ("💭 Thinking…" or "💬 <first sentence>").
+  lastIntent: string | null;
   // Count of top-level (main-agent) tool calls — a proxy for work done.
   stepCount: number;
   // Tally of work by category (edited/ran/read/searched/…) for the done summary.
@@ -141,6 +161,7 @@ export class ProgressTracker {
       startTime: Date.now(),
       lastActivityTime: Date.now(),
       lastTool: null,
+      lastIntent: null,
       stepCount: 0,
       toolCounts: new Map(),
       subagentsSpawned: 0,
@@ -357,6 +378,21 @@ export class ProgressTracker {
     const isSubagentTurn = !!obj?.parent_tool_use_id;
 
     for (const block of content) {
+      // The agent's own reasoning/narration — the most human "what I'm doing"
+      // signal. Thinking blocks → "💭 Thinking…"; text → its first sentence.
+      if (block?.type === 'thinking' || block?.type === 'redacted_thinking') {
+        state.lastIntent = '💭 Thinking…';
+        changed = true;
+        continue;
+      }
+      if (block?.type === 'text' && typeof block.text === 'string') {
+        const intent = firstSentence(block.text);
+        if (intent) {
+          state.lastIntent = `💬 ${intent}`;
+          changed = true;
+        }
+        continue;
+      }
       if (block?.type !== 'tool_use') continue;
       const name: string = block.name ?? 'Tool';
 
@@ -426,10 +462,11 @@ export class ProgressTracker {
   /** Push the current activity to the status-panel bridge (if wired). */
   private _onActivityChanged(chatJid: string, state: TrackerState): void {
     if (!this.onActivity) return;
+    const base = state.lastTool ?? state.lastIntent ?? '💭 Thinking…';
     const activity =
       state.subagents.size > 0
-        ? `${state.lastTool ?? '🤔 thinking'} · ${state.subagents.size} subagent${state.subagents.size > 1 ? 's' : ''}`
-        : (state.lastTool ?? '🤔 thinking');
+        ? `${base} · ${state.subagents.size} subagent${state.subagents.size > 1 ? 's' : ''}`
+        : base;
     try {
       this.onActivity(chatJid, activity);
     } catch {
@@ -536,7 +573,11 @@ export class ProgressTracker {
     );
     const steps = state.stepCount > 0 ? ` · ${state.stepCount} steps` : '';
     const head = `⏳ ${elapsed}${steps}`;
-    const lines: string[] = [`└ ${state.lastTool ?? '🤔 thinking...'}`];
+    const lines: string[] = [];
+    // Lead with the agent's own words (intent/thinking) when we have them.
+    if (state.lastIntent) lines.push(`└ ${state.lastIntent}`);
+    if (state.lastTool) lines.push(`└ ${state.lastTool}`);
+    if (lines.length === 0) lines.push('└ 💭 Thinking…');
     if (state.subagents.size > 0) {
       const names = [...state.subagents.values()];
       const shown = names.slice(0, 3).join(', ');

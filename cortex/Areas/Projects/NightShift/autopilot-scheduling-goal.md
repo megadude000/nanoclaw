@@ -17,7 +17,7 @@ tags:
   - rename
 created: '2026-07-19'
 project: nanoclaw
-source_hash: 606d3d64bc079180fe43c54c4a0c4991e79846aebd95df382ae3e071bf9b596f
+source_hash: 14ac26d30a5d59c516344c2db050cf935edfd85a0e225da9137a645eee6a83b7
 embedding_model: text-embedding-3-small
 ---
 # GOAL: "Autopilot" — proper-time autonomous work, no polling hacks
