@@ -393,6 +393,15 @@ function waitForIpcMessage(): Promise<string | null> {
  * allowing agent teams subagents to run to completion.
  * Also pipes IPC messages into the stream during the query.
  */
+type Effort = 'low' | 'medium' | 'high' | 'max';
+
+/** Normalize NANOCLAW_EFFORT; default to 'high' (deep reasoning). */
+function resolveEffort(raw: string | undefined): Effort {
+  const v = (raw || '').trim().toLowerCase();
+  if (v === 'low' || v === 'medium' || v === 'high' || v === 'max') return v;
+  return 'high';
+}
+
 async function runQuery(
   prompt: string,
   sessionId: string | undefined,
@@ -484,8 +493,10 @@ async function runQuery(
       additionalDirectories: extraDirs.length > 0 ? extraDirs : undefined,
       resume: sessionId,
       resumeSessionAt: resumeAt,
-      model: containerInput.model,
+      model: containerInput.model || process.env.NANOCLAW_MODEL || undefined,
       fallbackModel: process.env.NANOCLAW_FALLBACK_MODEL || undefined,
+      // Reasoning effort — guides thinking depth. Defaults to 'high'.
+      effort: resolveEffort(process.env.NANOCLAW_EFFORT),
       systemPrompt: globalClaudeMd
         ? { type: 'preset' as const, preset: 'claude_code' as const, append: globalClaudeMd }
         : undefined,

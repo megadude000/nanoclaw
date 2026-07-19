@@ -383,6 +383,17 @@ function buildContainerArgs(
     args.push('-e', `NANOCLAW_FALLBACK_MODEL=${fallbackModel}`);
   }
 
+  // Primary model + reasoning effort for the agent (defaults handled downstream)
+  const envCfg = readEnvFile(['NANOCLAW_MODEL', 'NANOCLAW_EFFORT']);
+  const model = process.env.NANOCLAW_MODEL || envCfg.NANOCLAW_MODEL;
+  if (model) {
+    args.push('-e', `NANOCLAW_MODEL=${model}`);
+  }
+  const effort = process.env.NANOCLAW_EFFORT || envCfg.NANOCLAW_EFFORT;
+  if (effort) {
+    args.push('-e', `NANOCLAW_EFFORT=${effort}`);
+  }
+
   // Run as host user so bind-mounted files are accessible.
   // Skip when running as root (uid 0), as the container's node user (uid 1000),
   // or when getuid is unavailable (native Windows without WSL).
