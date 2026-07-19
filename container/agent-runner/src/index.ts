@@ -52,11 +52,21 @@ interface RateLimitSnapshot {
 }
 
 interface ContainerOutput {
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'progress';
   result: string | null;
   newSessionId?: string;
   error?: string;
   rateLimit?: RateLimitSnapshot;
+  // Human "what I'm doing" descriptor, emitted mid-query with status='progress'
+  // so the host can show SDK-native activity without treating it as a result.
+  activity?: string;
+}
+
+/** Emit a mid-query activity descriptor (does not complete the turn). */
+function emitActivity(activity: string): void {
+  console.log(OUTPUT_START_MARKER);
+  console.log(JSON.stringify({ status: 'progress', result: null, activity }));
+  console.log(OUTPUT_END_MARKER);
 }
 
 // Latest subscription rate-limit info seen from the SDK this run. Attached to
@@ -638,18 +648,38 @@ async function runQuery(
       }
     }
 
-    if (
-      message.type === 'system' &&
-      (message as { subtype?: string }).subtype === 'task_notification'
-    ) {
-      const tn = message as {
-        task_id: string;
-        status: string;
-        summary: string;
+    // SDK-native activity descriptors → forward to the host progress UI.
+    // These are stream-only (not in the JSONL transcript), so the host can't
+    // see them otherwise. Kept short; the host throttles edits.
+    {
+      const m = message as {
+        type?: string;
+        subtype?: string;
+        summary?: string;
+        description?: string;
+        task_type?: string;
+        last_tool_name?: string;
+        status?: string;
       };
-      log(
-        `Task notification: task=${tn.task_id} status=${tn.status} summary=${tn.summary}`,
-      );
+      const clip = (s: string | undefined, n = 70): string =>
+        (s ?? '').replace(/[\n\r]+/g, ' ').trim().slice(0, n);
+      let activity: string | undefined;
+      if (m.type === 'tool_use_summary' && m.summary) {
+        activity = `📋 ${clip(m.summary)}`;
+      } else if (m.type === 'system' && m.subtype === 'task_started') {
+        activity = `🤖 delegating → ${clip(m.task_type || m.description, 40)}`;
+      } else if (m.type === 'system' && m.subtype === 'task_progress') {
+        const what = clip(m.description || m.last_tool_name || m.summary, 50);
+        activity = `🤖 ${clip(m.task_type, 20) || 'subagent'}: ${what}`;
+      } else if (m.type === 'system' && m.subtype === 'task_notification') {
+        log(`Task notification: status=${m.status} summary=${clip(m.summary)}`);
+        activity = `🤖 subagent ${m.status}: ${clip(m.summary, 45)}`;
+      } else if (m.type === 'system' && m.subtype === 'status') {
+        if (m.status === 'compacting') activity = '🗜 Compacting context…';
+      } else if (m.type === 'system' && m.subtype === 'compact_boundary') {
+        activity = '🗜 Context compacted, continuing…';
+      }
+      if (activity) emitActivity(activity);
     }
 
     if (message.type === 'result') {

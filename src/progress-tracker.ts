@@ -93,6 +93,9 @@ interface TrackerState {
   // Human "what I'm doing" line derived from the agent's own thinking/narration
   // in the transcript ("💭 Thinking…" or "💬 <first sentence>").
   lastIntent: string | null;
+  // SDK-native activity forwarded by the agent-runner (tool_use_summary,
+  // subagent task_progress, compacting…). Highest-priority display source.
+  forwardedActivity: string | null;
   // Count of top-level (main-agent) tool calls — a proxy for work done.
   stepCount: number;
   // Tally of work by category (edited/ran/read/searched/…) for the done summary.
@@ -162,6 +165,7 @@ export class ProgressTracker {
       lastActivityTime: Date.now(),
       lastTool: null,
       lastIntent: null,
+      forwardedActivity: null,
       stepCount: 0,
       toolCounts: new Map(),
       subagentsSpawned: 0,
@@ -207,6 +211,26 @@ export class ProgressTracker {
         );
       }
     }, JSONL_DISCOVER_TIMEOUT_MS);
+  }
+
+  /**
+   * SDK-native activity forwarded by the agent-runner (status='progress').
+   * Higher fidelity than the JSONL-derived line, so it takes display priority.
+   */
+  setActivity(chatJid: string, activity: string): void {
+    const state = this.states.get(chatJid);
+    if (!state || !activity) return;
+    state.forwardedActivity = activity;
+    state.lastActivityTime = Date.now();
+    this._onActivityChanged(chatJid, state);
+    if (state.silenceTimer) clearTimeout(state.silenceTimer);
+    state.silenceTimer = setTimeout(
+      () => this._onSilence(chatJid),
+      SILENCE_THRESHOLD_MS,
+    );
+    if (state.progressMsgId) {
+      this.editThrottler.schedule(chatJid, () => this._flushEdit(chatJid));
+    }
   }
 
   onResponseReceived(chatJid: string): void {
@@ -462,7 +486,8 @@ export class ProgressTracker {
   /** Push the current activity to the status-panel bridge (if wired). */
   private _onActivityChanged(chatJid: string, state: TrackerState): void {
     if (!this.onActivity) return;
-    const base = state.lastTool ?? state.lastIntent ?? '💭 Thinking…';
+    const base =
+      state.forwardedActivity ?? state.lastTool ?? state.lastIntent ?? '💭 Thinking…';
     const activity =
       state.subagents.size > 0
         ? `${base} · ${state.subagents.size} subagent${state.subagents.size > 1 ? 's' : ''}`
@@ -574,8 +599,9 @@ export class ProgressTracker {
     const steps = state.stepCount > 0 ? ` · ${state.stepCount} steps` : '';
     const head = `⏳ ${elapsed}${steps}`;
     const lines: string[] = [];
-    // Lead with the agent's own words (intent/thinking) when we have them.
-    if (state.lastIntent) lines.push(`└ ${state.lastIntent}`);
+    // Priority: SDK-forwarded activity, then the agent's own words, then tool.
+    if (state.forwardedActivity) lines.push(`└ ${state.forwardedActivity}`);
+    else if (state.lastIntent) lines.push(`└ ${state.lastIntent}`);
     if (state.lastTool) lines.push(`└ ${state.lastTool}`);
     if (lines.length === 0) lines.push('└ 💭 Thinking…');
     if (state.subagents.size > 0) {

@@ -285,6 +285,11 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
     // Streaming output callback — called for each agent result
     // Track weekly-usage telemetry from interactive runs too.
     if (result.rateLimit) recordRateLimit(result.rateLimit);
+    // SDK-native activity update (not a result) → feed the progress UI only.
+    if (result.status === 'progress') {
+      if (result.activity) progressTracker?.setActivity(chatJid, result.activity);
+      return;
+    }
     if (result.result) {
       const raw =
         typeof result.result === 'string'

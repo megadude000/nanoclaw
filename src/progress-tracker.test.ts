@@ -149,11 +149,24 @@ describe('ProgressTracker _parseLine', () => {
         },
       }),
     );
-    expect(state.lastIntent).toContain('Let me check the config and run the tests.');
+    expect(state.lastIntent).toContain(
+      'Let me check the config and run the tests.',
+    );
     const line = (tracker as any)._formatProgress(state);
     expect(line).toContain('💬');
     // narration alone doesn't count as a tool step
     expect(state.stepCount).toBe(0);
+  });
+
+  it('forwarded SDK activity takes display priority', () => {
+    const { tracker } = makeTracker();
+    const state = seedState(tracker, JID);
+    state.lastTool = '🔧 Bash → ls';
+    state.lastIntent = '💬 doing stuff';
+    tracker.setActivity(JID, '🤖 reviewer: checking the auth diff');
+    expect(state.forwardedActivity).toContain('reviewer');
+    const line = (tracker as any)._formatProgress(state);
+    expect(line).toContain('reviewer: checking the auth diff');
   });
 
   it('formats the progress line with steps and active subagents', () => {

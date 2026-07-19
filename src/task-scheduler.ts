@@ -335,6 +335,16 @@ async function runTask(
       async (streamedOutput: ContainerOutput) => {
         // Persist weekly-usage telemetry from every streamed output.
         if (streamedOutput.rateLimit) recordRateLimit(streamedOutput.rateLimit);
+        // SDK-native activity update (not a result) → progress UI only.
+        if (streamedOutput.status === 'progress') {
+          if (streamedOutput.activity && !task.silent) {
+            deps.progressTracker?.setActivity(
+              task.chat_jid,
+              streamedOutput.activity,
+            );
+          }
+          return;
+        }
         if (streamedOutput.result) {
           result = streamedOutput.result;
           // Suppress rate limit errors — don't spam user with API quota messages

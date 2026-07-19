@@ -59,12 +59,14 @@ export interface RateLimitSnapshot {
 }
 
 export interface ContainerOutput {
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'progress';
   result: string | null;
   newSessionId?: string;
   error?: string;
   // Subscription rate-limit telemetry surfaced by the agent-runner (claude.ai).
   rateLimit?: RateLimitSnapshot;
+  // Mid-query SDK-native activity descriptor (status='progress' only).
+  activity?: string;
 }
 
 interface VolumeMount {

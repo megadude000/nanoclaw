@@ -157,6 +157,58 @@ export class DiscordChannel implements Channel {
           await message.reply('Spinning up YW instance...');
           return;
         }
+        if (cmd === 'grocery' || cmd === 'cart') {
+          const chatJid = `dc:${message.channelId}`;
+          // Everything after the command word is an optional custom item list.
+          const itemsPart = trimmedCmd.slice(1).slice(cmd.length).trim();
+          const DEFAULT_CART = [
+            'milk 1L',
+            'eggs (10)',
+            'bread loaf',
+            'butter 250g',
+            'chicken breast 1kg',
+            'rice 1kg',
+            'pasta 500g',
+            'tomatoes 1kg',
+            'onions 1kg',
+            'potatoes 2kg',
+            'apples 1kg',
+            'bananas 1kg',
+            'cheese (Eidam) 500g',
+            'yogurt (4x)',
+            'ground coffee 250g',
+            'olive oil 500ml',
+          ].join(', ');
+          const cart = itemsPart || DEFAULT_CART;
+          const usedDefault = itemsPart ? '' : ' (default basic cart)';
+          const prompt =
+            `@${ASSISTANT_NAME} Grocery price check for Prague delivery.\n\n` +
+            `Cart${usedDefault}: ${cart}\n\n` +
+            `Task: use WebSearch to check current online grocery **delivery** ` +
+            `options in Prague (Rohlík.cz, Košík.cz, Tesco Online/iTesco, ` +
+            `Wolt Market, Billa, Albert) and approximate the total price of this ` +
+            `cart at each. For each service give: estimated cart total (CZK), ` +
+            `delivery fee, and minimum order. Then recommend where it is cheapest ` +
+            `overall (cart + delivery), with a 2-3 line reasoning. Be explicit ` +
+            `that prices are approximations and may vary. Format as a compact ` +
+            `comparison (one line per service) + a clear recommendation.`;
+          this.opts.onMessage(chatJid, {
+            id: message.id,
+            chat_jid: chatJid,
+            sender: message.author.id,
+            sender_name:
+              message.member?.displayName ||
+              message.author.displayName ||
+              message.author.username,
+            content: prompt,
+            timestamp: message.createdAt.toISOString(),
+            is_from_me: false,
+          });
+          await message.reply(
+            `🛒 Checking Prague grocery delivery prices for ${itemsPart ? 'your cart' : 'a basic cart'}… I'll post a comparison shortly.`,
+          );
+          return;
+        }
       }
 
       const channelId = message.channelId;
