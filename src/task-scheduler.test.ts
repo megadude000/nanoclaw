@@ -4,8 +4,11 @@ import { _initTestDatabase, createTask, getTaskById } from './db.js';
 import {
   _resetSchedulerLoopForTests,
   computeNextRun,
+  estimateTaskIntervalMs,
+  chooseTaskModelEffort,
   startSchedulerLoop,
 } from './task-scheduler.js';
+import type { RegisteredGroup, ScheduledTask } from './types.js';
 
 describe('task scheduler', () => {
   beforeEach(() => {
@@ -125,5 +128,64 @@ describe('task scheduler', () => {
     const offset =
       (new Date(nextRun!).getTime() - new Date(scheduledTime).getTime()) % ms;
     expect(offset).toBe(0);
+  });
+});
+
+describe('task model/effort selection', () => {
+  const baseTask = (over: Partial<ScheduledTask>): ScheduledTask =>
+    ({
+      id: 't',
+      group_folder: 'main',
+      chat_jid: 'tg:1',
+      prompt: 'x',
+      schedule_type: 'cron',
+      schedule_value: '0 0 * * *',
+      context_mode: 'isolated',
+      next_run: new Date().toISOString(),
+      status: 'active',
+      created_at: new Date().toISOString(),
+      ...over,
+    }) as ScheduledTask;
+  const group = { folder: 'main' } as RegisteredGroup;
+
+  it('estimates a short interval for a frequent cron', () => {
+    const ms = estimateTaskIntervalMs(
+      baseTask({ schedule_value: '0 */2 10-18 * * *' }),
+    );
+    expect(ms).toBe(2 * 60_000);
+  });
+
+  it('estimates ~24h for a daily cron', () => {
+    const ms = estimateTaskIntervalMs(
+      baseTask({ schedule_value: '27 23 * * *' }),
+    );
+    expect(ms).toBe(24 * 60 * 60_000);
+  });
+
+  it('runs frequent housekeeping on fast Sonnet', () => {
+    const { model, effort } = chooseTaskModelEffort(
+      baseTask({ schedule_value: '0 */2 10-18 * * *' }),
+      group,
+    );
+    expect(model).toBe('claude-sonnet-4-6');
+    expect(effort).toBe('high');
+  });
+
+  it('runs infrequent heavy tasks on Opus/max', () => {
+    const { model, effort } = chooseTaskModelEffort(
+      baseTask({ schedule_value: '27 23 * * *' }),
+      group,
+    );
+    expect(model).toBe('claude-opus-4-8');
+    expect(effort).toBe('max');
+  });
+
+  it('honors an explicit per-task model at max effort', () => {
+    const { model, effort } = chooseTaskModelEffort(
+      baseTask({ schedule_value: '0 */2 10-18 * * *', model: 'claude-haiku-4-5' }),
+      group,
+    );
+    expect(model).toBe('claude-haiku-4-5');
+    expect(effort).toBe('max');
   });
 });

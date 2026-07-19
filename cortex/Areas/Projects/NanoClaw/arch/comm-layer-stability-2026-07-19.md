@@ -14,7 +14,7 @@ tags:
   - upstream-merge
 created: '2026-07-19'
 project: nanoclaw
-source_hash: 2fe8d3758b3c60cf59d890c6a5f32e473e32a6623a9265d333bbf699598603b9
+source_hash: f68ef7b3cef2cd0fc37704d34f118a8c732694ad3bba5da174c9325e1d083da6
 embedding_model: text-embedding-3-small
 ---
 # Comm-layer stability + credential restoration (2026-07-19)

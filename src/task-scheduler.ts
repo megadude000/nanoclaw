@@ -72,6 +72,58 @@ export function computeNextRun(task: ScheduledTask): string | null {
   return null;
 }
 
+// Scheduled tasks that fire at least this far apart are treated as "heavy"
+// and run on Opus at max effort; anything more frequent (memory-housekeeping
+// pulses, monitors) stays on fast Sonnet so a high-frequency loop can't burn
+// the subscription quota. Empirically necessary: a 2-minute autoDream task on
+// Opus/max exhausted the daily limit.
+const HEAVY_TASK_MIN_INTERVAL_MS = 60 * 60_000; // 1 hour
+// When a run hits the provider quota, push the next fire out by this much so a
+// frequent task doesn't hammer the limit every couple of minutes.
+const RATE_LIMIT_COOLDOWN_MS = 30 * 60_000; // 30 minutes
+
+type Effort = 'low' | 'medium' | 'high' | 'max';
+
+/** Estimate how often a task fires, in ms (Infinity for one-off tasks). */
+export function estimateTaskIntervalMs(task: ScheduledTask): number {
+  if (task.schedule_type === 'once') return Infinity;
+  if (task.schedule_type === 'interval') {
+    const ms = parseInt(task.schedule_value, 10);
+    return ms > 0 ? ms : Infinity;
+  }
+  if (task.schedule_type === 'cron') {
+    try {
+      const it = CronExpressionParser.parse(task.schedule_value, {
+        tz: TIMEZONE,
+      });
+      const a = it.next().getTime();
+      const b = it.next().getTime();
+      return Math.max(0, b - a);
+    } catch {
+      return Infinity;
+    }
+  }
+  return Infinity;
+}
+
+/**
+ * Choose model + reasoning effort for a scheduled task. An explicit per-task or
+ * per-group model always wins (with max effort). Otherwise: infrequent heavy
+ * work (Night Shift, digests, weekly reviews) runs Opus at max effort; frequent
+ * housekeeping runs Sonnet at high effort to stay within quota.
+ */
+export function chooseTaskModelEffort(
+  task: ScheduledTask,
+  group: RegisteredGroup,
+): { model: string | undefined; effort: Effort } {
+  const explicit = task.model || group.containerConfig?.model;
+  if (explicit) return { model: explicit, effort: 'max' };
+  const heavy = estimateTaskIntervalMs(task) >= HEAVY_TASK_MIN_INTERVAL_MS;
+  return heavy
+    ? { model: 'claude-opus-4-8', effort: 'max' }
+    : { model: 'claude-sonnet-4-6', effort: 'high' };
+}
+
 export interface SchedulerDependencies {
   registeredGroups: () => Record<string, RegisteredGroup>;
   getSessions: () => Record<string, string>;
@@ -179,6 +231,11 @@ async function runTask(
 
   let result: string | null = null;
   let error: string | null = null;
+  let rateLimited = false;
+  const { model: taskModel, effort: taskEffort } = chooseTaskModelEffort(
+    task,
+    group,
+  );
 
   // For group context mode, use the group's current session
   const sessions = deps.getSessions();
@@ -227,10 +284,10 @@ async function runTask(
         silent: task.silent ?? false,
         assistantName: ASSISTANT_NAME,
         script: task.script || undefined,
-        // Scheduled/background tasks: maximum reasoning. Default to Opus at
-        // 'max' effort; an explicit per-task/group model still wins.
-        model: task.model || group.containerConfig?.model || 'claude-opus-4-8',
-        effort: 'max',
+        // Frequency-aware: heavy infrequent tasks → Opus/max, frequent
+        // housekeeping → Sonnet/high (see chooseTaskModelEffort).
+        model: taskModel,
+        effort: taskEffort,
       },
       (proc, containerName) =>
         deps.onProcess(task.chat_jid, proc, containerName, task.group_folder),
@@ -240,6 +297,7 @@ async function runTask(
           // Suppress rate limit errors — don't spam user with API quota messages
           const isRateLimit =
             result.includes('hit your limit') || result.includes('rate_limit');
+          if (isRateLimit) rateLimited = true;
           if (!isRateLimit) {
             // DIGEST-01/02: Route to configured targets, or fall back to original chatJid
             if (isRouted) {
@@ -316,6 +374,7 @@ async function runTask(
 
   // ASTATUS-02: Report a terminal state to #agents so every "Took" gets a
   // matching close — green "Closed" on success, red "Failed" on error.
+  // A quota hit is not a real failure and would spam #agents, so it's skipped.
   if (!error) {
     deps.sendToAgents?.(
       buildClosedEmbed({
@@ -325,7 +384,7 @@ async function runTask(
         summary: result?.slice(0, 200) ?? undefined,
       }),
     );
-  } else {
+  } else if (!rateLimited) {
     deps.sendToAgents?.(
       buildFailedEmbed({
         title: task.prompt.slice(0, 80),
@@ -347,7 +406,19 @@ async function runTask(
     error,
   });
 
-  const nextRun = computeNextRun(task);
+  let nextRun = computeNextRun(task);
+  // If the provider quota was hit, back the next fire off so a frequent task
+  // stops hammering the limit until it likely resets.
+  if (rateLimited && nextRun) {
+    const cooldownUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS;
+    if (new Date(nextRun).getTime() < cooldownUntil) {
+      nextRun = new Date(cooldownUntil).toISOString();
+      logger.warn(
+        { taskId: task.id, nextRun },
+        'Task rate-limited; backing off next run by 30m',
+      );
+    }
+  }
   const resultSummary = error
     ? `Error: ${error}`
     : result
