@@ -18,6 +18,55 @@ const JSONL_DISCOVER_TIMEOUT_MS = 30_000;
 // all — the user just gets the answer. Only genuinely slow runs show progress.
 const INITIAL_SHOW_MS = 7_000;
 
+/**
+ * Bucket a tool into a human "what was done" category, keyed by a
+ * "singular|plural" noun so the done summary reads naturally ("3 edits, 1 run").
+ */
+function categorizeTool(name: string): string {
+  switch (name) {
+    case 'Write':
+    case 'Edit':
+    case 'NotebookEdit':
+      return 'edit|edits';
+    case 'Read':
+      return 'file read|files read';
+    case 'Bash':
+      return 'command|commands';
+    case 'Grep':
+    case 'Glob':
+      return 'search|searches';
+    case 'WebSearch':
+    case 'WebFetch':
+      return 'web lookup|web lookups';
+    case 'Skill':
+      return 'skill|skills';
+    default:
+      return 'tool call|tool calls';
+  }
+}
+
+/** Render a category tally as "3 edits, 1 command, 2 searches". */
+function summarizeToolCounts(counts: Map<string, number>): string {
+  const parts: string[] = [];
+  // Stable, sensible order: edits, reads, commands, searches, web, skills, other.
+  const order = [
+    'edit|edits',
+    'file read|files read',
+    'command|commands',
+    'search|searches',
+    'web lookup|web lookups',
+    'skill|skills',
+    'tool call|tool calls',
+  ];
+  for (const key of order) {
+    const n = counts.get(key);
+    if (!n) continue;
+    const [one, many] = key.split('|');
+    parts.push(`${n} ${n === 1 ? one : many}`);
+  }
+  return parts.join(', ');
+}
+
 interface TrackerState {
   chatJid: string;
   groupFolder: string;
@@ -26,6 +75,10 @@ interface TrackerState {
   lastTool: string | null;
   // Count of top-level (main-agent) tool calls — a proxy for work done.
   stepCount: number;
+  // Tally of work by category (edited/ran/read/searched/…) for the done summary.
+  toolCounts: Map<string, number>;
+  // Total subagents spawned this run (for the "used N subagents" summary).
+  subagentsSpawned: number;
   // Active subagents: Task tool_use id → short label. Added when the agent
   // spawns a Task subagent, removed when that Task's tool_result lands.
   subagents: Map<string, string>;
@@ -89,6 +142,8 @@ export class ProgressTracker {
       lastActivityTime: Date.now(),
       lastTool: null,
       stepCount: 0,
+      toolCounts: new Map(),
+      subagentsSpawned: 0,
       subagents: new Map(),
       progressMsgId: null,
       logsMsgId: null,
@@ -135,6 +190,15 @@ export class ProgressTracker {
 
   onResponseReceived(chatJid: string): void {
     const state = this.states.get(chatJid);
+    // Final flush: fast runs can finish between 2s polls, so catch up on any
+    // tool lines written since the last poll before summarizing what was done.
+    if (state) {
+      try {
+        this._pollJSONL(chatJid);
+      } catch {
+        /* best-effort */
+      }
+    }
     const msgId = state?.progressMsgId ?? null;
     const logsMsgId = state?.logsMsgId ?? null;
     const elapsed = state
@@ -305,13 +369,18 @@ export class ProgressTracker {
           .replace(/[\n\r]+/g, ' ')
           .slice(0, 32);
         state.subagents.set(block.id, label);
+        state.subagentsSpawned++;
         state.lastTool = `🤖 delegating → ${label}`;
         changed = true;
         continue;
       }
 
       state.lastTool = this._formatToolLabel(name, block.input ?? {});
-      if (!isSubagentTurn) state.stepCount++;
+      if (!isSubagentTurn) {
+        state.stepCount++;
+        const cat = categorizeTool(name);
+        state.toolCounts.set(cat, (state.toolCounts.get(cat) ?? 0) + 1);
+      }
       changed = true;
     }
 
@@ -483,8 +552,21 @@ export class ProgressTracker {
     elapsedSec: number,
   ): string {
     const elapsed = this._humanDuration(elapsedSec);
-    const steps =
-      state && state.stepCount > 0 ? ` · ${state.stepCount} steps` : '';
-    return `✅ Done in ${elapsed}${steps}`;
+    if (!state) return `✅ Done in ${elapsed}`;
+
+    // Summarize what actually happened, not just the clock. A pure text reply
+    // (no tools) stays short; a working run reads "3 edits, 1 command · 12 steps".
+    const bits: string[] = [];
+    const work = summarizeToolCounts(state.toolCounts);
+    if (work) bits.push(work);
+    if (state.subagentsSpawned > 0) {
+      bits.push(
+        `${state.subagentsSpawned} subagent${state.subagentsSpawned > 1 ? 's' : ''}`,
+      );
+    }
+    if (state.stepCount > 0) bits.push(`${state.stepCount} steps`);
+
+    const summary = bits.length ? ` · ${bits.join(' · ')}` : '';
+    return `✅ Done in ${elapsed}${summary}`;
   }
 }

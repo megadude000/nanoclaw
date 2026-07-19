@@ -27,6 +27,8 @@ function seedState(tracker: ProgressTracker, jid: string) {
     lastActivityTime: Date.now(),
     lastTool: null,
     stepCount: 0,
+    toolCounts: new Map<string, number>(),
+    subagentsSpawned: 0,
     subagents: new Map<string, string>(),
     progressMsgId: null,
     logsMsgId: null,
@@ -134,6 +136,47 @@ describe('ProgressTracker _parseLine', () => {
     const done = (tracker as any)._formatDone(state, 75);
     expect(done).toContain('Done in 1m 15s');
     expect(done).toContain('3 steps');
+  });
+
+  it('done summary describes what was done (tool categories + subagents)', () => {
+    const { tracker } = makeTracker();
+    const state = seedState(tracker, JID);
+    state.stepCount = 6;
+    state.toolCounts.set('edit|edits', 3);
+    state.toolCounts.set('command|commands', 1);
+    state.toolCounts.set('search|searches', 2);
+    state.subagentsSpawned = 2;
+    const done = (tracker as any)._formatDone(state, 5);
+    expect(done).toContain('3 edits');
+    expect(done).toContain('1 command');
+    expect(done).toContain('2 searches');
+    expect(done).toContain('2 subagents');
+  });
+
+  it('counts tool categories from parsed lines', () => {
+    const { tracker } = makeTracker();
+    const state = seedState(tracker, JID);
+    (tracker as any)._parseLine(
+      JID,
+      assistantToolLine('Edit', { file_path: '/a/x.ts' }),
+    );
+    (tracker as any)._parseLine(
+      JID,
+      assistantToolLine('Write', { file_path: '/a/y.ts' }),
+    );
+    (tracker as any)._parseLine(JID, assistantToolLine('Bash', { command: 'ls' }));
+    expect(state.toolCounts.get('edit|edits')).toBe(2);
+    expect(state.toolCounts.get('command|commands')).toBe(1);
+    const done = (tracker as any)._formatDone(state, 3);
+    expect(done).toContain('2 edits');
+    expect(done).toContain('1 command');
+  });
+
+  it('done stays short for a pure text reply (no tools)', () => {
+    const { tracker } = makeTracker();
+    const state = seedState(tracker, JID);
+    const done = (tracker as any)._formatDone(state, 2);
+    expect(done).toBe('✅ Done in 2s');
   });
 });
 

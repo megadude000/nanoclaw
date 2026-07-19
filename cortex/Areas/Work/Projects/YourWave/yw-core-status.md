@@ -89,6 +89,15 @@ embedding_model: text-embedding-3-small
 - `·` JSX-text escape bug + Dashboard breadcrumb dup fixed. Dead prototype routes/test-catch/auth-store residue deleted. Phase 16–19 planning deletions committed; phase-23 plans tracked.
 - Verify: build clean, **975/0 vitest**, 10/10 browser e2e checks. Milestones M6 (frontend refactor public+CRM, TDD-first), M7 (real data layer), M8 (shop+bundle builder) queued this session.
 
+## M6 Frontend Refactor — ✅ DONE (2026-07-19, commits beb1449..4b3ebab)
+
+- **Atlas**: 891-line route triplication → shared `AtlasArticlePage.astro` + 14-line wrappers; `getAtlasPathsForLocale()` helper fixes the cs-leak (140 stray `/atlas/cs/*` pages gone). Golden HTML diff clean.
+- **Podcast-unlocked** → shared component, strings via `t()` keys; **cs registered** in astro.config i18n/autoTranslate (runtime already supported it).
+- **Header.astro** 1357 → composition shell + 6 subcomponents in `components/header/`; normalized DOM byte-identical.
+- **CRM**: DataTable 715→246, UsersPage 687→57, PaymentsPage 492→63, RoastBatchDialog 776→311; wizard steps/palette/dashboard extracted to `parts/`; static inline styles → `crm-components.css`. TDD: 20+9 characterization tests written red/green against ORIGINAL code first.
+- **Latent bug found & fixed**: Base UI dialog portals render outside `[data-theme='crm']` → all portaled dialogs were unstyled (pre-existing for BulkTransfer/Location/Confirm). Portal Backdrop/Popup now re-stamp `data-theme='crm'`.
+- Verify: build clean, **1014/0 vitest** (975 baseline +39), golden diffs all benign, e2e across locales + CRM + mobile drawer + Storybook pass.
+
 ## Next Goals (stated 2026-07-19 by Andrii)
 
 Refactor frontend structure/architecture problem areas, then deliver: working **Atlas** (+ engagement/sales features), **Shop**, **Bundle Builder**, and a **working CRM** to manage it all. DB strategy: local Supabase stack for dev (started 2026-07-19), cloud project needs unpause or re-creation.
