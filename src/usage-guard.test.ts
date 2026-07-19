@@ -35,14 +35,36 @@ describe('usage-guard', () => {
 
   it('returns the most-constraining weekly limit across types', () => {
     recordRateLimit(
-      { rateLimitType: 'seven_day_sonnet', utilization: 0.5, resetsAt: NOW + WEEK },
+      {
+        rateLimitType: 'seven_day_sonnet',
+        utilization: 0.5,
+        resetsAt: NOW + WEEK,
+      },
       NOW,
     );
     recordRateLimit(
-      { rateLimitType: 'seven_day_opus', utilization: 0.88, resetsAt: NOW + WEEK },
+      {
+        rateLimitType: 'seven_day_opus',
+        utilization: 0.88,
+        resetsAt: NOW + WEEK,
+      },
       NOW,
     );
     expect(getWeeklyUsage(NOW)?.utilization).toBe(0.88);
+  });
+
+  it('treats resetsAt as Unix seconds (not ms) so entries are not falsely expired', () => {
+    // Real SDK value shape: seconds. now in ms just before the reset.
+    const resetSec = 1_784_500_800; // seconds
+    const nowMs = resetSec * 1000 - 60_000; // 1 min before reset, in ms
+    recordRateLimit(
+      { rateLimitType: 'seven_day', utilization: 0.9, resetsAt: resetSec },
+      nowMs,
+    );
+    const u = getWeeklyUsage(nowMs);
+    expect(u?.utilization).toBe(0.9); // still valid, not dropped
+    // and expired once the window passes
+    expect(getWeeklyUsage(resetSec * 1000 + 1000)).toBeNull();
   });
 
   it('drops entries whose reset window has passed', () => {

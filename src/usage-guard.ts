@@ -25,6 +25,16 @@ interface WeeklyEntry {
 
 type WeeklyState = Record<string, WeeklyEntry>; // rateLimitType -> entry
 
+/**
+ * Normalize an epoch that may be seconds or milliseconds to milliseconds.
+ * The SDK reports `resetsAt` in Unix seconds (e.g. 1784500800); anything below
+ * this threshold is treated as seconds and scaled up.
+ */
+function toEpochMs(v: number | undefined): number | undefined {
+  if (v == null) return undefined;
+  return v < 1e12 ? v * 1000 : v;
+}
+
 function readState(): WeeklyState {
   try {
     const raw = getRouterState(WEEKLY_STATE_KEY);
@@ -48,7 +58,7 @@ export function recordRateLimit(
   state[rl.rateLimitType] = {
     utilization: rl.utilization,
     status: rl.status,
-    resetsAt: rl.resetsAt,
+    resetsAt: toEpochMs(rl.resetsAt), // normalize seconds → ms
     at: now,
   };
   try {
@@ -78,7 +88,13 @@ export function getWeeklyUsage(now = Date.now()): WeeklyUsage | null {
     const expiry = e.resetsAt ?? e.at + 7 * 24 * 60 * 60_000;
     if (now >= expiry) continue;
     if (!worst || e.utilization > worst.utilization) {
-      worst = { utilization: e.utilization, rateLimitType, status: e.status, resetsAt: e.resetsAt, at: e.at };
+      worst = {
+        utilization: e.utilization,
+        rateLimitType,
+        status: e.status,
+        resetsAt: e.resetsAt,
+        at: e.at,
+      };
     }
   }
   return worst;
@@ -108,13 +124,20 @@ export function shouldSkipAutopilot(
   const usage = getWeeklyUsage(now);
   if (!usage) return { skip: false };
   if (usage.utilization >= threshold) {
-    return { skip: true, usage, reason: `weekly usage ${Math.round(usage.utilization * 100)}%` };
+    return {
+      skip: true,
+      usage,
+      reason: `weekly usage ${Math.round(usage.utilization * 100)}%`,
+    };
   }
   return { skip: false, usage };
 }
 
 /** Human-friendly reset time, e.g. "Tue 14:00" or "in 2d". */
-export function formatReset(resetsAt: number | undefined, now = Date.now()): string {
+export function formatReset(
+  resetsAt: number | undefined,
+  now = Date.now(),
+): string {
   if (!resetsAt) return 'unknown';
   const diffMs = resetsAt - now;
   if (diffMs <= 0) return 'now';

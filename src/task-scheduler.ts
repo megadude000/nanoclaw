@@ -248,11 +248,7 @@ async function runTask(
       error: null,
     });
     const skipNext = computeNextRun(task);
-    updateTaskAfterRun(
-      task.id,
-      skipNext,
-      `Skipped (weekly usage ${pct}%)`,
-    );
+    updateTaskAfterRun(task.id, skipNext, `Skipped (weekly usage ${pct}%)`);
     return;
   }
 

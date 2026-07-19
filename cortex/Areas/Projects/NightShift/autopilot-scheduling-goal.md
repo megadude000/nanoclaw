@@ -72,9 +72,50 @@ embedding_model: text-embedding-3-small
 5. **Prefer event/webhook triggers over cron polling** where a real event exists
    (Notion/GitHub webhooks already do this — extend the pattern).
 
+## KAIROS — what it is (investigated 2026-07-19)
+
+KAIROS is the **watchdog/supervisor layer** for unattended autonomy — it exists
+because the overnight execution agent can stall (context fill, stuck) with nobody
+watching:
+- **KAIROS-night** (`15 0,1,2,3,4,5,23 * * *`, hourly overnight): reads a
+  pre-task script's `data.stalledMinutes/planDate/remaining` and priority-routes —
+  **P0 STALL** (>45 min no activity + tasks remaining) → restart execution with
+  the remaining tasks; **P1 DONE** → cortex sync + lore commit; **P2 IDLE** →
+  opportunistic work (write tests, fix cortex orphans).
+- **KAIROS-lite** (`*/30 9-20`, daytime): proactive pulse over the observations
+  log; P0 message user, P1 schedule reminder, P2 defer to the shift.
+
+So KAIROS is legitimate (stall recovery for unattended work), not a hack. The
+open question is only cadence/model tier (see item 3 above).
+
+## Weekly-usage gate (shipped 2026-07-19)
+
+Autopilot now **skips itself when the subscription's weekly quota is nearly
+spent**, so interactive use keeps headroom:
+- Signal is authoritative from Anthropic: the SDK's `rate_limit_event`
+  (`SDKRateLimitInfo.utilization` + `rateLimitType: seven_day*` + `resetsAt`).
+  agent-runner captures it and attaches it to every container output; the host
+  records it via `src/usage-guard.ts`.
+- `shouldSkipAutopilot(task)`: for Autopilot tasks (nightshift/kairos), if the
+  most-constraining weekly utilization ≥ **80%**, the run is skipped, a message
+  is posted to the user ("🛑 Skipping Autopilot … weekly usage at N% … resets
+  in ~Xd"), and the run is logged `status='skipped'`. Interactive chat and
+  non-Autopilot tasks (e.g. morning digest) are never gated.
+- Threshold: `AUTOPILOT_WEEKLY_THRESHOLD` in `src/usage-guard.ts`.
+
+## Session-drainage check (2026-07-19)
+
+- **Session continuity: healthy.** 0 `No conversation found` in the last 4h (the
+  agent-runner fresh-session self-heal holds); session store 87 jsonl / 29M / 4
+  DB rows — no leak.
+- **Quota drainage: root cause was the 2-min autoDream on Opus/max** (killed).
+  agent-runner now logs real utilization (`Rate limit: type=… util=…% resetsAt=…`)
+  so weekly burn is observable going forward.
+
 ## Guardrails now in place (so this can't regress silently)
 
-- Frequency-aware tier + rate-limit backoff (above); `estimateTaskIntervalMs`
-  is the cadence oracle, so any new sub-hourly task is auto-kept off Opus/max.
+- Frequency-aware tier + rate-limit backoff; `estimateTaskIntervalMs` is the
+  cadence oracle, so any new sub-hourly task is auto-kept off Opus/max.
+- Weekly-usage gate on Autopilot (above) — a heavy week can't run the quota dry.
 
 Related: [[NightShift]] [[comm-layer-stability-2026-07-19]]
