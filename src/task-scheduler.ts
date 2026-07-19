@@ -102,9 +102,19 @@ export function estimateTaskIntervalMs(task: ScheduledTask): number {
       const it = CronExpressionParser.parse(task.schedule_value, {
         tz: TIMEZONE,
       });
-      const a = it.next().getTime();
-      const b = it.next().getTime();
-      return Math.max(0, b - a);
+      // Use the SMALLEST gap across several upcoming occurrences, not just the
+      // next two. Sampling only next..next is time-of-day dependent: a task
+      // that fires every 30m during 09–20h looks hourly-plus if evaluated in
+      // the evening (last fire → next morning). The min gap reflects its true
+      // peak cadence, so its tier stays stable regardless of when we check.
+      let prev = it.next().getTime();
+      let minGap = Infinity;
+      for (let i = 0; i < 8; i++) {
+        const next = it.next().getTime();
+        minGap = Math.min(minGap, next - prev);
+        prev = next;
+      }
+      return Math.max(0, minGap);
     } catch {
       return Infinity;
     }

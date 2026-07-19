@@ -162,6 +162,22 @@ describe('task model/effort selection', () => {
     expect(ms).toBe(24 * 60 * 60_000);
   });
 
+  it('uses the min gap so a windowed cron is not misclassified by time of day', () => {
+    // */30 9-20 fires every 30m within the window; the overnight gap must not
+    // inflate the estimate (that flipped the tier depending on eval time).
+    const ms = estimateTaskIntervalMs(
+      baseTask({ schedule_value: '*/30 9-20 * * *' }),
+    );
+    expect(ms).toBe(30 * 60_000);
+    // and therefore runs on fast Sonnet, not Opus/max
+    expect(
+      chooseTaskModelEffort(
+        baseTask({ schedule_value: '*/30 9-20 * * *' }),
+        group,
+      ).model,
+    ).toBe('claude-sonnet-4-6');
+  });
+
   it('runs frequent housekeeping on fast Sonnet', () => {
     const { model, effort } = chooseTaskModelEffort(
       baseTask({ schedule_value: '0 */2 10-18 * * *' }),
