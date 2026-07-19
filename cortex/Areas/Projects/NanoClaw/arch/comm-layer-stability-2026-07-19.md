@@ -186,6 +186,40 @@ All four remaining audit items were completed in a follow-up session
   to #agents (chat+panel already show subagents; forwarding risks noise);
   GitHub-CI-success webhook noise (ops risk, already run-id deduped).
 
+## SDK signals — what we reuse and what's still on the table (2026-07-19)
+
+The Agent SDK (`@anthropic-ai/claude-agent-sdk` 0.2.92) exposes far more than
+we parse. Two tiers:
+
+**In the JSONL transcript → usable host-side (ProgressTracker), no container change:**
+- `assistant.content[].thinking` → **now shown as "💭 Thinking…"**.
+- `assistant.content[].text` → **now shown as "💬 <first sentence>"** (intent/title).
+- `tool_use` / `tool_result` → tool labels, step count, subagent spawn/complete
+  (already used). `parent_tool_use_id` distinguishes subagent turns.
+- `rate_limit_event.rate_limit_info` (SDKRateLimitInfo: status / rateLimitType
+  seven_day* / utilization / resetsAt) → weekly-usage gate (already used).
+
+**Stream-only (agent-runner sees them, NOT in JSONL) → would need forwarding:**
+- `tool_use_summary` (`{summary}`) — SDK's natural-language "what that batch of
+  tools did" — the best real "title" of current activity.
+- `task_started` (`{description, task_type, prompt}`) / `task_progress`
+  (`{description, last_tool_name, summary, usage{total_tokens,tool_uses,duration_ms}}`)
+  / `task_notification` (`{status, summary, usage}`) — **rich per-subagent
+  descriptions + progress + token cost**. Best source for deep subagent visibility.
+- `tool_progress` (`{tool_name, elapsed_time_seconds}`) — live "still running X
+  for Ns" (good for long Bash/WebFetch).
+- `status` (SDKStatus = 'compacting' | null) — surface "🗜 compacting context…".
+- `compact_boundary` (`{trigger, pre_tokens}`) — note when context was compacted.
+- `prompt_suggestion` (`{suggestion}`) — suggested next actions.
+- Result messages carry `usage` + `modelUsage` — real per-run token accounting
+  (could feed a usage ledger / cost readout).
+
+Forwarding path if we pursue it: agent-runner emits a lightweight
+`writeOutput({status:'progress', activity})` on these stream messages; the host's
+streaming `onOutput` feeds the ProgressTracker (overrides the JSONL-derived line).
+Deferred for now — thinking + narration already give the "what I'm doing" title
+host-side; forwarding is the next step for SDK-native subagent descriptions.
+
 ## Verification
 
 - First pass: `npm run build` clean; full `npm test` = **722 passed**.
