@@ -25,6 +25,12 @@ import {
   updateTaskAfterRun,
 } from './db.js';
 import { GroupQueue } from './group-queue.js';
+import {
+  recordRateLimit,
+  shouldSkipAutopilot,
+  formatReset,
+  AUTOPILOT_WEEKLY_THRESHOLD,
+} from './usage-guard.js';
 import { resolveGroupFolderPath } from './group-folder.js';
 import { logger } from './logger.js';
 import { ProgressTracker } from './progress-tracker.js';
@@ -211,6 +217,45 @@ async function runTask(
     );
   }
 
+  // Weekly-usage gate: skip autonomous (Autopilot) work when the subscription's
+  // weekly quota is nearly spent, and tell the user why. Interactive chat and
+  // non-Autopilot tasks are never gated.
+  const skipDecision = shouldSkipAutopilot(task);
+  if (skipDecision.skip) {
+    const u = skipDecision.usage;
+    const resetStr = u ? formatReset(u.resetsAt) : 'unknown';
+    const pct = u ? Math.round(u.utilization * 100) : 0;
+    const msg =
+      `🛑 Skipping Autopilot (\`${task.prompt.slice(0, 40).replace(/\n/g, ' ')}…\`) — ` +
+      `weekly usage at **${pct}%** (≥ ${Math.round(AUTOPILOT_WEEKLY_THRESHOLD * 100)}%). ` +
+      `Preserving quota for your interactive use. Weekly limit resets ${resetStr}.`;
+    logger.warn(
+      { taskId: task.id, utilization: u?.utilization, resetsAt: u?.resetsAt },
+      'Autopilot skipped: weekly usage over threshold',
+    );
+    const targets = isRouted
+      ? routingTargets.map((t) => t.jid)
+      : [task.chat_jid];
+    for (const jid of targets) {
+      await deps.sendMessage(jid, msg).catch(() => {});
+    }
+    logTaskRun({
+      task_id: task.id,
+      run_at: new Date().toISOString(),
+      duration_ms: 0,
+      status: 'skipped',
+      result: `Skipped: ${skipDecision.reason}`,
+      error: null,
+    });
+    const skipNext = computeNextRun(task);
+    updateTaskAfterRun(
+      task.id,
+      skipNext,
+      `Skipped (weekly usage ${pct}%)`,
+    );
+    return;
+  }
+
   // Update tasks snapshot for container to read (filtered by group)
   const isMain = group.isMain === true;
   const tasks = getAllTasks();
@@ -292,6 +337,8 @@ async function runTask(
       (proc, containerName) =>
         deps.onProcess(task.chat_jid, proc, containerName, task.group_folder),
       async (streamedOutput: ContainerOutput) => {
+        // Persist weekly-usage telemetry from every streamed output.
+        if (streamedOutput.rateLimit) recordRateLimit(streamedOutput.rateLimit);
         if (streamedOutput.result) {
           result = streamedOutput.result;
           // Suppress rate limit errors — don't spam user with API quota messages
@@ -346,6 +393,7 @@ async function runTask(
     );
 
     if (closeTimer) clearTimeout(closeTimer);
+    if (output.rateLimit) recordRateLimit(output.rateLimit);
 
     if (output.status === 'error') {
       error = output.error || 'Unknown error';

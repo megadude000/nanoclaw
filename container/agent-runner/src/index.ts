@@ -44,12 +44,25 @@ interface ContainerInput {
   effort?: 'low' | 'medium' | 'high' | 'max';
 }
 
+interface RateLimitSnapshot {
+  status?: string;
+  rateLimitType?: string;
+  utilization?: number;
+  resetsAt?: number;
+}
+
 interface ContainerOutput {
   status: 'success' | 'error';
   result: string | null;
   newSessionId?: string;
   error?: string;
+  rateLimit?: RateLimitSnapshot;
 }
+
+// Latest subscription rate-limit info seen from the SDK this run. Attached to
+// every writeOutput so the host can track weekly (seven_day) utilization and
+// gate autonomous work before the quota is exhausted.
+let latestRateLimit: RateLimitSnapshot | undefined;
 
 interface SessionEntry {
   sessionId: string;
@@ -142,7 +155,13 @@ const OUTPUT_END_MARKER = '---NANOCLAW_OUTPUT_END---';
 
 function writeOutput(output: ContainerOutput): void {
   console.log(OUTPUT_START_MARKER);
-  console.log(JSON.stringify(output));
+  console.log(
+    JSON.stringify(
+      latestRateLimit && output.rateLimit === undefined
+        ? { ...output, rateLimit: latestRateLimit }
+        : output,
+    ),
+  );
   console.log(OUTPUT_END_MARKER);
 }
 
@@ -597,6 +616,26 @@ async function runQuery(
     if (message.type === 'system' && message.subtype === 'init') {
       newSessionId = message.session_id;
       log(`Session initialized: ${newSessionId}`);
+    }
+
+    // Subscription rate-limit telemetry (claude.ai users). Capture the latest
+    // so the host can track weekly (seven_day) utilization for the autopilot gate.
+    if ((message as { type?: string }).type === 'rate_limit_event') {
+      const info = (message as { rate_limit_info?: RateLimitSnapshot })
+        .rate_limit_info;
+      if (info) {
+        latestRateLimit = {
+          status: info.status,
+          rateLimitType: info.rateLimitType,
+          utilization: info.utilization,
+          resetsAt: info.resetsAt,
+        };
+        log(
+          `Rate limit: type=${info.rateLimitType} util=${
+            info.utilization != null ? Math.round(info.utilization * 100) + '%' : '?'
+          } status=${info.status} resetsAt=${info.resetsAt ?? '?'}`,
+        );
+      }
     }
 
     if (

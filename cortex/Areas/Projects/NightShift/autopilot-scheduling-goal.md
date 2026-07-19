@@ -2,7 +2,9 @@
 cortex_level: L30
 confidence: high
 domain: nanoclaw
-scope: GOAL — rename "Night Shift" → "Autopilot" and put its scheduling on proper triggers (no polling hacks)
+scope: >-
+  GOAL — rename "Night Shift" → "Autopilot" and put its scheduling on proper
+  triggers (no polling hacks)
 type: goal
 status: open
 tags:
@@ -15,6 +17,8 @@ tags:
   - rename
 created: '2026-07-19'
 project: nanoclaw
+source_hash: 606d3d64bc079180fe43c54c4a0c4991e79846aebd95df382ae3e071bf9b596f
+embedding_model: text-embedding-3-small
 ---
 # GOAL: "Autopilot" — proper-time autonomous work, no polling hacks
 

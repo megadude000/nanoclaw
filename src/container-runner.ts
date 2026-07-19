@@ -51,11 +51,20 @@ export interface ContainerInput {
   effort?: 'low' | 'medium' | 'high' | 'max';
 }
 
+export interface RateLimitSnapshot {
+  status?: string;
+  rateLimitType?: string;
+  utilization?: number;
+  resetsAt?: number;
+}
+
 export interface ContainerOutput {
   status: 'success' | 'error';
   result: string | null;
   newSessionId?: string;
   error?: string;
+  // Subscription rate-limit telemetry surfaced by the agent-runner (claude.ai).
+  rateLimit?: RateLimitSnapshot;
 }
 
 interface VolumeMount {

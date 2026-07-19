@@ -13,7 +13,7 @@ tags:
 created: 2026-04-01T00:00:00.000Z
 updated: 2026-07-19T09:30:00.000Z
 status: milestone-4-verifying
-source_hash: 140ffa0f0d20726c588ba0b8b4e6f83599d82c3f9b1bf79f2f9c8a0cbc7a9f51
+source_hash: 05418c074764adcc63b86637f460a5533739415f567a63aef5cf91b3ca8a43d7
 embedding_model: text-embedding-3-small
 ---
 
@@ -81,6 +81,13 @@ embedding_model: text-embedding-3-small
 - ⚠️ **RBAC bug found**: `src/middleware.ts:60` reads `getUser().app_metadata.role`, which comes from `raw_app_meta_data` in the DB — NOT from the JWT claim the `custom_access_token_hook` injects. The hook is effectively dead code for the middleware path; role gating only works if role is ALSO manually mirrored into `raw_app_meta_data`. Fix: read the claim from the validated JWT (or sync role → `raw_app_meta_data` via trigger).
 - E2E verified via Playwright: login → `/crm` renders → Inventory renders (mock data). Inventory infinite-render did NOT reproduce on direct navigation; suspected to need in-app sidebar navigation path.
 - Visible UI bugs from screenshot: literal `·` strings in Inventory "Origin · Variety" column (double-escaped unicode in mock data); breadcrumb shows "Dashboard > Dashboard > Inventory".
+
+## M5 Stabilize — ✅ DONE (2026-07-19, commits c265aae..899d69e)
+
+- RBAC middleware now reads role/blocked from JWT claims via `getClaims()` (hook no longer dead code); fails closed on auth outage. 15/15 tests.
+- Inventory freeze root-caused: TanStack Table `_autoResetPageIndex` **microtask livelock** from unstable `[]`/`{}` prop defaults in DataTable — fixed with module-level stable defaults + `autoResetPageIndex: false`; debug instrumentation removed; regression unit test + formalized local e2e spec.
+- `·` JSX-text escape bug + Dashboard breadcrumb dup fixed. Dead prototype routes/test-catch/auth-store residue deleted. Phase 16–19 planning deletions committed; phase-23 plans tracked.
+- Verify: build clean, **975/0 vitest**, 10/10 browser e2e checks. Milestones M6 (frontend refactor public+CRM, TDD-first), M7 (real data layer), M8 (shop+bundle builder) queued this session.
 
 ## Next Goals (stated 2026-07-19 by Andrii)
 

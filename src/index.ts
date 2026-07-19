@@ -69,6 +69,7 @@ import {
 } from './sender-allowlist.js';
 import { readEnvFile } from './env.js';
 import { startSessionCleanup } from './session-cleanup.js';
+import { recordRateLimit } from './usage-guard.js';
 import { startSchedulerLoop } from './task-scheduler.js';
 import { startCortexWatcher, stopCortexWatcher } from './cortex/watcher.js';
 import { startHealthMonitor } from './health-monitor.js';
@@ -282,6 +283,8 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
 
   const output = await runAgent(group, prompt, chatJid, async (result) => {
     // Streaming output callback — called for each agent result
+    // Track weekly-usage telemetry from interactive runs too.
+    if (result.rateLimit) recordRateLimit(result.rateLimit);
     if (result.result) {
       const raw =
         typeof result.result === 'string'
